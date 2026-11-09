@@ -3,189 +3,258 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, PlusCircle, ShieldCheck, FileSpreadsheet, Users, Menu, X, Lock } from 'lucide-react';
+import { useDonation } from '@/context/DonationContext';
+import { Search, ChevronDown, Menu, X, ShieldCheck, HeartHandshake, PlusCircle, Building2 } from 'lucide-react';
 
-interface HeaderProps {
-  searchQuery?: string;
-  onSearchChange?: (val: string) => void;
-}
-
-export default function Header({ searchQuery = '', onSearchChange }: HeaderProps) {
+export default function Header() {
+  const { openSearchModal } = useDonation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [donateDropdownOpen, setDonateDropdownOpen] = useState(false);
+  const [fundraiseDropdownOpen, setFundraiseDropdownOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
-          
-          {/* Logo & Platform Name */}
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
-            <div className="relative w-12 h-12 flex-shrink-0">
-              <Image
-                src="/images/gcc-emblem.png"
-                alt="GCC Foundation Emblem"
-                width={48}
-                height={48}
-                className="object-contain"
-                priority
-              />
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-heading font-black text-2xl tracking-tight text-[#3D5E16]">
-                  GCC
-                </span>
-                <span className="font-heading font-extrabold text-xs tracking-[0.25em] text-[#D97706] uppercase">
-                  FOUNDATION
-                </span>
+    <header className="sticky top-0 z-40 bg-white border-b border-[#E5E7EB] h-[72px]">
+      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        
+        {/* LEFT NAV: Search, Donate dropdown, Fundraise dropdown */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Search Trigger (GoFundMe Style) */}
+          <button
+            type="button"
+            onClick={openSearchModal}
+            className="flex items-center gap-2 py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-full transition-colors"
+            aria-label="Search fundraisers"
+          >
+            <Search className="w-4 h-4 text-gray-700" />
+            <span className="hidden sm:inline">Search</span>
+          </button>
+
+          {/* Donate Dropdown */}
+          <div className="relative hidden md:block">
+            <button
+              type="button"
+              onClick={() => {
+                setDonateDropdownOpen(!donateDropdownOpen);
+                setFundraiseDropdownOpen(false);
+              }}
+              onMouseEnter={() => setDonateDropdownOpen(true)}
+              className="flex items-center gap-1 py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:text-[#02A95C] rounded-full transition-colors"
+            >
+              <span>Donate</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+            </button>
+
+            {donateDropdownOpen && (
+              <div
+                onMouseLeave={() => setDonateDropdownOpen(false)}
+                className="absolute top-full left-0 mt-1 w-56 bg-white border border-[#E5E7EB] rounded-2xl shadow-elevated py-2 z-50 animate-fadeIn"
+              >
+                <div className="px-4 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Verified Causes
+                </div>
+                <Link
+                  href="/?category=Medical+Care"
+                  onClick={() => setDonateDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Medical & Surgery
+                </Link>
+                <Link
+                  href="/?category=Education+%26+Tuition"
+                  onClick={() => setDonateDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Education & Tuition
+                </Link>
+                <Link
+                  href="/?category=Emergency+Relief"
+                  onClick={() => setDonateDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Emergency Relief
+                </Link>
+                <Link
+                  href="/?category=Clean+Water+Wells"
+                  onClick={() => setDonateDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Clean Water Wells
+                </Link>
               </div>
-              <span className="text-[10px] text-gray-700 tracking-wide font-medium">
-                Vetted East African Crowdfunding & Relief
-              </span>
-            </div>
+            )}
+          </div>
+
+          {/* Fundraise Dropdown */}
+          <div className="relative hidden md:block">
+            <button
+              type="button"
+              onClick={() => {
+                setFundraiseDropdownOpen(!fundraiseDropdownOpen);
+                setDonateDropdownOpen(false);
+              }}
+              onMouseEnter={() => setFundraiseDropdownOpen(true)}
+              className="flex items-center gap-1 py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:text-[#02A95C] rounded-full transition-colors"
+            >
+              <span>Fundraise</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+            </button>
+
+            {fundraiseDropdownOpen && (
+              <div
+                onMouseLeave={() => setFundraiseDropdownOpen(false)}
+                className="absolute top-full left-0 mt-1 w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-elevated py-2 z-50 animate-fadeIn"
+              >
+                <div className="px-4 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  How to Fundraise
+                </div>
+                <Link
+                  href="/create-campaign"
+                  onClick={() => setFundraiseDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Start a Fundraiser (0% Fee)
+                </Link>
+                <Link
+                  href="/how-it-works"
+                  onClick={() => setFundraiseDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  How Vetting Works
+                </Link>
+                <Link
+                  href="/transparency"
+                  onClick={() => setFundraiseDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#FBF9F6] hover:text-[#02A95C] font-medium"
+                >
+                  Public Disbursement Ledger
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CENTER: GCC FOUNDATION Brand Mark */}
+        <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
+          <div className="relative w-8 h-8 flex-shrink-0">
+            <Image
+              src="/images/gcc-emblem.png"
+              alt="GCC Foundation Emblem"
+              width={32}
+              height={32}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="font-heading font-black text-xl tracking-tight text-[#3D5E16]">
+              GCC
+            </span>
+            <span className="font-heading font-extrabold text-[11px] tracking-[0.2em] text-[#D97706] uppercase">
+              FOUNDATION
+            </span>
+          </div>
+        </Link>
+
+        {/* RIGHT: About, Sign in, Pill Outlined "Start a Fundraiser" */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link
+            href="/our-team"
+            className="hidden lg:inline-block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:text-[#02A95C] transition-colors"
+          >
+            About
           </Link>
 
-          {/* Search Box (Desktop) */}
-          <div className="hidden md:flex flex-1 max-w-sm mx-4">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search verified medical, water, education causes..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-full text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3D5E16] focus:border-[#3D5E16] transition-all"
-              />
-              <Search className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
-            </div>
-          </div>
+          <Link
+            href="/admin"
+            className="hidden sm:inline-block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:text-[#02A95C] transition-colors"
+          >
+            Sign in
+          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-gray-800">
-            <Link
-              href="/how-it-works"
-              className="flex items-center gap-1.5 hover:text-[#3D5E16] transition-colors py-1"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#3D5E16]" />
-              <span>How Vetting Works</span>
-            </Link>
+          {/* GoFundMe Exact Outlined Pill Button */}
+          <Link
+            href="/create-campaign"
+            className="inline-flex items-center justify-center border border-[#1A1A1A] hover:border-[#02A95C] hover:bg-[#02A95C] hover:text-white text-[#1A1A1A] text-xs sm:text-sm font-bold py-2 sm:py-2.5 px-4 sm:px-5 rounded-full transition-all"
+          >
+            Start a Fundraiser
+          </Link>
 
-            <Link
-              href="/transparency"
-              className="flex items-center gap-1.5 hover:text-[#3D5E16] transition-colors py-1"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-[#3D5E16]" />
-              <span>Public Ledger</span>
-            </Link>
-
-            <Link
-              href="/our-team"
-              className="flex items-center gap-1.5 hover:text-[#3D5E16] transition-colors py-1"
-            >
-              <Users className="w-3.5 h-3.5 text-[#3D5E16]" />
-              <span>Team & Board</span>
-            </Link>
-
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors py-1 border-l border-gray-200 pl-4"
-              title="Compliance Officer & Auditor Portal"
-            >
-              <Lock className="w-3 h-3 text-gray-400" />
-              <span>Auditor Portal</span>
-            </Link>
-          </nav>
-
-          {/* CTAs */}
-          <div className="hidden sm:flex items-center gap-3">
-            <Link
-              href="/create-campaign"
-              className="inline-flex items-center gap-2 bg-[#3D5E16] hover:bg-[#2F4812] text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition-all hover:shadow hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <PlusCircle className="w-4 h-4 text-[#AFC68A]" />
-              <span>Start a Fundraiser</span>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
+          {/* Mobile hamburger */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
-            aria-label="Toggle navigation menu"
+            className="md:hidden p-2 text-gray-700 hover:text-black"
+            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
-        {/* Mobile Search Input */}
-        <div className="md:hidden pb-3">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search causes by name, district, or hospital..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3D5E16]"
-            />
-            <Search className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
-          </div>
-        </div>
+      </div>
 
-        {/* Mobile Nav Dropdown */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-[#E5E7EB] space-y-3 animate-fadeIn">
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-b border-[#E5E7EB] px-4 py-4 space-y-3 animate-fadeIn">
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              openSearchModal();
+            }}
+            className="w-full flex items-center gap-2 py-2.5 px-3 bg-[#FBF9F6] border border-[#E5E7EB] rounded-full text-xs text-gray-700 font-semibold"
+          >
+            <Search className="w-4 h-4 text-gray-500" />
+            <span>Search fundraisers...</span>
+          </button>
+
+          <div className="space-y-1 pt-2">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-[#F9FAFB] rounded"
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
             >
-              Home / Causes
+              Discover Causes
             </Link>
             <Link
               href="/how-it-works"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-[#F9FAFB] rounded"
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
             >
-              <ShieldCheck className="w-4 h-4 text-[#3D5E16]" />
               How Vetting Works
             </Link>
             <Link
               href="/transparency"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-[#F9FAFB] rounded"
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
             >
-              <FileSpreadsheet className="w-4 h-4 text-[#3D5E16]" />
-              Public Ledger & Receipts
+              Public Financial Ledger
             </Link>
             <Link
               href="/our-team"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-[#F9FAFB] rounded"
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
             >
-              <Users className="w-4 h-4 text-[#3D5E16]" />
-              Our Team & Board
+              About & Team
             </Link>
             <Link
               href="/admin"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-[#F9FAFB] rounded"
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
             >
-              <Lock className="w-4 h-4 text-gray-400" />
-              Auditor & Compliance Portal
+              Auditor Portal
             </Link>
-            <div className="pt-2">
-              <Link
-                href="/create-campaign"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 bg-[#3D5E16] text-white text-sm font-bold py-2.5 rounded-lg"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Start a Fundraiser
-              </Link>
-            </div>
           </div>
-        )}
-      </div>
+
+          <div className="pt-2">
+            <Link
+              href="/create-campaign"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full inline-flex items-center justify-center bg-[#02A95C] text-white font-bold text-sm py-3 rounded-full shadow-sm"
+            >
+              Start a GCC Fundraiser
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Campaign, DonorRecord, VolunteerPledge } from '@/types';
 import { CAMPAIGNS_DATA } from '@/data/campaigns';
 
@@ -24,6 +24,14 @@ interface DonationContextType {
     campaignId: string,
     pledge: Omit<VolunteerPledge, 'id' | 'datePledged' | 'status'>
   ) => Promise<{ success: boolean }>;
+
+  // Add new campaign dynamically from wizard
+  addNewCampaign: (campaign: Campaign) => void;
+
+  // Search Modal
+  isSearchModalOpen: boolean;
+  openSearchModal: () => void;
+  closeSearchModal: () => void;
 }
 
 const DonationContext = createContext<DonationContextType | undefined>(undefined);
@@ -35,6 +43,8 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
 
   const [activeCampaignForPledge, setActiveCampaignForPledge] = useState<Campaign | null>(null);
   const [isPledgeModalOpen, setIsPledgeModalOpen] = useState(false);
+
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const openDonationModal = (campaign: Campaign) => {
     setActiveCampaignForDonation(campaign);
@@ -54,11 +64,17 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
     setIsPledgeModalOpen(false);
   };
 
+  const openSearchModal = () => setIsSearchModalOpen(true);
+  const closeSearchModal = () => setIsSearchModalOpen(false);
+
+  const addNewCampaign = (newCamp: Campaign) => {
+    setCampaigns((prev) => [newCamp, ...prev]);
+  };
+
   const processDonation = async (
     campaignId: string,
     donorData: Omit<DonorRecord, 'id' | 'timestamp'>
   ): Promise<{ success: boolean; txRef: string }> => {
-    // Generate simulated banking transaction reference
     const txRef = `GCC-TXN-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
     const newRecord: DonorRecord = {
@@ -81,7 +97,6 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
-    // Update active campaign if currently viewed
     if (activeCampaignForDonation && activeCampaignForDonation.id === campaignId) {
       setActiveCampaignForDonation((prev) =>
         prev
@@ -138,6 +153,10 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         openPledgeModal,
         closePledgeModal,
         submitVolunteerPledge,
+        addNewCampaign,
+        isSearchModalOpen,
+        openSearchModal,
+        closeSearchModal,
       }}
     >
       {children}

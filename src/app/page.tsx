@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import CampaignCard from '@/components/CampaignCard';
+import SearchModal from '@/components/SearchModal';
 import { useDonation } from '@/context/DonationContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { Category } from '@/types';
@@ -11,111 +12,80 @@ import Link from 'next/link';
 import {
   ShieldCheck,
   Building2,
-  FileSpreadsheet,
-  CheckCircle2,
+  FileCheck2,
   ArrowRight,
-  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
   Sparkles,
-  HeartHandshake,
-  Layers,
-  HelpCircle,
-  AlertCircle
+  Users,
+  CheckCircle2
 } from 'lucide-react';
 
-const CATEGORIES: Category[] = [
-  'All',
-  'Medical Care',
-  'Education & Tuition',
-  'Clean Water Wells',
-  'Emergency Relief',
-  'Rural Agriculture',
-];
+const FILTER_CATEGORIES = ['All', 'Medical', 'Education', 'Emergency', 'Community'];
 
 export default function HomePage() {
   const { campaigns } = useDonation();
   const { formatUGX } = useCurrency();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category>('All');
-  const [sortBy, setSortBy] = useState<'urgent' | 'closest' | 'recent' | 'raised'>('urgent');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [currentPage, setCurrentPage] = useState<number>(0);
 
-  // Filtered and Sorted campaigns
+  // Filter campaigns
   const filteredCampaigns = useMemo(() => {
+    if (selectedCategory === 'All') return campaigns;
     return campaigns.filter((c) => {
-      const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
-      const matchesSearch =
-        searchQuery === '' ||
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.location.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.payoutVerification.institutionName.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    }).sort((a, b) => {
-      if (sortBy === 'urgent') return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
-      if (sortBy === 'closest') {
-        const remainingA = a.goalUGX - a.raisedUGX;
-        const remainingB = b.goalUGX - b.raisedUGX;
-        return remainingA - remainingB;
-      }
-      if (sortBy === 'raised') return b.raisedUGX - a.raisedUGX;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (selectedCategory === 'Medical') return c.category === 'Medical Care';
+      if (selectedCategory === 'Education') return c.category === 'Education & Tuition';
+      if (selectedCategory === 'Emergency') return c.category === 'Emergency Relief';
+      if (selectedCategory === 'Community') return c.category === 'Clean Water Wells' || c.category === 'Rural Agriculture';
+      return true;
     });
-  }, [campaigns, selectedCategory, searchQuery, sortBy]);
+  }, [campaigns, selectedCategory]);
+
+  // Featured large card is the first item, remaining 4 form the 2x2 grid
+  const featuredCampaign = filteredCampaigns[0] || campaigns[0];
+  const gridCampaigns = filteredCampaigns.slice(1, 5);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAF9F6]">
-      {/* Sticky Top Header */}
-      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+    <div className="flex-1 flex flex-col bg-white">
+      {/* Search Modal Triggered from Header */}
+      <SearchModal />
 
-      {/* Hero Section */}
+      {/* Exact GoFundMe Sticky Header (72px) */}
+      <Header />
+
+      {/* Hero: The GoFundMe Progress Circle / Arc Photo Wheel Collage */}
       <Hero />
 
-      {/* Main Campaign Discovery Section */}
-      <section id="campaigns-grid" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 w-full space-y-8">
+      {/* ================= SECTION: DISCOVER FUNDRAISERS (Exact 1 + 4 Grid) ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 w-full space-y-8">
         
-        {/* Section Heading & Filter Bar */}
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <span className="text-[11px] font-bold text-[#3D5E16] uppercase tracking-wider block">
-                Verified Community Needs
-              </span>
-              <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-gray-900 tracking-tight">
-                Active Verified Campaigns
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-800">
-                Every cause undergoes field verification and itemized budget approval before publication.
-              </p>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-700 font-medium">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                aria-label="Sort campaigns by criteria"
-                className="bg-white border border-[#E5E7EB] text-xs font-semibold text-gray-900 py-2 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3D5E16]"
-              >
-                <option value="urgent">Most Urgent Clinical Need</option>
-                <option value="closest">Closest to Target Goal</option>
-                <option value="raised">Highest Amount Raised</option>
-                <option value="recent">Recently Verified</option>
-              </select>
-            </div>
+        {/* Section Header with Category Filter & Nav Controls */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#1A1A1A] tracking-[-0.02em]">
+              Discover fundraisers inspired by what you care about
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Every campaign is vetted in-person with 100% direct payouts to hospital or school accounts.
+            </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {CATEGORIES.map((cat) => (
+          {/* Working Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {FILTER_CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  setCurrentPage(0);
+                }}
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? 'bg-[#3D5E16] text-white shadow-sm'
-                    : 'bg-white text-gray-800 border border-[#E5E7EB] hover:bg-gray-50'
+                    ? 'bg-[#1A1A1A] text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-[#E5E7EB] hover:border-gray-400 hover:bg-[#FBF9F6]'
                 }`}
               >
                 {cat}
@@ -124,142 +94,168 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 3-Column Campaign Grid */}
-        {filteredCampaigns.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredCampaigns.map((campaign) => (
-              <CampaignCard key={campaign.id} campaign={campaign} />
+        {/* Exact GoFundMe 1 + 4 Asymmetric Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          
+          {/* LEFT: 1 Large Featured Card Spanning 2 Rows (5 cols) */}
+          <div className="lg:col-span-5">
+            <CampaignCard campaign={featuredCampaign} isLargeFeatured={true} />
+          </div>
+
+          {/* RIGHT: 2x2 Grid of 4 Campaign Cards (7 cols) */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {gridCampaigns.map((camp) => (
+              <CampaignCard key={camp.id} campaign={camp} />
             ))}
+
+            {gridCampaigns.length === 0 && (
+              <div className="col-span-2 p-12 text-center text-gray-500 border border-dashed rounded-2xl">
+                No additional campaigns found in this category.
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center space-y-3">
-            <AlertCircle className="w-10 h-10 text-gray-600 mx-auto" />
-            <h3 className="font-heading font-bold text-base text-gray-800">No campaigns matched your search</h3>
-            <p className="text-xs text-gray-800 max-w-sm mx-auto">
-              Try searching for a different hospital name, district, or clear your category filter.
-            </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('All');
-              }}
-              className="bg-[#3D5E16] text-white text-xs font-bold px-4 py-2 rounded-lg"
-            >
-              Reset Filters
-            </button>
-          </div>
-        )}
+
+        </div>
 
       </section>
 
-      {/* Institutional Transparency & Anti-Scam Architecture Section */}
-      <section className="bg-white border-y border-[#E5E7EB] py-14 sm:py-18">
+      {/* ================= SECTION: HOW GCC FOUNDATION WORKS (Warm Cream #FBF9F6) ================= */}
+      <section className="bg-[#FBF9F6] border-y border-[#E5E7EB] py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           
           <div className="max-w-2xl mx-auto text-center space-y-3">
-            <span className="text-[11px] font-bold text-[#D97706] uppercase tracking-wider bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-              ANTI-SCAM ARCHITECTURE
+            <span className="text-xs font-bold text-[#02A95C] uppercase tracking-wider bg-white border border-[#E5E7EB] px-3.5 py-1 rounded-full shadow-subtle">
+              TRANSPARENT FROM DAY ONE
             </span>
-            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-gray-900 tracking-tight">
-              Why GCC Foundation Is Different From Generic Crowdfunding
+            <h2 className="font-heading font-extrabold text-3xl sm:text-4xl text-[#1A1A1A] tracking-[-0.02em]">
+              How GCC Foundation works
             </h2>
-            <p className="text-xs sm:text-sm text-gray-800">
-              Unregulated crowdfunding platforms allow unvetted personal campaigns with zero accountability. We enforce institutional financial safeguards at every single step.
+            <p className="text-sm sm:text-base text-gray-600">
+              We combine GoFundMe's seamless fundraising flow with institutional anti-fraud protections.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          {/* 3-Step Horizontal Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
-            {/* Pillar 1 */}
-            <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-2xl p-6 space-y-4 hover:border-[#CDDCB3] transition-all">
-              <div className="w-12 h-12 bg-[#F4F7EE] text-[#3D5E16] border border-[#CDDCB3] rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6" />
+            {/* Step 1 */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 space-y-4 shadow-subtle hover:shadow-card transition-all">
+              <div className="w-12 h-12 rounded-full bg-[#E6EED8] text-[#2F4812] font-black text-xl flex items-center justify-center font-heading">
+                1
               </div>
-              <h3 className="font-heading font-bold text-lg text-gray-900">
-                100% Direct-to-Institution Payout
+              <h3 className="font-heading font-bold text-xl text-[#1A1A1A]">
+                Start your verified fundraiser
               </h3>
-              <p className="text-xs text-gray-800 leading-relaxed font-body">
-                We never wire medical funds to personal mobile numbers when an established health facility exists. Disbursements are sent directly via EFT to verified hospital accounts (e.g. Uganda Heart Institute, Nsambya Hospital) or official school bursars.
+              <p className="text-sm text-gray-600 leading-relaxed font-body">
+                Set your target goal, add a clear story, and upload the patient's hospital proforma or school bursar quote. Our guided wizard ensures zero hassle.
               </p>
-              <div className="pt-2 text-[11px] font-bold text-[#3D5E16] flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Zero Private Intermediaries</span>
-              </div>
             </div>
 
-            {/* Pillar 2 */}
-            <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-2xl p-6 space-y-4 hover:border-[#CDDCB3] transition-all">
-              <div className="w-12 h-12 bg-[#F4F7EE] text-[#3D5E16] border border-[#CDDCB3] rounded-xl flex items-center justify-center">
-                <FileSpreadsheet className="w-6 h-6" />
+            {/* Step 2 */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 space-y-4 shadow-subtle hover:shadow-card transition-all">
+              <div className="w-12 h-12 rounded-full bg-[#E6EED8] text-[#2F4812] font-black text-xl flex items-center justify-center font-heading">
+                2
               </div>
-              <h3 className="font-heading font-bold text-lg text-gray-900">
-                Itemized Invoices & Stamped Receipts
+              <h3 className="font-heading font-bold text-xl text-[#1A1A1A]">
+                Share with friends & community
               </h3>
-              <p className="text-xs text-gray-800 leading-relaxed font-body">
-                Every campaign displays a line-item budget table with exact unit costs (e.g., cardiopulmonary bypass pack: UGX 7,800,000; hospital bed: UGX 4,450,000). Once funds are transferred, stamped bank vouchers and hospital receipts are published publicly.
+              <p className="text-sm text-gray-600 leading-relaxed font-body">
+                Broadcast via WhatsApp, copy link, and social channels. Donors can give in US Dollars, Ugandan Shillings (UGX), or Kenyan Shillings (KES) using Mobile Money or Cards.
               </p>
-              <div className="pt-2 text-[11px] font-bold text-[#3D5E16] flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Auditable Public Ledgers</span>
-              </div>
             </div>
 
-            {/* Pillar 3 */}
-            <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-2xl p-6 space-y-4 hover:border-[#CDDCB3] transition-all">
-              <div className="w-12 h-12 bg-[#F4F7EE] text-[#3D5E16] border border-[#CDDCB3] rounded-xl flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6" />
+            {/* Step 3 */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 space-y-4 shadow-subtle hover:shadow-card transition-all">
+              <div className="w-12 h-12 rounded-full bg-[#E6EED8] text-[#2F4812] font-black text-xl flex items-center justify-center font-heading">
+                3
               </div>
-              <h3 className="font-heading font-bold text-lg text-gray-900">
-                LC1 & Bedside In-Person Vetting
+              <h3 className="font-heading font-bold text-xl text-[#1A1A1A]">
+                100% Direct institutional payout
               </h3>
-              <p className="text-xs text-gray-800 leading-relaxed font-body">
-                GCC field officers physically visit the hospital ward or community site before any fundraiser goes live. We verify Ugandan National ID (NIN) numbers, Local Council (LC1) recommendation letters, and lead physician signatures.
+              <p className="text-sm text-gray-600 leading-relaxed font-body">
+                Funds are wired straight to the verified hospital, school, or contractor bank account. Receipts and bank payment slips are published publicly to the campaign ledger.
               </p>
-              <div className="pt-2 text-[11px] font-bold text-[#3D5E16] flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Physician & LC1 Sign-Off</span>
-              </div>
             </div>
 
           </div>
 
           <div className="text-center pt-2">
             <Link
-              href="/how-it-works"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#3D5E16] hover:text-[#2F4812] underline decoration-2 underline-offset-4"
+              href="/create-campaign"
+              className="inline-flex items-center justify-center bg-[#02A95C] hover:bg-[#028F4D] text-white text-sm font-bold py-3 px-8 rounded-full shadow-sm hover:shadow transition-all"
             >
-              <span>Read the Full 4-Tier Verification Protocol & Whistleblower Charter</span>
-              <ArrowRight className="w-4 h-4" />
+              Start a GCC Fundraiser
             </Link>
           </div>
 
         </div>
       </section>
 
-      {/* Banner: Need help starting a campaign? */}
-      <section className="bg-[#F4F7EE] border-b border-[#CDDCB3] py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold text-[#2F4812] uppercase tracking-wider">
-              Facing an Urgent Hospital Bill or Community Need?
-            </span>
-            <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-gray-900">
-              Start a Verified Fundraiser with GCC Foundation
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-800 max-w-xl">
-              0% platform fee. Guided KYC verification within 12 hours. We coordinate directly with your hospital or school bursar.
-            </p>
-          </div>
+      {/* ================= SECTION: FULL-WIDTH DARK FOREST GREEN (#012D19) GIVING GUARANTEE ================= */}
+      <section className="bg-[#012D19] text-white py-16 sm:py-24 border-b border-[#02A95C]/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            
+            <div className="inline-flex items-center gap-2 bg-[#02A95C]/20 border border-[#02A95C]/40 text-[#02A95C] px-4 py-1.5 rounded-full text-xs font-bold">
+              <ShieldCheck className="w-4 h-4" />
+              <span>THE GCC FOUNDATION GIVING GUARANTEE</span>
+            </div>
 
-          <Link
-            href="/create-campaign"
-            className="inline-flex items-center gap-2 bg-[#3D5E16] hover:bg-[#2F4812] text-white text-xs font-bold px-6 py-3.5 rounded-lg shadow-sm transition-all whitespace-nowrap"
-          >
-            <span>Start a Fundraiser Now</span>
-            <ArrowRight className="w-4 h-4 text-[#AFC68A]" />
-          </Link>
+            <h2 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-[-0.02em] leading-tight">
+              We’ve got you covered. <br className="hidden sm:inline" />
+              100% donor protection on every shilling.
+            </h2>
+
+            <p className="text-base sm:text-lg text-gray-300 font-body leading-relaxed max-w-2xl mx-auto">
+              In the rare event that something isn’t right with a campaign, we guarantee a full refund. All medical and tuition funds are escrowed and sent directly to hospital and school accounts—never unverified private hands.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left pt-6">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <div className="text-[#02A95C] font-bold text-sm flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Bedside In-Person Vetting</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Field officers visit hospital wards and check National IDs (NIN) and LC1 recommendation letters.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <div className="text-[#02A95C] font-bold text-sm flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Direct Institution Wires</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Disbursements are wired via Bank EFT directly to hospital accounts (Mulago, Nsambya, etc.).
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <div className="text-[#02A95C] font-bold text-sm flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Transparent Public Ledger</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Itemized invoices and stamped bank deposit slips are posted directly on the campaign page.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Link
+                href="/how-it-works#guarantee"
+                className="inline-flex items-center gap-2 text-sm font-bold text-white hover:text-[#02A95C] underline decoration-2 underline-offset-4 transition-colors"
+              >
+                <span>Read our full Giving Guarantee Charter</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+          </div>
         </div>
       </section>
+
     </div>
   );
 }

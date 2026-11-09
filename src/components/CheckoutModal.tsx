@@ -10,15 +10,11 @@ import {
   X,
   ShieldCheck,
   CheckCircle2,
-  Heart,
   Building2,
   Phone,
   CreditCard,
   Lock,
-  ArrowRight,
   Download,
-  Share2,
-  AlertCircle,
   Sparkles
 } from 'lucide-react';
 
@@ -29,7 +25,7 @@ export default function CheckoutModal() {
   const { currency, setCurrency, formatCurrencyAmount, rates } = useCurrency();
 
   const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
-  const [selectedPreset, setSelectedPreset] = useState<number>(100000); // in UGX base
+  const [selectedPreset, setSelectedPreset] = useState<number>(100000); // base in UGX
   const [customAmount, setCustomAmount] = useState<string>('');
   const [tipPercentage, setTipPercentage] = useState<number>(8); // 8% default
   const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
@@ -47,7 +43,7 @@ export default function CheckoutModal() {
   // Processing & Simulation State
   const [isProcessing, setIsProcessing] = useState(false);
   const [simulatedStep, setSimulatedStep] = useState<'idle' | 'ussd_prompt' | 'success'>('idle');
-  const [ussdCountdown, setUssdCountdown] = useState(15);
+  const [ussdCountdown, setUssdCountdown] = useState(12);
   const [completedTxRef, setCompletedTxRef] = useState<string>('');
 
   // Presets based on currency
@@ -78,8 +74,9 @@ export default function CheckoutModal() {
     }
   };
 
-  // Calculate actual base amount in UGX
-  const effectiveBaseUGX = customAmount ? parseFloat(customAmount) * (currency === 'USD' ? rates.UGX : currency === 'KES' ? rates.UGX / rates.KES : 1) : selectedPreset;
+  const effectiveBaseUGX = customAmount
+    ? parseFloat(customAmount) * (currency === 'USD' ? rates.UGX : currency === 'KES' ? rates.UGX / rates.KES : 1)
+    : selectedPreset;
   const tipAmountUGX = Math.round(effectiveBaseUGX * (tipPercentage / 100));
   const totalAmountUGX = effectiveBaseUGX + tipAmountUGX;
 
@@ -94,7 +91,6 @@ export default function CheckoutModal() {
         setUssdCountdown((prev) => prev - 1);
       }, 1000);
     } else if (simulatedStep === 'ussd_prompt' && ussdCountdown === 0) {
-      // Auto complete simulation
       finalizeDonation();
     }
     return () => clearTimeout(timer);
@@ -113,7 +109,6 @@ export default function CheckoutModal() {
       setUssdCountdown(10);
       setIsProcessing(false);
     } else {
-      // Simulate card processing
       setTimeout(() => {
         finalizeDonation();
       }, 1800);
@@ -130,7 +125,7 @@ export default function CheckoutModal() {
     };
 
     const res = await processDonation(activeCampaignForDonation.id, {
-      name: isAnonymous ? 'Anonymous Supporter' : (donorName || 'Generous Supporter'),
+      name: isAnonymous ? 'Anonymous' : (donorName || 'Generous Supporter'),
       amountUGX: effectiveBaseUGX,
       currencyPaid: currency,
       amountInOriginalCurrency: parseFloat(baseFormatted.value.replace(/,/g, '')),
@@ -146,14 +141,12 @@ export default function CheckoutModal() {
 
     try {
       confetti({
-        particleCount: 100,
-        spread: 70,
+        particleCount: 120,
+        spread: 75,
         origin: { y: 0.6 },
-        colors: ['#3D5E16', '#D97706', '#E6EED8', '#2F4812'],
+        colors: ['#02A95C', '#D97706', '#E6EED8', '#1A1A1A'],
       });
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   };
 
   const resetAndClose = () => {
@@ -165,35 +158,35 @@ export default function CheckoutModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl max-w-xl w-full border border-[#E5E7EB] shadow-2xl overflow-hidden my-6 animate-fadeIn">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-3xl max-w-xl w-full border border-[#E5E7EB] shadow-2xl overflow-hidden my-6 animate-fadeIn">
         
-        {/* Modal Header */}
-        <div className="bg-[#FAF9F6] border-b border-[#E5E7EB] px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 relative flex-shrink-0">
+        {/* Modal Top Bar */}
+        <div className="bg-white border-b border-[#E5E7EB] px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 relative flex-shrink-0">
               <Image
                 src="/images/gcc-emblem.png"
                 alt="GCC Emblem"
-                width={32}
-                height={32}
+                width={28}
+                height={28}
                 className="object-contain"
               />
             </div>
             <div>
-              <span className="font-heading font-black text-sm text-[#3D5E16] block">
-                GCC FOUNDATION ESCROW
+              <span className="font-heading font-black text-sm text-[#1A1A1A] block">
+                GCC FOUNDATION
               </span>
-              <span className="text-[11px] text-gray-700 font-medium">
-                Regulated Humanitarian Giving Portal · 0% Platform Fee
+              <span className="text-[11px] text-gray-500 font-medium">
+                100% Direct Institutional Escrow
               </span>
             </div>
           </div>
 
           <button
             onClick={resetAndClose}
-            className="text-gray-600 hover:text-gray-900 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
-            aria-label="Close modal"
+            className="text-gray-400 hover:text-gray-900 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -201,37 +194,33 @@ export default function CheckoutModal() {
 
         {/* STEP 1: Main Donation Form */}
         {simulatedStep === 'idle' && (
-          <form onSubmit={handleStartPayment} className="p-5 sm:p-6 space-y-5">
+          <form onSubmit={handleStartPayment} className="p-6 space-y-5">
             
-            {/* Campaign Summary & Direct Payout Notice */}
-            <div className="bg-[#F4F7EE] border border-[#CDDCB3] rounded-xl p-3.5 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#2F4812]">Beneficiary Campaign:</span>
-                <span className="text-[11px] bg-white border border-[#CDDCB3] text-[#3D5E16] px-2 py-0.5 rounded font-mono font-semibold">
-                  100% Direct Payout
-                </span>
-              </div>
-              <p className="font-heading font-bold text-sm text-gray-900 line-clamp-1">
+            {/* Beneficiary Header */}
+            <div className="bg-[#FBF9F6] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+              <span className="text-[11px] font-bold text-[#02A95C] uppercase tracking-wider block">
+                You're supporting:
+              </span>
+              <h3 className="font-heading font-bold text-base text-[#1A1A1A] line-clamp-1">
                 {activeCampaignForDonation.title}
-              </p>
-              <div className="flex items-center gap-1.5 text-xs text-gray-800">
-                <Building2 className="w-3.5 h-3.5 text-[#3D5E16] flex-shrink-0" />
+              </h3>
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 pt-0.5">
+                <Building2 className="w-3.5 h-3.5 text-[#02A95C] flex-shrink-0" />
                 <span>
-                  Disbursed directly to:{' '}
-                  <strong className="text-gray-900 font-semibold">{activeCampaignForDonation.payoutVerification.institutionName}</strong>
+                  Direct Payout: <strong className="text-gray-900">{activeCampaignForDonation.payoutVerification.institutionName}</strong>
                 </span>
               </div>
             </div>
 
-            {/* Giving Frequency Switcher */}
-            <div className="grid grid-cols-2 bg-gray-100 p-1 rounded-lg border border-[#E5E7EB]">
+            {/* Frequency Toggle: One-Time vs. Monthly Sustainer */}
+            <div className="grid grid-cols-2 bg-gray-100 p-1 rounded-full border border-[#E5E7EB]">
               <button
                 type="button"
                 onClick={() => setFrequency('one-time')}
-                className={`py-2 text-xs font-bold rounded-md transition-all ${
+                className={`py-2 text-xs font-bold rounded-full transition-all ${
                   frequency === 'one-time'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-700 hover:text-gray-900'
+                    ? 'bg-white text-[#1A1A1A] shadow-sm'
+                    : 'text-gray-500 hover:text-[#1A1A1A]'
                 }`}
               >
                 One-Time Gift
@@ -239,28 +228,28 @@ export default function CheckoutModal() {
               <button
                 type="button"
                 onClick={() => setFrequency('monthly')}
-                className={`py-2 text-xs font-bold rounded-md transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1.5 ${
                   frequency === 'monthly'
-                    ? 'bg-[#3D5E16] text-white shadow-sm'
-                    : 'text-gray-700 hover:text-gray-900'
+                    ? 'bg-[#02A95C] text-white shadow-sm'
+                    : 'text-gray-500 hover:text-[#1A1A1A]'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#AFC68A]" />
+                <Sparkles className="w-3.5 h-3.5 text-white" />
                 Monthly Sustainer
               </button>
             </div>
 
-            {/* Currency Selector Row */}
+            {/* Currency Switcher */}
             <div className="flex items-center justify-between pt-1">
-              <label className="text-xs font-bold text-gray-800">Choose Donation Amount:</label>
-              <div className="flex items-center bg-gray-100 p-0.5 rounded border border-gray-200">
+              <label className="text-xs font-bold text-[#1A1A1A]">Donation Amount:</label>
+              <div className="flex items-center bg-gray-100 p-0.5 rounded-full border border-gray-200">
                 {(['UGX', 'KES', 'USD'] as CurrencyCode[]).map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setCurrency(c)}
-                    className={`px-2 py-0.5 text-[11px] font-bold rounded ${
-                      currency === c ? 'bg-[#3D5E16] text-white' : 'text-gray-700 hover:text-gray-900'
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
+                      currency === c ? 'bg-[#02A95C] text-white shadow-xs' : 'text-gray-600 hover:text-black'
                     }`}
                   >
                     {c}
@@ -281,9 +270,9 @@ export default function CheckoutModal() {
                       setSelectedPreset(preset.ugx);
                       setCustomAmount('');
                     }}
-                    className={`py-2 px-1 text-xs font-bold rounded-lg border tabular-nums transition-all ${
+                    className={`py-2.5 px-1 text-xs font-bold rounded-xl border tabular-nums transition-all ${
                       isSelected
-                        ? 'border-[#3D5E16] bg-[#F4F7EE] text-[#2F4812] ring-1 ring-[#3D5E16]'
+                        ? 'border-[#02A95C] bg-[#02A95C]/10 text-[#02A95C] ring-2 ring-[#02A95C]'
                         : 'border-[#E5E7EB] bg-white text-gray-800 hover:bg-gray-50'
                     }`}
                   >
@@ -293,133 +282,80 @@ export default function CheckoutModal() {
               })}
             </div>
 
-            {/* Custom Amount Input */}
+            {/* Custom Amount */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-700 font-bold text-xs">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 font-bold text-xs">
                 {currency === 'USD' ? '$' : currency}
-              </div>
+              </span>
               <input
                 type="number"
                 placeholder="Or enter custom amount..."
                 value={customAmount}
-                onChange={(e) => {
-                  setCustomAmount(e.target.value);
-                }}
-                className="w-full pl-14 pr-4 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-sm text-gray-900 font-semibold focus:outline-none focus:ring-1 focus:ring-[#3D5E16] focus:border-[#3D5E16] tabular-nums"
+                onChange={(e) => setCustomAmount(e.target.value)}
+                className="w-full pl-16 pr-4 py-3 bg-[#FBF9F6] border border-[#E5E7EB] rounded-xl text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#02A95C] tabular-nums"
               />
             </div>
 
-            {/* Payment Rails Selector */}
+            {/* Payment Method Tabs */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-800 block">
-                Select Secure Payment Method:
-              </label>
-              
+              <label className="text-xs font-bold text-[#1A1A1A] block">Payment Method:</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('mtn')}
-                  className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all ${
-                    paymentMethod === 'mtn'
-                      ? 'border-[#3D5E16] bg-[#F4F7EE] ring-1 ring-[#3D5E16]'
-                      : 'border-[#E5E7EB] bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 px-1 py-0.5 rounded w-max border border-amber-200">
-                    MTN MoMo
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 mt-2">Mobile Money</span>
-                  <span className="text-[10px] text-gray-700">Instant USSD Push</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('airtel')}
-                  className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all ${
-                    paymentMethod === 'airtel'
-                      ? 'border-[#3D5E16] bg-[#F4F7EE] ring-1 ring-[#3D5E16]'
-                      : 'border-[#E5E7EB] bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-[10px] uppercase font-bold text-red-700 bg-red-50 px-1 py-0.5 rounded w-max border border-red-200">
-                    Airtel Money
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 mt-2">Airtel MoMo</span>
-                  <span className="text-[10px] text-gray-700">East Africa</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('mpesa')}
-                  className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all ${
-                    paymentMethod === 'mpesa'
-                      ? 'border-[#3D5E16] bg-[#F4F7EE] ring-1 ring-[#3D5E16]'
-                      : 'border-[#E5E7EB] bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded w-max border border-emerald-200">
-                    Safaricom
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 mt-2">M-Pesa</span>
-                  <span className="text-[10px] text-gray-700">Kenya / Int'l</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all ${
-                    paymentMethod === 'card'
-                      ? 'border-[#3D5E16] bg-[#F4F7EE] ring-1 ring-[#3D5E16]'
-                      : 'border-[#E5E7EB] bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-[10px] uppercase font-bold text-blue-700 bg-blue-50 px-1 py-0.5 rounded w-max border border-blue-200">
-                    Visa / MC
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 mt-2">Credit / Debit</span>
-                  <span className="text-[10px] text-gray-700">Global Card</span>
-                </button>
+                {[
+                  { id: 'mtn', name: 'MTN MoMo', tag: 'Mobile Money' },
+                  { id: 'airtel', name: 'Airtel Money', tag: 'Airtel MoMo' },
+                  { id: 'mpesa', name: 'M-Pesa', tag: 'Safaricom' },
+                  { id: 'card', name: 'Card / Visa', tag: 'Credit/Debit' },
+                ].map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(m.id as any)}
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                      paymentMethod === m.id
+                        ? 'border-[#02A95C] bg-[#02A95C]/10 ring-2 ring-[#02A95C]'
+                        : 'border-[#E5E7EB] bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900">{m.name}</span>
+                    <span className="text-[10px] text-gray-500">{m.tag}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Payment Details Form (Dynamic for MoMo vs Card) */}
-            <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-xl p-4 space-y-3">
-              {(paymentMethod === 'mtn' || paymentMethod === 'airtel' || paymentMethod === 'mpesa') ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-gray-800">
-                    <Phone className="w-3.5 h-3.5 text-[#3D5E16]" />
-                    <span>Enter Mobile Money Phone Number for Instant Prompt:</span>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      required
-                      placeholder="e.g. 0772 123456 or +256 701 987654"
-                      value={donorPhone}
-                      onChange={(e) => setDonorPhone(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-xs text-gray-900 font-mono focus:outline-none focus:ring-1 focus:ring-[#3D5E16]"
-                    />
-                  </div>
-                  <p className="text-[11px] text-gray-700 leading-tight">
-                    A secure USSD PIN pop-up will appear directly on this phone screen to authorize disbursement.
+            {/* Payment Details Input */}
+            <div className="bg-[#FBF9F6] border border-[#E5E7EB] rounded-2xl p-4 space-y-3">
+              {paymentMethod === 'mtn' || paymentMethod === 'airtel' || paymentMethod === 'mpesa' ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#02A95C]" />
+                    <span>Mobile Money Phone Number:</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 0772 123456 or +256 701 987654"
+                    value={donorPhone}
+                    onChange={(e) => setDonorPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-xs font-mono text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#02A95C]"
+                  />
+                  <p className="text-[11px] text-gray-500">
+                    A USSD prompt will appear on your phone to enter your PIN and approve disbursement.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs font-bold text-gray-800">
-                    <span className="flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-[#3D5E16]" />
-                      Card Details (256-Bit SSL Encrypted)
-                    </span>
-                    <span className="text-[10px] text-gray-700 font-mono">PCI-DSS Level 1</span>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5 text-[#02A95C]" />
+                    <span>Card Information (256-Bit SSL Encrypted):</span>
+                  </label>
                   <input
                     type="text"
                     required
                     placeholder="Card Number (4000 •••• •••• 1234)"
                     value={cardNumber}
                     onChange={(e) => setCardNumber(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs font-mono"
+                    className="w-full px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs font-mono"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -428,15 +364,15 @@ export default function CheckoutModal() {
                       placeholder="MM / YY"
                       value={cardExpiry}
                       onChange={(e) => setCardExpiry(e.target.value)}
-                      className="px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs font-mono"
+                      className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs font-mono"
                     />
                     <input
                       type="text"
                       required
-                      placeholder="CVC / CVV"
+                      placeholder="CVC"
                       value={cardCvc}
                       onChange={(e) => setCardCvc(e.target.value)}
-                      className="px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs font-mono"
+                      className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs font-mono"
                     />
                   </div>
                 </div>
@@ -446,50 +382,50 @@ export default function CheckoutModal() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-gray-200">
                 <input
                   type="text"
-                  placeholder="Your Full Name (or leave blank if anon)"
+                  placeholder="Your Full Name"
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                   disabled={isAnonymous}
-                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs text-gray-900 disabled:opacity-50"
+                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs text-gray-900"
                 />
                 <input
                   type="email"
-                  placeholder="Email for Official Tax Receipt"
+                  placeholder="Email for Digital Tax Receipt"
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
-                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs text-gray-900"
+                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs text-gray-900"
                 />
               </div>
 
-              {/* Words of Hope / Message */}
+              {/* Message of Hope */}
               <input
                 type="text"
-                placeholder="Optional word of hope or prayer for Brenda / family..."
+                placeholder="Optional word of support or prayer..."
                 value={donorMessage}
                 onChange={(e) => setDonorMessage(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-[#E5E7EB] rounded text-xs text-gray-900 placeholder-gray-400"
+                className="w-full px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs text-gray-900"
               />
 
-              {/* Anonymity Checkbox */}
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-800">
+              {/* Anonymous Checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
                 <input
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="rounded text-[#3D5E16] focus:ring-[#3D5E16]"
+                  className="rounded text-[#02A95C] focus:ring-[#02A95C]"
                 />
-                <span>Don't display my name publicly on the campaign ledger</span>
+                <span>Don't display my name publicly on the campaign page</span>
               </label>
             </div>
 
-            {/* Optional Tip Slider (0% to 15%) */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-2">
+            {/* Optional Tip Slider (0% - 15%) */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <div>
                   <span className="font-bold text-gray-900">Optional Tip for Platform Operations: </span>
-                  <span className="font-black text-[#3D5E16]">{tipPercentage}% ({tipFormatted.fullString})</span>
+                  <span className="font-bold text-[#02A95C]">{tipPercentage}% ({tipFormatted.fullString})</span>
                 </div>
-                <span className="text-[10px] text-gray-700">0% fee on causes</span>
+                <span className="text-[10px] text-gray-500">0% fee on charity</span>
               </div>
               <input
                 type="range"
@@ -498,110 +434,73 @@ export default function CheckoutModal() {
                 step="1"
                 value={tipPercentage}
                 onChange={(e) => setTipPercentage(parseInt(e.target.value))}
-                className="w-full accent-[#3D5E16] cursor-pointer"
+                className="w-full accent-[#02A95C] cursor-pointer"
               />
-              <p className="text-[11px] text-gray-700 leading-tight">
-                GCC Foundation charges 0% platform fee to causes. Voluntary tips keep our field officers verifying hospital beds and cover banking gateway charges.
+              <p className="text-[11px] text-gray-500 leading-tight">
+                GCC Foundation charges 0% platform fee to causes. Voluntary tips keep our field officers verifying hospital beds.
               </p>
             </div>
 
-            {/* Total Ledger Breakdown */}
-            <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-lg p-3 text-xs space-y-1">
-              <div className="flex justify-between text-gray-800">
-                <span>Beneficiary Direct Disbursement:</span>
-                <span className="font-mono font-bold">{baseFormatted.fullString}</span>
-              </div>
-              {tipAmountUGX > 0 && (
-                <div className="flex justify-between text-gray-800">
-                  <span>GCC Operations Tip ({tipPercentage}%):</span>
-                  <span className="font-mono font-bold">{tipFormatted.fullString}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-gray-900 text-sm pt-1.5 border-t border-gray-200">
-                <span>Total Charge:</span>
-                <span className="font-heading font-black text-[#3D5E16] tabular-nums text-base">
-                  {totalFormatted.fullString}
-                </span>
-              </div>
+            {/* Total Row */}
+            <div className="flex justify-between items-baseline pt-2 border-t border-[#E5E7EB] font-heading font-extrabold text-base">
+              <span className="text-[#1A1A1A]">Total due today:</span>
+              <span className="text-xl text-[#02A95C] tabular-nums">
+                {totalFormatted.fullString}
+              </span>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Button (GoFundMe Emerald Green Pill) */}
             <button
               type="submit"
               disabled={isProcessing}
-              className="w-full bg-[#3D5E16] hover:bg-[#2F4812] text-white font-bold text-sm py-3.5 px-4 rounded-xl shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-[#02A95C] hover:bg-[#028F4D] text-white font-extrabold text-base py-4 px-6 rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isProcessing ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  <span>Contacting Banking Rail...</span>
-                </>
+                <span>Connecting to payment gateway...</span>
               ) : (
                 <>
-                  <Lock className="w-4 h-4 text-[#AFC68A]" />
-                  <span>
-                    Authorize {totalFormatted.fullString} {frequency === 'monthly' ? '/ Month' : 'Now'}
-                  </span>
+                  <Lock className="w-4 h-4 text-white" />
+                  <span>Donate {totalFormatted.fullString} {frequency === 'monthly' ? '/ month' : ''}</span>
                 </>
               )}
             </button>
 
-            {/* Security Footer Note */}
-            <div className="flex items-center justify-center gap-2 text-[11px] text-gray-700 text-center">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#3D5E16]" />
-              <span>Protected by 100% Anti-Fraud Refund Guarantee · Registered NGO #INDR15982736NB</span>
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 text-center">
+              <ShieldCheck className="w-4 h-4 text-[#02A95C]" />
+              <span>Protected by the GCC Foundation Giving Guarantee • 100% Refundable</span>
             </div>
 
           </form>
         )}
 
-        {/* STEP 2: Simulated USSD Push Notification on Phone */}
+        {/* STEP 2: USSD Prompt Screen */}
         {simulatedStep === 'ussd_prompt' && (
-          <div className="p-6 text-center space-y-6">
-            <div className="w-16 h-16 bg-amber-50 border-2 border-amber-300 rounded-full flex items-center justify-center mx-auto text-amber-600 animate-pulse">
+          <div className="p-8 text-center space-y-6">
+            <div className="w-16 h-16 bg-[#02A95C]/10 text-[#02A95C] rounded-full flex items-center justify-center mx-auto animate-pulse">
               <Phone className="w-8 h-8" />
             </div>
 
             <div className="space-y-2">
-              <span className="inline-block bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                USSD Prompt Sent to Phone
-              </span>
-              <h3 className="font-heading font-bold text-xl text-gray-900">
+              <h3 className="font-heading font-extrabold text-2xl text-[#1A1A1A]">
                 Check Your Phone: {donorPhone || '+256 7•• ••• 419'}
               </h3>
-              <p className="text-xs text-gray-800 max-w-sm mx-auto">
-                A popup has been dispatched to your handset from <strong className="text-gray-900">GCC Foundation Escrow</strong>. Enter your Mobile Money PIN on your screen to complete the transfer of <strong className="text-[#3D5E16]">{totalFormatted.fullString}</strong>.
+              <p className="text-xs text-gray-600 max-w-sm mx-auto">
+                A USSD popup has been dispatched to your handset from <strong className="text-gray-900">GCC Foundation Escrow</strong>. Enter your Mobile Money PIN on your screen to authorize payment of <strong className="text-[#02A95C]">{totalFormatted.fullString}</strong>.
               </p>
-            </div>
-
-            {/* Simulated USSD Mock Card */}
-            <div className="bg-gray-900 text-amber-400 font-mono text-xs p-4 rounded-xl max-w-xs mx-auto border-2 border-amber-500 shadow-xl text-left space-y-2">
-              <div className="text-[10px] text-gray-400 border-b border-gray-800 pb-1">
-                USSD GATEWAY PUSH · MTN/AIRTEL
-              </div>
-              <p className="leading-snug">
-                Approve Payment of {totalFormatted.fullString} to GCC FOUNDATION ESCROW (Ref: UHI-NAMUBIRU)?
-              </p>
-              <div className="text-gray-300 text-[11px]">
-                1. Enter MM PIN to Confirm
-              </div>
-              <div className="text-gray-500 text-[10px] italic pt-1">
-                Awaiting response ({ussdCountdown}s)...
-              </div>
             </div>
 
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={finalizeDonation}
-                className="bg-[#3D5E16] text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow hover:bg-[#2F4812] transition-colors"
+                className="bg-[#02A95C] text-white text-xs font-bold px-6 py-3 rounded-full shadow hover:bg-[#028F4D] transition-colors"
               >
                 Simulate: "I Have Entered My PIN"
               </button>
               <button
                 type="button"
                 onClick={() => setSimulatedStep('idle')}
-                className="text-xs text-gray-600 hover:text-gray-900"
+                className="text-xs text-gray-500 hover:text-gray-800"
               >
                 Cancel
               </button>
@@ -609,80 +508,53 @@ export default function CheckoutModal() {
           </div>
         )}
 
-        {/* STEP 3: Success Screen & Printable Institutional Receipt */}
+        {/* STEP 3: Confetti Success Screen */}
         {simulatedStep === 'success' && (
-          <div className="p-6 space-y-6">
-            
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 bg-[#F4F7EE] text-[#3D5E16] border border-[#CDDCB3] rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h3 className="font-heading font-extrabold text-2xl text-gray-900">
-                Payment Confirmed & Escrowed!
+          <div className="p-8 space-y-6 text-center">
+            <div className="w-16 h-16 bg-[#E6EED8] text-[#02A95C] rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-heading font-extrabold text-2xl text-[#1A1A1A]">
+                You're amazing! Thank you for giving.
               </h3>
-              <p className="text-xs text-gray-800 max-w-md mx-auto">
-                Thank you! Your gift of <strong className="text-[#3D5E16] font-bold">{totalFormatted.fullString}</strong> has been logged to the immutable public ledger.
+              <p className="text-sm text-gray-600 max-w-md mx-auto">
+                Your donation of <strong className="text-[#02A95C]">{totalFormatted.fullString}</strong> has been logged to the public campaign ledger.
               </p>
             </div>
 
-            {/* Official Digital Receipt Card */}
-            <div className="bg-[#FAF9F6] border-2 border-dashed border-[#CDDCB3] rounded-xl p-4 sm:p-5 text-xs space-y-3 font-mono">
-              <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                <div>
-                  <span className="font-black text-sm text-[#3D5E16] block">GCC FOUNDATION</span>
-                  <span className="text-[10px] text-gray-700">Official Disbursement Voucher</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-gray-700 block">Transaction Reference:</span>
-                  <span className="font-bold text-gray-900">{completedTxRef}</span>
-                </div>
+            {/* Printable Digital Receipt Card */}
+            <div className="bg-[#FBF9F6] border border-[#E5E7EB] rounded-2xl p-5 text-left text-xs font-mono space-y-2">
+              <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                <span className="font-bold text-[#1A1A1A]">GCC FOUNDATION VOUCHER</span>
+                <span className="text-[10px] text-gray-500">{completedTxRef}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div>
-                  <span className="text-gray-700 block">Date & Timestamp:</span>
-                  <span className="text-gray-900 font-bold">{new Date().toLocaleString()}</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 block">Payment Method:</span>
-                  <span className="text-gray-900 font-bold uppercase">{paymentMethod}</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 block">Beneficiary Entity:</span>
-                  <span className="text-gray-900 font-bold">{activeCampaignForDonation.payoutVerification.institutionName}</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 block">Donor Name:</span>
-                  <span className="text-gray-900 font-bold">{isAnonymous ? 'Anonymous' : (donorName || 'Generous Donor')}</span>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-2 flex justify-between items-baseline font-bold">
-                <span className="text-gray-800">Total Net Disbursed:</span>
-                <span className="text-sm text-[#3D5E16]">{totalFormatted.fullString}</span>
+              <div className="space-y-1 text-gray-600">
+                <div>Beneficiary: <strong className="text-gray-900 font-sans">{activeCampaignForDonation.payoutVerification.institutionName}</strong></div>
+                <div>Amount: <strong className="text-[#02A95C] font-bold">{totalFormatted.fullString}</strong></div>
+                <div>Method: <strong className="uppercase">{paymentMethod}</strong></div>
+                <div>Date: {new Date().toLocaleDateString()}</div>
               </div>
             </div>
 
-            {/* Receipt Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 bg-white hover:bg-gray-50 border border-[#E5E7EB] text-gray-800 text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="bg-white border border-[#E5E7EB] hover:bg-gray-50 text-gray-800 text-xs font-bold py-3 px-5 rounded-full flex items-center gap-1.5"
               >
-                <Download className="w-3.5 h-3.5 text-gray-700" />
-                <span>Print / Save Tax Receipt</span>
+                <Download className="w-4 h-4 text-gray-500" />
+                <span>Print Receipt</span>
               </button>
-
               <button
                 type="button"
                 onClick={resetAndClose}
-                className="flex-1 bg-[#3D5E16] hover:bg-[#2F4812] text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow transition-colors text-center"
+                className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-8 rounded-full"
               >
                 Done
               </button>
             </div>
-
           </div>
         )}
 

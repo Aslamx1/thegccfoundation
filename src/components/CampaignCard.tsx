@@ -6,142 +6,178 @@ import Image from 'next/image';
 import { Campaign } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useDonation } from '@/context/DonationContext';
-import { MapPin, Building2, ShieldCheck, HeartHandshake, CheckCircle2 } from 'lucide-react';
+import { MapPin, Building2, ShieldCheck, HeartHandshake } from 'lucide-react';
 
 interface CampaignCardProps {
   campaign: Campaign;
+  isLargeFeatured?: boolean;
 }
 
-export default function CampaignCard({ campaign }: CampaignCardProps) {
+export default function CampaignCard({ campaign, isLargeFeatured = false }: CampaignCardProps) {
   const { formatUGX } = useCurrency();
   const { openDonationModal } = useDonation();
 
   const percentRaised = Math.min(100, Math.round((campaign.raisedUGX / campaign.goalUGX) * 100));
 
-  const getInstitutionBadgeText = () => {
-    switch (campaign.payoutVerification.type) {
-      case 'Direct-to-Hospital':
-        return 'Direct Hospital Payout';
-      case 'Direct-to-School':
-        return 'Direct School Bursar';
-      case 'Direct-to-Contractor':
-        return 'Direct Contractor Escrow';
-      default:
-        return 'Vetted Trustee Payout';
-    }
-  };
+  const formattedDonations =
+    campaign.donorCount >= 1000
+      ? `${(campaign.donorCount / 1000).toFixed(1)}K donations`
+      : `${campaign.donorCount} donations`;
 
-  return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-subtle hover:shadow-elevated transition-all duration-200 flex flex-col group">
-      
-      {/* Authentic Image Container */}
-      <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
-        <Link href={`/campaign/${campaign.id}`} className="block w-full h-full">
-          <Image
-            src={campaign.coverImage}
-            alt={campaign.title}
-            fill
-            className="object-cover group-hover:scale-102 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </Link>
+  if (isLargeFeatured) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-subtle hover:shadow-elevated transition-all duration-300 flex flex-col justify-between group h-full">
+        {/* Large 16:9 / 16:10 Image Container */}
+        <div>
+          <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
+            <Link href={`/campaign/${campaign.id}`} className="block w-full h-full">
+              <Image
+                src={campaign.coverImage}
+                alt={campaign.title}
+                fill
+                className="object-cover group-hover:scale-102 transition-transform duration-300"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
+            </Link>
 
-        {/* Top Badges */}
-        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
-          <span className="bg-white/95 text-gray-900 backdrop-blur-sm text-[11px] font-bold px-2.5 py-1 rounded shadow-sm border border-gray-200">
-            {campaign.category}
-          </span>
-          {campaign.urgent && (
-            <span className="bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 rounded shadow-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              Urgent Need
-            </span>
-          )}
-        </div>
+            {/* Top Badges */}
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <span className="bg-white/95 text-[#1A1A1A] text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                Featured Cause
+              </span>
+              <span className="bg-[#02A95C] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                {campaign.category}
+              </span>
+            </div>
 
-        {/* Bottom Location & Verified Stamp */}
-        <div className="absolute bottom-2 left-2 right-2 bg-black/75 backdrop-blur-sm text-white px-2.5 py-1 rounded text-[11px] flex items-center justify-between">
-          <span className="flex items-center gap-1 truncate text-gray-200">
-            <MapPin className="w-3 h-3 text-[#AFC68A] flex-shrink-0" />
-            <span className="truncate">{campaign.location.district}, {campaign.location.country}</span>
-          </span>
-          <span className="flex items-center gap-1 text-[#8AA95E] text-[10px] font-mono flex-shrink-0 ml-1">
-            <ShieldCheck className="w-3 h-3" />
-            KYC Verified
-          </span>
-        </div>
-      </div>
-
-      {/* Card Body */}
-      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-        
-        <div className="space-y-2.5">
-          {/* Direct-to-Institution Verification Badge */}
-          <div className="inline-flex items-center gap-1.5 bg-[#F4F7EE] text-[#2F4812] border border-[#CDDCB3] text-[11px] font-semibold px-2 py-0.5 rounded">
-            <Building2 className="w-3 h-3 text-[#3D5E16]" />
-            <span>{getInstitutionBadgeText()}</span>
+            {/* GoFundMe Exact Bottom-Left Translucent Pill: Donation Count */}
+            <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#02A95C]"></span>
+              <span>{formattedDonations}</span>
+            </div>
           </div>
 
-          {/* Title */}
-          <h3 className="font-heading font-bold text-base text-gray-900 group-hover:text-[#3D5E16] transition-colors line-clamp-2 leading-snug">
-            <Link href={`/campaign/${campaign.id}`}>
-              {campaign.title}
-            </Link>
-          </h3>
+          {/* Body Content */}
+          <div className="p-6 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <MapPin className="w-3.5 h-3.5 text-gray-400" />
+              <span>{campaign.location.facilityName || `${campaign.location.district}, ${campaign.location.country}`}</span>
+            </div>
 
-          {/* 2-line story preview */}
-          <p className="text-gray-800 text-xs line-clamp-2 leading-relaxed">
-            {campaign.subtitle}
-          </p>
+            <h3 className="font-heading font-extrabold text-xl text-[#1A1A1A] group-hover:text-[#02A95C] transition-colors line-clamp-2 leading-snug">
+              <Link href={`/campaign/${campaign.id}`}>
+                {campaign.title}
+              </Link>
+            </h3>
+
+            <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
+              {campaign.subtitle}
+            </p>
+          </div>
         </div>
 
-        {/* Financial Progress & Tabular Stats */}
-        <div className="pt-2 border-t border-gray-100 space-y-2">
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+        {/* Financial Progress Block */}
+        <div className="p-6 pt-0 space-y-3">
+          {/* Thin 6px rounded progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-[#3D5E16] h-full rounded-full transition-all duration-300"
+              className="bg-[#02A95C] h-full rounded-full transition-all duration-300"
               style={{ width: `${percentRaised}%` }}
             />
           </div>
 
-          {/* Tabular Financial Ledger Stats */}
-          <div className="space-y-1">
-            <div className="flex items-baseline justify-between">
-              <span className="font-heading font-black text-sm text-[#3D5E16] tabular-nums">
-                {formatUGX(campaign.raisedUGX)}
-              </span>
-              <span className="text-[11px] text-gray-700 tabular-nums">
-                of <strong className="text-gray-800 font-semibold">{formatUGX(campaign.goalUGX)}</strong>
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-gray-700 font-medium">
-              <span className="tabular-nums text-gray-900 font-semibold">{percentRaised}% reached</span>
-              <span className="tabular-nums text-gray-800">{campaign.donorCount} donors</span>
-              <span className="text-gray-700">{campaign.daysRemaining} days left</span>
-            </div>
+          <div className="flex items-baseline justify-between">
+            <span className="font-heading font-extrabold text-lg text-[#1A1A1A] tabular-nums">
+              {formatUGX(campaign.raisedUGX)} raised
+            </span>
+            <span className="text-xs text-gray-500 tabular-nums">
+              of {formatUGX(campaign.goalUGX)}
+            </span>
           </div>
 
-          {/* Card Action Buttons */}
-          <div className="pt-2 flex items-center gap-2">
+          {/* Action Row */}
+          <div className="pt-2 flex items-center gap-3">
             <button
               type="button"
               onClick={() => openDonationModal(campaign)}
-              className="flex-1 bg-[#3D5E16] hover:bg-[#2F4812] text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition-all text-center flex items-center justify-center gap-1.5"
+              className="flex-1 bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-4 rounded-full shadow-sm transition-all text-center"
             >
-              <HeartHandshake className="w-3.5 h-3.5 text-[#AFC68A]" />
-              <span>Donate</span>
+              Donate Now
             </button>
             <Link
               href={`/campaign/${campaign.id}`}
-              className="px-3 py-2.5 bg-[#F9FAFB] hover:bg-gray-100 border border-[#E5E7EB] text-gray-800 text-xs font-semibold rounded-lg transition-colors text-center"
+              className="px-5 py-3 border border-gray-300 hover:border-gray-900 text-gray-800 text-xs font-bold rounded-full transition-colors text-center"
             >
-              Ledger
+              View Story
             </Link>
           </div>
         </div>
+      </div>
+    );
+  }
 
+  // Standard GoFundMe Card (for the 2x2 grid)
+  return (
+    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-subtle hover:shadow-card transition-all duration-200 flex flex-col justify-between group">
+      
+      {/* 16:9 Image with 12px radius */}
+      <div>
+        <div className="relative aspect-[16/9] bg-gray-100 overflow-hidden m-2 rounded-xl">
+          <Link href={`/campaign/${campaign.id}`} className="block w-full h-full">
+            <Image
+              src={campaign.coverImage}
+              alt={campaign.title}
+              fill
+              className="object-cover group-hover:scale-103 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, 300px"
+            />
+          </Link>
+
+          {/* GoFundMe Exact Bottom-Left Translucent Pill Badge: e.g. "1.2K donations" */}
+          <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#02A95C]"></span>
+            <span>{formattedDonations}</span>
+          </div>
+
+          {campaign.urgent && (
+            <div className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+              Urgent
+            </div>
+          )}
+        </div>
+
+        {/* Card Body */}
+        <div className="px-4 pt-2 pb-3 space-y-1.5">
+          <div className="flex items-center gap-1 text-[11px] text-gray-500 truncate">
+            <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+            <span className="truncate">{campaign.location.district}, Uganda</span>
+          </div>
+
+          {/* Bold 2-Line Title */}
+          <h3 className="font-heading font-bold text-sm text-[#1A1A1A] group-hover:text-[#02A95C] transition-colors line-clamp-2 leading-snug">
+            <Link href={`/campaign/${campaign.id}`}>
+              {campaign.title}
+            </Link>
+          </h3>
+        </div>
+      </div>
+
+      {/* Progress & Single Line Bold Metric */}
+      <div className="px-4 pb-4 pt-1 space-y-2">
+        {/* Thin 6px rounded progress bar */}
+        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+          <div
+            className="bg-[#02A95C] h-full rounded-full transition-all duration-300"
+            style={{ width: `${percentRaised}%` }}
+          />
+        </div>
+
+        {/* Bold single-line metric */}
+        <div className="flex items-baseline justify-between text-xs font-heading font-extrabold text-[#1A1A1A] tabular-nums">
+          <span>{formatUGX(campaign.raisedUGX)} raised</span>
+          <span className="text-[11px] text-gray-500 font-normal">of {formatUGX(campaign.goalUGX)}</span>
+        </div>
       </div>
 
     </div>
