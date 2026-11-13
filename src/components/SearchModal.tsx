@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useDonation } from '@/context/DonationContext';
@@ -11,6 +11,15 @@ export default function SearchModal() {
   const { campaigns, isSearchModalOpen, closeSearchModal } = useDonation();
   const { formatUGX } = useCurrency();
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    if (!isSearchModalOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeSearchModal();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isSearchModalOpen, closeSearchModal]);
 
   if (!isSearchModalOpen) return null;
 
@@ -26,8 +35,8 @@ export default function SearchModal() {
   }).slice(0, 5);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-2xl w-full border border-[#E5E7EB] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4 animate-fadeIn" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSearchModal(); }}>
+      <div role="dialog" aria-modal="true" aria-label="Search fundraisers" className="bg-white rounded-2xl max-w-2xl w-full border border-[#E5E7EB] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
         
         {/* Search Input Bar */}
         <div className="p-4 border-b border-[#E5E7EB] flex items-center gap-3">

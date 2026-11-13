@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import SearchModal from '@/components/SearchModal';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useDonation } from '@/context/DonationContext';
 import { Campaign, Category } from '@/types';
@@ -26,6 +25,15 @@ export default function CreateCampaignPage() {
 
   const [step, setStep] = useState<number>(1);
   const [category, setCategory] = useState<Category>('Medical Care');
+  const [country, setCountry] = useState('Uganda');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const selectedCountry = params.get('country');
+    const selectedDistrict = params.get('district');
+    if (selectedCountry) setCountry(selectedCountry);
+    if (selectedDistrict) setDistrict(selectedDistrict);
+  }, []);
   const [title, setTitle] = useState('');
   const [beneficiaryName, setBeneficiaryName] = useState('');
   const [relationship, setRelationship] = useState('Parent / Legal Guardian');
@@ -42,7 +50,9 @@ export default function CreateCampaignPage() {
   const [ninNumber, setNinNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [idFileUploaded, setIdFileUploaded] = useState(false);
+  const [idFileName, setIdFileName] = useState('');
   const [hospitalProformaUploaded, setHospitalProformaUploaded] = useState(false);
+  const [proformaFileName, setProformaFileName] = useState('');
 
   // Institution Payout Destination
   const [payoutType, setPayoutType] = useState<'Direct-to-Hospital' | 'Direct-to-School' | 'Direct-to-Contractor'>('Direct-to-Hospital');
@@ -69,7 +79,7 @@ export default function CreateCampaignPage() {
       location: {
         district,
         subCounty: 'Central Division',
-        country: 'Uganda',
+        country,
         facilityName,
       },
       goalUGX: parsedGoal,
@@ -91,7 +101,7 @@ export default function CreateCampaignPage() {
       payoutVerification: {
         type: payoutType,
         institutionName: facilityName,
-        accountNumberMasked: institutionAccount ? `••• ${institutionAccount.slice(-4)}` : 'Stanbic Bank A/C •••• 9920',
+        accountNumberMasked: institutionAccount ? `â€¢â€¢â€¢ ${institutionAccount.slice(-4)}` : 'Stanbic Bank A/C â€¢â€¢â€¢â€¢ 9920',
         bankName: institutionBank,
         verificationReference: `GCC-KYC-${Math.floor(1000 + Math.random() * 9000)}`,
         complianceOfficer: 'Pauline Namukasa, FCCA',
@@ -99,10 +109,10 @@ export default function CreateCampaignPage() {
       organizer: {
         name: organizerName || 'Registered Organizer',
         role: relationship,
-        ninOrIdMasked: ninNumber ? `NIN: ${ninNumber.slice(0, 4)}••••` : 'Uganda NIN: CM88••••',
-        verifiedBadge: true,
+        ninOrIdMasked: ninNumber ? `NIN: ${ninNumber.slice(0, 4)}â€¢â€¢â€¢â€¢` : 'Uganda NIN: CM88â€¢â€¢â€¢â€¢',
+        verifiedBadge: false,
         relationshipToBeneficiary: relationship,
-        phoneMasked: phone ? `${phone.slice(0, 6)}••••` : '+256 7•• ••••',
+        phoneMasked: phone ? `${phone.slice(0, 6)}â€¢â€¢â€¢â€¢` : '+256 7â€¢â€¢ â€¢â€¢â€¢â€¢',
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
         residence: district,
       },
@@ -140,14 +150,13 @@ export default function CreateCampaignPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#FBF9F6]">
-      <SearchModal />
       <Header />
 
       {/* Header */}
       <section className="bg-white border-b border-[#E5E7EB] py-8 sm:py-12">
         <div className="max-w-2xl mx-auto px-4 text-center space-y-3">
           <span className="text-xs font-bold text-[#02A95C] uppercase tracking-wider bg-[#E6EED8] px-3.5 py-1 rounded-full">
-            START A GCC FUNDRAISER • 0% PLATFORM FEE
+            START A GCC FUNDRAISER â€¢ 0% PLATFORM FEE
           </span>
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#1A1A1A] tracking-tight">
             Tell your story and get verified
@@ -175,7 +184,7 @@ export default function CreateCampaignPage() {
                         : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    {step > s.num ? '✓' : s.num}
+                    {step > s.num ? 'âœ“' : s.num}
                   </div>
                   <span className="hidden sm:inline text-xs font-medium text-gray-700">{s.label}</span>
                 </div>
@@ -265,7 +274,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                disabled={!beneficiaryName}
+                disabled={!beneficiaryName.trim() || !district.trim() || !facilityName.trim() || !relationship.trim()}
                 className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-6 rounded-full shadow-sm flex items-center gap-1.5 disabled:opacity-50"
               >
                 <span>Continue to Target Goal</span>
@@ -323,7 +332,8 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-6 rounded-full shadow-sm flex items-center gap-1.5"
+                disabled={!Number.isFinite(Number(goalAmount)) || Number(goalAmount) <= 0}
+                className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-6 rounded-full shadow-sm flex items-center gap-1.5 disabled:opacity-50"
               >
                 <span>Continue to Story & Photo</span>
                 <ArrowRight className="w-4 h-4" />
@@ -388,7 +398,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                disabled={!title}
+                disabled={!title.trim() || !story.trim()}
                 className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-6 rounded-full shadow-sm flex items-center gap-1.5 disabled:opacity-50"
               >
                 <span>Continue to KYC & Payout</span>
@@ -423,7 +433,7 @@ export default function CreateCampaignPage() {
                   <input
                     type="text"
                     required
-                    placeholder="CM880341029•••"
+                    placeholder="CM880341029â€¢â€¢â€¢"
                     value={ninNumber}
                     onChange={(e) => setNinNumber(e.target.value)}
                     className="w-full p-3 bg-white border border-[#E5E7EB] rounded-xl text-xs text-gray-900 font-mono"
@@ -457,26 +467,17 @@ export default function CreateCampaignPage() {
                 </div>
               </div>
 
-              {/* Simulated Document Upload Checkboxes */}
-              <div className="pt-2 space-y-2">
-                <span className="text-xs font-bold text-gray-800 block">Required Proof Documents:</span>
-                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={idFileUploaded}
-                    onChange={(e) => setIdFileUploaded(e.target.checked)}
-                    className="rounded text-[#02A95C] focus:ring-[#02A95C]"
-                  />
-                  <span>I have uploaded my National ID / Passport</span>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-950">
+                This is a browser-only preview. Do not enter real national ID or bank details. Files selected below stay on this device and are not sent for verification.
+              </div>
+              <div className="pt-2 space-y-4">
+                <label className="block text-xs font-bold text-gray-800">Select ID / passport file
+                  <input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setIdFileUploaded(Boolean(file)); setIdFileName(file?.name ?? ''); }} className="mt-2 block w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs font-normal" />
+                  {idFileName && <span className="mt-1 block font-normal text-[#087443]">Selected: {idFileName} (not uploaded)</span>}
                 </label>
-                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hospitalProformaUploaded}
-                    onChange={(e) => setHospitalProformaUploaded(e.target.checked)}
-                    className="rounded text-[#02A95C] focus:ring-[#02A95C]"
-                  />
-                  <span>I have attached the stamped hospital proforma / bursar invoice</span>
+                <label className="block text-xs font-bold text-gray-800">Select hospital proforma / school invoice
+                  <input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setHospitalProformaUploaded(Boolean(file)); setProformaFileName(file?.name ?? ''); }} className="mt-2 block w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs font-normal" />
+                  {proformaFileName && <span className="mt-1 block font-normal text-[#087443]">Selected: {proformaFileName} (not uploaded)</span>}
                 </label>
               </div>
             </div>
@@ -493,7 +494,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting || !organizerName}
+                disabled={isSubmitting || !organizerName.trim() || !ninNumber.trim() || !institutionAccount.trim() || !idFileUploaded || !hospitalProformaUploaded}
                 className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-8 rounded-full shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -501,7 +502,7 @@ export default function CreateCampaignPage() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>Publish Verified Fundraiser</span>
+                    <span>Create fundraiser preview</span>
                   </>
                 )}
               </button>
@@ -518,10 +519,10 @@ export default function CreateCampaignPage() {
 
             <div className="space-y-2">
               <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#1A1A1A]">
-                Your Fundraiser is Live!
+                Your fundraiser preview is saved
               </h2>
               <p className="text-sm text-gray-600 max-w-md mx-auto">
-                Congratulations, <strong className="text-gray-900">{organizerName}</strong>! Your campaign has been published and added live to the GCC Foundation Discover grid.
+                This fundraiser is saved in this browser only. It has not been reviewed, verified, or published for other visitors.
               </p>
             </div>
 
@@ -530,7 +531,7 @@ export default function CreateCampaignPage() {
                 href={`/campaign/${newCampaignId}`}
                 className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs sm:text-sm font-bold py-3.5 px-8 rounded-full shadow-sm transition-all text-center w-full sm:w-auto"
               >
-                View Live Fundraiser
+                View fundraiser preview
               </Link>
               <Link
                 href="/"
@@ -546,3 +547,4 @@ export default function CreateCampaignPage() {
     </div>
   );
 }
+

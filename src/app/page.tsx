@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import CampaignCard from '@/components/CampaignCard';
-import SearchModal from '@/components/SearchModal';
 import { useDonation } from '@/context/DonationContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { Category } from '@/types';
@@ -14,8 +13,6 @@ import {
   Building2,
   FileCheck2,
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Lock,
   Sparkles,
   Users,
@@ -29,7 +26,13 @@ export default function HomePage() {
   const { formatUGX } = useCurrency();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [currentPage, setCurrentPage] = useState<number>(0);
+  useEffect(() => {
+    const category = new URLSearchParams(window.location.search).get('category')?.toLowerCase() ?? '';
+    if (category.includes('medical')) setSelectedCategory('Medical');
+    else if (category.includes('education') || category.includes('tuition')) setSelectedCategory('Education');
+    else if (category.includes('emergency')) setSelectedCategory('Emergency');
+    else if (category.includes('water') || category.includes('agriculture') || category.includes('community')) setSelectedCategory('Community');
+  }, []);
 
   // Filter campaigns
   const filteredCampaigns = useMemo(() => {
@@ -44,22 +47,19 @@ export default function HomePage() {
   }, [campaigns, selectedCategory]);
 
   // Featured large card is the first item, remaining 4 form the 2x2 grid
-  const featuredCampaign = filteredCampaigns[0] || campaigns[0];
+  const featuredCampaign = filteredCampaigns[0];
   const gridCampaigns = filteredCampaigns.slice(1, 5);
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Search Modal Triggered from Header */}
-      <SearchModal />
-
-      {/* Exact GoFundMe Sticky Header (72px) */}
+      {/* Site navigation */}
       <Header />
 
-      {/* Hero: The GoFundMe Progress Circle / Arc Photo Wheel Collage */}
+      {/* Fundraising hero */}
       <Hero />
 
       {/* ================= SECTION: DISCOVER FUNDRAISERS (Exact 1 + 4 Grid) ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 w-full space-y-8">
+      <section id="discover" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 w-full space-y-8">
         
         {/* Section Header with Category Filter & Nav Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -80,7 +80,6 @@ export default function HomePage() {
                 type="button"
                 onClick={() => {
                   setSelectedCategory(cat);
-                  setCurrentPage(0);
                 }}
                 className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                   selectedCategory === cat
@@ -94,29 +93,24 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Exact GoFundMe 1 + 4 Asymmetric Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          
-          {/* LEFT: 1 Large Featured Card Spanning 2 Rows (5 cols) */}
-          <div className="lg:col-span-5">
-            <CampaignCard campaign={featuredCampaign} isLargeFeatured={true} />
+        {featuredCampaign ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="lg:col-span-5">
+              <CampaignCard campaign={featuredCampaign} isLargeFeatured />
+            </div>
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {gridCampaigns.map((camp) => (
+                <CampaignCard key={camp.id} campaign={camp} />
+              ))}
+            </div>
           </div>
-
-          {/* RIGHT: 2x2 Grid of 4 Campaign Cards (7 cols) */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {gridCampaigns.map((camp) => (
-              <CampaignCard key={camp.id} campaign={camp} />
-            ))}
-
-            {gridCampaigns.length === 0 && (
-              <div className="col-span-2 p-12 text-center text-gray-500 border border-dashed rounded-2xl">
-                No additional campaigns found in this category.
-              </div>
-            )}
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#D7DED8] bg-[#F8FAF7] px-6 py-14 text-center">
+            <h3 className="font-heading text-xl font-bold text-[#20251F]">No {selectedCategory.toLowerCase()} fundraisers yet</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-gray-600">Try another cause, or browse every fundraiser on GCC Foundation.</p>
+            <button type="button" onClick={() => setSelectedCategory('All')} className="mt-5 rounded-full bg-[#02A95C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#028F4D]">Browse all fundraisers</button>
           </div>
-
-        </div>
-
+        )}
       </section>
 
       {/* ================= SECTION: HOW GCC FOUNDATION WORKS (Warm Cream #FBF9F6) ================= */}
@@ -131,7 +125,7 @@ export default function HomePage() {
               How GCC Foundation works
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
-              We combine GoFundMe's seamless fundraising flow with institutional anti-fraud protections.
+              A clear, guided way to raise support and follow how contributions are used.
             </p>
           </div>
 
@@ -202,12 +196,12 @@ export default function HomePage() {
             </div>
 
             <h2 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-[-0.02em] leading-tight">
-              We’ve got you covered. <br className="hidden sm:inline" />
+              We've got you covered. <br className="hidden sm:inline" />
               100% donor protection on every shilling.
             </h2>
 
             <p className="text-base sm:text-lg text-gray-300 font-body leading-relaxed max-w-2xl mx-auto">
-              In the rare event that something isn’t right with a campaign, we guarantee a full refund. All medical and tuition funds are escrowed and sent directly to hospital and school accounts—never unverified private hands.
+              In the rare event that something isn't right with a campaign, we guarantee a full refund. All medical and tuition funds are escrowed and sent directly to hospital and school accounts—never unverified private hands.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left pt-6">

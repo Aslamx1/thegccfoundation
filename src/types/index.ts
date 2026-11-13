@@ -1,10 +1,6 @@
-export type CurrencyCode = 'UGX' | 'KES' | 'USD';
+export type CurrencyCode = string;
 
-export interface ExchangeRates {
-  UGX: number; // Base (1 USD = 3750 UGX)
-  KES: number; // 1 USD = 130 KES
-  USD: number; // 1 USD = 1 USD
-}
+export type ExchangeRates = Record<string, number>;
 
 export type Category = 
   | 'All'
@@ -65,6 +61,7 @@ export interface VolunteerPledge {
 
 export interface Campaign {
   id: string;
+  ownerUserId?: string;
   slug: string;
   title: string;
   subtitle: string;
@@ -130,3 +127,6 @@ export interface TeamMember {
   credentials: string;
   linkedinOrEmail: string;
 }
+
+
+

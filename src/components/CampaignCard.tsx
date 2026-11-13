@@ -51,7 +51,7 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
               </span>
             </div>
 
-            {/* GoFundMe Exact Bottom-Left Translucent Pill: Donation Count */}
+            {/* Donation count */}
             <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#02A95C]"></span>
               <span>{formattedDonations}</span>
@@ -117,7 +117,7 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
     );
   }
 
-  // Standard GoFundMe Card (for the 2x2 grid)
+  // Standard fundraiser card
   return (
     <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-subtle hover:shadow-card transition-all duration-200 flex flex-col justify-between group">
       
@@ -134,7 +134,7 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
             />
           </Link>
 
-          {/* GoFundMe Exact Bottom-Left Translucent Pill Badge: e.g. "1.2K donations" */}
+          {/* Donation count badge */}
           <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#02A95C]"></span>
             <span>{formattedDonations}</span>

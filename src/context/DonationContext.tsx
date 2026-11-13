@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Campaign, DonorRecord, VolunteerPledge } from '@/types';
 import { CAMPAIGNS_DATA } from '@/data/campaigns';
+import { useAuth } from '@/context/AuthContext';
 
 interface DonationContextType {
   campaigns: Campaign[];
@@ -34,10 +35,14 @@ interface DonationContextType {
   closeSearchModal: () => void;
 }
 
+const STORAGE_KEY = 'gcc_foundation_campaigns';
+
 const DonationContext = createContext<DonationContextType | undefined>(undefined);
 
 export function DonationProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>(CAMPAIGNS_DATA);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [activeCampaignForDonation, setActiveCampaignForDonation] = useState<Campaign | null>(null);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
 
@@ -45,6 +50,29 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
   const [isPledgeModalOpen, setIsPledgeModalOpen] = useState(false);
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedCampaigns = localStorage.getItem(STORAGE_KEY);
+      if (savedCampaigns) {
+        const parsed = JSON.parse(savedCampaigns);
+        if (Array.isArray(parsed)) setCampaigns(parsed as Campaign[]);
+      }
+    } catch {
+      // Ignore unavailable or invalid storage and use the bundled campaigns.
+    } finally {
+      setCampaignsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!campaignsLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+    } catch {
+      // Campaigns remain available for the current session if browser storage is unavailable.
+    }
+  }, [campaigns, campaignsLoaded]);
 
   const openDonationModal = (campaign: Campaign) => {
     setActiveCampaignForDonation(campaign);
@@ -68,7 +96,7 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
   const closeSearchModal = () => setIsSearchModalOpen(false);
 
   const addNewCampaign = (newCamp: Campaign) => {
-    setCampaigns((prev) => [newCamp, ...prev]);
+    setCampaigns((prev) => [{ ...newCamp, ownerUserId: user?.id }, ...prev]);
   };
 
   const processDonation = async (
@@ -82,6 +110,24 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
       id: `dn-live-${Date.now()}`,
       timestamp: 'Just now',
     };
+
+    if (user) {
+      try {
+        const key = `gcc_foundation_donations_${user.id}`;
+        const saved = JSON.parse(localStorage.getItem(key) || '[]') as Array<Record<string, unknown>>;
+        localStorage.setItem(key, JSON.stringify([{
+          id: txRef,
+          campaignId,
+          campaignTitle: campaigns.find((campaign) => campaign.id === campaignId)?.title ?? 'GCC fundraiser',
+          amountUGX: donorData.amountUGX,
+          currencyPaid: donorData.currencyPaid,
+          date: new Date().toISOString(),
+          isAnonymous: !!donorData.isAnonymous,
+        }, ...saved]));
+      } catch {
+        // The donation remains in the current campaign if browser storage is unavailable.
+      }
+    }
 
     setCampaigns((prev) =>
       prev.map((c) => {
@@ -171,3 +217,6 @@ export function useDonation() {
   }
   return context;
 }
+
+
+

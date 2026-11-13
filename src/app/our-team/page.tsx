@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Header from '@/components/Header';
@@ -11,7 +11,6 @@ import {
   MapPin,
   CheckCircle2,
   Award,
-  PhoneCall
 } from 'lucide-react';
 
 export default function OurTeamPage() {
@@ -131,30 +130,8 @@ export default function OurTeamPage() {
           </div>
         </div>
 
-        {/* Physical Office Visit Invitation */}
-        <div className="bg-[#F4F7EE] border border-[#CDDCB3] rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <h3 className="font-heading font-bold text-lg text-[#2F4812]">
-              Visit Our Nakasero Headquarters
-            </h3>
-            <p className="text-xs text-gray-800 max-w-lg">
-              Donors, corporate partners, and beneficiaries are welcome to visit our physical offices in Kampala during working hours (Monday to Friday, 8:00 AM – 5:00 PM EAT).
-            </p>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-[#2F4812] pt-1 font-semibold">
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                Plot 14, Lumumba Avenue, Nakasero
-              </span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <PhoneCall className="w-3.5 h-3.5" />
-                +256 (0) 772 491 802
-              </span>
-            </div>
-          </div>
-        </div>
-
       </section>
     </div>
   );
 }
+

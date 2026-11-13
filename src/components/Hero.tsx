@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -30,7 +30,7 @@ export default function Hero() {
     },
     {
       category: 'Community',
-      label: 'Women’s Drip Irrigation',
+      label: 'Womenâ€™s Drip Irrigation',
       image: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=600&q=80',
       rotation: '-rotate-2',
       colPos: 'lg:top-1/2 lg:-right-6 lg:-translate-y-1/2',
@@ -56,7 +56,7 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Central Hero Block */}
-        <div className="relative min-h-[480px] lg:min-h-[580px] flex flex-col items-center justify-center text-center py-8">
+        <div className="relative min-h-0 sm:min-h-[480px] lg:min-h-[580px] flex flex-col items-center justify-center text-center py-5 sm:py-8">
           
           {/* Arc Photo Tiles (Desktop Positioned in Circle/Arc around center content) */}
           <div className="hidden lg:block absolute inset-0 pointer-events-none select-none">
@@ -86,17 +86,17 @@ export default function Hero() {
             ))}
           </div>
 
-          {/* Centered Content (Exact GoFundMe Layout) */}
+          {/* Centered campaign introduction */}
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
             
             {/* Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 bg-[#FBF9F6] border border-[#E5E7EB] text-[#1A1A1A] px-4 py-1.5 rounded-full text-xs font-bold shadow-subtle">
+            <div className="inline-flex max-w-full items-center gap-2 bg-[#FBF9F6] border border-[#E5E7EB] text-[#1A1A1A] px-3 py-1.5 rounded-full text-[10px] leading-snug sm:px-4 sm:text-xs font-bold shadow-subtle">
               <span className="w-2 h-2 rounded-full bg-[#02A95C]"></span>
               <span>#1 CROWDFUNDING PLATFORM FOR COMMUNITIES</span>
             </div>
 
             {/* Bold Headline */}
-            <h1 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-[54px] text-[#1A1A1A] tracking-[-0.025em] leading-[1.1]">
+            <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-[#1A1A1A] tracking-[-0.025em] leading-[1.1]">
               Successful fundraisers <br className="hidden sm:inline" />
               start here
             </h1>
@@ -105,10 +105,10 @@ export default function Hero() {
               Transparent, vetted giving for East Africa and beyond. 100% of medical and tuition donations are wired directly to verified institutional ledgers.
             </p>
 
-            {/* Centered GoFundMe Emerald Green Pill CTA */}
+            {/* Primary calls to action */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/create-campaign"
+                href="/create/fundraiser/category"
                 className="inline-flex items-center justify-center bg-[#02A95C] hover:bg-[#028F4D] text-white text-base font-bold py-3.5 px-8 rounded-full shadow-sm hover:shadow transition-all transform active:scale-98"
               >
                 Start a GCC Fundraiser
@@ -126,7 +126,7 @@ export default function Hero() {
             {/* Trust Assurance Sub-line */}
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 pt-2">
               <ShieldCheck className="w-4 h-4 text-[#02A95C]" />
-              <span>Direct-to-Institution Payouts • 0% Platform Fee to Charities</span>
+              <span>Direct-to-Institution Payouts â€¢ 0% Platform Fee to Charities</span>
             </div>
 
           </div>
@@ -136,7 +136,7 @@ export default function Hero() {
             {photoTiles.map((tile, idx) => (
               <div
                 key={idx}
-                className="w-40 flex-shrink-0 bg-white p-2 rounded-2xl shadow-subtle border border-[#E5E7EB]"
+                className="w-[min(72vw,10rem)] flex-shrink-0 bg-white p-2 rounded-2xl shadow-subtle border border-[#E5E7EB]"
               >
                 <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
                   <Image src={tile.image} alt={tile.label} fill className="object-cover" />
@@ -157,3 +157,4 @@ export default function Hero() {
     </section>
   );
 }
+

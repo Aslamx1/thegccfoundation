@@ -6,9 +6,8 @@ import { ShieldCheck, PhoneCall, CheckCircle2 } from 'lucide-react';
 import { CurrencyCode } from '@/types';
 
 export default function TopTrustBar() {
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, currencyOptions, rates } = useCurrency();
 
-  const currencies: CurrencyCode[] = ['UGX', 'KES', 'USD'];
 
   return (
     <div className="bg-[#1F310C] text-[#E6EED8] text-xs border-b border-[#2F4812] py-2 px-4 sm:px-6 lg:px-8">
@@ -42,20 +41,8 @@ export default function TopTrustBar() {
           {/* Currency Switcher */}
           <div className="flex items-center bg-[#121E07] border border-[#2F4812] rounded p-0.5">
             <span className="text-[10px] text-gray-400 uppercase tracking-wider px-1.5 font-medium">Currency:</span>
-            {currencies.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCurrency(c)}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
-                  currency === c
-                    ? 'bg-[#3D5E16] text-white shadow-sm'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+            <select aria-label="Site currency" value={currency} onChange={(event) => setCurrency(event.target.value)} className="max-w-[150px] truncate bg-transparent px-1.5 py-1 text-[11px] font-bold text-white outline-none">{currencyOptions.map((option) => <option key={option.code} value={option.code} disabled={!rates[option.code]}>{option.code} - {option.name}{!rates[option.code] ? ' (rate unavailable)' : ''}</option>)}</select>
+            <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="px-1 text-[9px] text-gray-400 underline" title="Daily reference exchange rates">Rates</a>
           </div>
         </div>
       </div>

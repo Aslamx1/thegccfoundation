@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -52,4 +52,204 @@ body {
     top: 0;
     width: 100%;
   }
+}
+
+/* GCC Foundation fundraising experience: shared interaction and layout polish */
+:root {
+  color-scheme: light;
+  --gcc-green: #02a95c;
+  --gcc-green-dark: #087443;
+  --gcc-ink: #20251f;
+  --gcc-muted: #626b64;
+  --gcc-line: #e4e8e3;
+  --gcc-canvas: #f7f8f5;
+}
+
+html { scroll-behavior: smooth; }
+body { color: var(--gcc-ink); background: #fff; }
+::selection { background: #dff2e5; color: #163a25; }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, a { transition: color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+:focus-visible { outline: 3px solid rgba(2,169,92,.45); outline-offset: 3px; }
+input, select, textarea { color: var(--gcc-ink); }
+input::placeholder, textarea::placeholder { color: #858d86; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Shared GCC component styling across campaign, learning and account routes */
+:where(main) h1, :where(main) h2, :where(main) h3 { text-wrap: balance; }
+:where(main) p { text-wrap: pretty; }
+:where(main) input:not([type=checkbox]):not([type=radio]),
+:where(main) select,
+:where(main) textarea {
+  border-color: var(--gcc-line);
+  border-radius: 12px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+:where(main) input:not([type=checkbox]):not([type=radio]):focus,
+:where(main) select:focus,
+:where(main) textarea:focus {
+  border-color: var(--gcc-green);
+  box-shadow: 0 0 0 3px rgba(2,169,92,.12);
+  outline: none;
+}
+:where(main) button:disabled { cursor: not-allowed; }
+@media (max-width: 640px) {
+  :where(main) h1 { letter-spacing: -.025em; }
+  :where(main) section { scroll-margin-top: 5rem; }
+}
+
+/* Reusable campaign and content cards */
+:where(main) [class*="border-[#E5E7EB]"][class*="rounded-2xl"] {
+  border-color: var(--gcc-line);
+}
+:where(main) [class*="shadow-card"],
+:where(main) [class*="shadow-subtle"] {
+  box-shadow: 0 2px 10px rgba(22, 38, 27, .045);
+}
+:where(main) [class*="shadow-card"]:hover,
+:where(main) [class*="shadow-subtle"]:hover {
+  box-shadow: 0 12px 28px rgba(22, 38, 27, .09);
+}
+:where(main) [class*="aspect-"] img { transition: transform .35s ease; }
+:where(main) [class*="aspect-"]:hover img { transform: scale(1.025); }
+:where(main) [class*="overflow-x-auto"] { scrollbar-width: thin; scrollbar-color: #c8d1ca transparent; }
+
+/* Glass treatment and motion shared by the GCC account pages */
+.auth-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 14% 22%, rgba(2, 169, 92, .12), transparent 34%),
+    radial-gradient(ellipse at 86% 76%, rgba(102, 184, 131, .15), transparent 32%),
+    linear-gradient(135deg, #f7faf6 0%, #eef5ef 50%, #f9faf7 100%);
+}
+.auth-shell::before,
+.auth-shell::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid rgba(255, 255, 255, .68);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, .2);
+  box-shadow: inset 0 0 50px rgba(255, 255, 255, .24), 0 18px 70px rgba(39, 95, 58, .06);
+  backdrop-filter: blur(4px);
+  animation: auth-float 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.auth-shell::before { top: 14%; left: -9rem; }
+.auth-shell::after { right: -10rem; bottom: 6%; width: 23rem; height: 23rem; animation-delay: -5s; }
+.auth-glass-card {
+  border: 1px solid rgba(255, 255, 255, .82);
+  background: rgba(255, 255, 255, .78);
+  box-shadow: 0 24px 80px rgba(26, 54, 34, .11), inset 0 1px 0 rgba(255, 255, 255, .9);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+.auth-enter { animation: auth-rise-in .65s cubic-bezier(.2, .75, .25, 1) both; }
+.auth-shell header { background: rgba(255, 255, 255, .66); border-color: rgba(255, 255, 255, .7); backdrop-filter: blur(16px); }
+.auth-glass-card button:not(:disabled):hover { transform: translateY(-1px); }
+@keyframes auth-rise-in {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes auth-float {
+  from { transform: translate3d(0, -8px, 0) rotate(-4deg); }
+  to { transform: translate3d(12px, 12px, 0) rotate(5deg); }
+}
+@supports not ((backdrop-filter: blur(1px))) {
+  .auth-glass-card { background: #fff; }
+}
+.auth-page-loader {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(247, 250, 246, .97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.auth-page-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: auth-loader-appear .3s ease-out both;
+}
+.auth-loader-logo { width: 190px; height: auto; object-fit: contain; }
+.auth-loading-ring {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(2, 169, 92, .16);
+  border-top-color: #02a95c;
+  border-right-color: #02a95c;
+  border-radius: 50%;
+  animation: auth-loader-spin .75s linear infinite;
+}
+.auth-page-loader-label { color: #626b64; font-size: .875rem; }
+@keyframes auth-loader-spin { to { transform: rotate(360deg); } }
+@keyframes auth-loader-appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+/* HopeBot animated launcher and conversation states */
+.hopebot-launcher {
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 25%, #ffffff 0, #f3fff5 26%, #d1f2d9 65%, #a8dfb8 100%);
+  box-shadow: 0 12px 38px rgba(8, 116, 67, .3), 0 0 0 1px rgba(255,255,255,.85) inset;
+  color: #075b39;
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+  animation: hopebot-float 4s ease-in-out infinite;
+}
+.hopebot-launcher:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 16px 42px rgba(8, 116, 67, .38), 0 0 0 1px rgba(255,255,255,.9) inset; }
+.hopebot-launcher:focus-visible { outline: 3px solid #02a95c; outline-offset: 4px; }
+.hopebot-launcher-open { background: linear-gradient(145deg, #0b8050, #075b39); color: white; animation: hopebot-open .3s ease-out both; }
+.hopebot-launcher-label { position: absolute; right: 78px; white-space: nowrap; border: 1px solid #dce8dd; border-radius: 999px; background: rgba(255,255,255,.96); padding: 8px 13px; color: #175b37; font-size: 12px; font-weight: 750; box-shadow: 0 6px 20px rgba(26,52,32,.12); opacity: 0; transform: translateX(5px); transition: opacity .2s ease, transform .2s ease; pointer-events: none; }
+.hopebot-launcher:hover .hopebot-launcher-label, .hopebot-launcher:focus-visible .hopebot-launcher-label { opacity: 1; transform: translateX(0); }
+.hopebot-mark { position: relative; display: inline-flex; width: 64px; height: 64px; flex: 0 0 auto; align-items: center; justify-content: center; animation: hopebot-float 4s ease-in-out infinite; }
+.hopebot-mark-small { width: 46px; height: 46px; animation-duration: 4.8s; }
+.hopebot-aura { position: absolute; inset: 4px; border: 1px solid rgba(8,116,67,.18); border-radius: 9999px; animation: hopebot-aura 2.8s ease-out infinite; }
+.hopebot-mark-small .hopebot-aura { inset: 2px; border-color: rgba(255,255,255,.55); }
+.hopebot-face { position: relative; z-index: 1; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 4px 6px rgba(7,91,57,.16)); }
+.hopebot-spark { position: absolute; z-index: 2; top: 6px; right: 1px; width: 7px; height: 7px; border-radius: 50%; background: #ffc963; box-shadow: 0 0 0 3px rgba(255,201,99,.2), 0 0 12px rgba(255,201,99,.9); animation: hopebot-spark 2.2s ease-in-out infinite; }
+.hopebot-mark-small .hopebot-spark { top: 2px; right: 0; width: 5px; height: 5px; }
+.hopebot-panel { transform-origin: bottom right; animation: hopebot-panel-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.hopebot-typing { display: inline-flex; align-items: center; gap: 4px; }
+.hopebot-typing i { width: 4px; height: 4px; border-radius: 50%; background: #159258; animation: hopebot-dot 1s ease-in-out infinite; }
+.hopebot-typing i:nth-child(2) { animation-delay: .15s; }
+.hopebot-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes hopebot-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-4px) rotate(1deg); } }
+@keyframes hopebot-aura { 0% { transform: scale(.88); opacity: .65; } 75%, 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes hopebot-spark { 0%, 100% { transform: scale(.8) rotate(0); opacity: .8; } 50% { transform: scale(1.2) rotate(18deg); opacity: 1; } }
+@keyframes hopebot-open { from { transform: rotate(-65deg) scale(.75); } to { transform: rotate(0) scale(1); } }
+@keyframes hopebot-panel-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes hopebot-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .hopebot-launcher, .hopebot-mark, .hopebot-aura, .hopebot-spark, .hopebot-panel, .hopebot-typing i { animation: none !important; transition: none !important; }
+}
+/* Viewport units with legacy fallbacks for browsers predating dvh. */
+.checkout-viewport-height { max-height: min(88vh, 720px); }
+.hopebot-viewport-height { max-height: min(720px, calc(100vh - 7.25rem)); }
+@supports (height: 100dvh) {
+  .checkout-viewport-height { max-height: min(88dvh, 720px); }
+  .hopebot-viewport-height { max-height: min(720px, calc(100dvh - 7.25rem)); }
+}
+/* Keep narrow phones usable without clipping navigation or data tables. */
+@media (max-width: 380px) {
+  .hopebot-launcher { width: 60px; height: 60px; }
+  .hopebot-mark { width: 54px; height: 54px; }
+  .hopebot-mark-small { width: 42px; height: 42px; }
+}
+@media (max-width: 640px) {
+  table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .hopebot-launcher { right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); }
 }

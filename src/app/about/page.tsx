@@ -1,0 +1,21 @@
+'use client';
+
+import Header from '@/components/Header';
+import Link from 'next/link';
+
+const resources = [
+  { id: 'how-it-works', title: 'How GCC works', description: 'Learn how to start a fundraiser and support a community cause.', action: 'Read how it works', href: '/how-it-works' },
+  { id: 'safety', title: 'Trust and safety', description: 'Learn how to report a concern and review the safeguards currently described on GCC.', action: 'View transparency information', href: '/transparency' },
+  { id: 'countries', title: 'Supported countries', description: 'The fundraiser setup lets you choose a beneficiary location. A listed location does not mean payouts are available there yet.', action: 'View location selector', href: '/create/fundraiser/category' },
+  { id: 'pricing', title: 'Pricing', description: 'The demo checkout displays a 0% platform fee for causes. Live processor fees and payment services are not connected yet.', action: 'See pricing details', href: '#pricing' },
+  { id: 'help', title: 'Help Center', description: 'Ask HopeBot a question. Live human chat and ticket submissions are not connected yet.', action: 'Ask HopeBot', actionType: 'assistant' as const },
+  { id: 'about-gcc', title: 'About GCC', description: 'Meet the people and learn about the community work presented by GCC Foundation.', action: 'Meet the team', href: '/our-team' },
+  { id: 'newsroom', title: 'Newsroom', description: 'There are no newsroom articles published here yet. Browse campaign updates and public reporting.', action: 'Browse campaign updates', href: '/transparency' },
+  { id: 'careers', title: 'Careers', description: 'No job listings are published on this site at the moment.', action: 'Check back later', href: '#careers' },
+  { id: 'foundation', title: 'GCC Foundation', description: 'Community giving, with campaign updates and transparent reporting for East Africa.', action: 'Explore GCC', href: '/' },
+  { id: 'partnerships', title: 'Partnerships', description: 'Partnership applications are not connected on this demo site. Contact details currently listed by GCC are in the site header.', action: 'Contact GCC Support', href: 'tel:+256772491802' },
+];
+
+export default function AboutResourcesPage() {
+  return <div className="min-h-screen bg-[#f8faf7]"><Header/><main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8"><div className="max-w-3xl"><p className="text-sm font-bold uppercase tracking-wide text-[#087443]">About GCC Foundation</p><h1 className="mt-3 font-heading text-3xl font-extrabold tracking-tight text-[#20251f] sm:text-4xl">How it works, pricing, and more</h1><p className="mt-4 text-base leading-relaxed text-[#626b64]">Find information about using GCC, the current demo features, and ways to learn more about the foundation.</p></div><div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{resources.map((resource) => <article id={resource.id} key={resource.id} className="flex scroll-mt-24 flex-col rounded-2xl border border-[#e2e8e2] bg-white p-5 shadow-sm"><h2 className="text-lg font-bold text-[#20251f]">{resource.title}</h2><p className="mt-2 flex-1 text-sm leading-relaxed text-[#626b64]">{resource.description}</p>{resource.actionType === 'assistant' ? <button type="button" onClick={() => window.dispatchEvent(new Event('gcc:open-hopebot'))} className="mt-5 self-start rounded-full bg-[#087443] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#066339]">{resource.action}</button> : <Link href={resource.href ?? '#'} className="mt-5 self-start text-sm font-bold text-[#087443] hover:underline">{resource.action}</Link>}</article>)}</div><section id="pricing-details" className="mt-10 scroll-mt-24 rounded-2xl border border-[#dce8dd] bg-[#eff7ef] p-6 sm:p-8"><h2 className="text-xl font-bold text-[#20251f]">Pricing and fees in this demo</h2><p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#526057]">The checkout screen currently displays a 0% GCC platform fee for causes and an optional contribution to GCC. No live payment processor is connected, so this site cannot confirm payment processing fees, settle donations, or issue real receipts. Review live payment terms before using a connected service.</p></section></main></div>;
+}
