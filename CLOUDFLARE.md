@@ -1,21 +1,21 @@
 ﻿# Cloudflare Workers deployment
 
-This Next.js app is configured for Cloudflare Workers with the OpenNext Cloudflare adapter. The Worker name matches the existing Cloudflare service: `thegccfoundation`.
+This Next.js app uses the OpenNext Cloudflare adapter. The Worker name matches the existing Cloudflare service: `thegccfoundation`.
 
 ## Workers Builds settings
 
-In **Workers & Pages → thegccfoundation → Settings → Build**, use:
+In **Workers & Pages → thegccfoundation → Settings → Builds**, use:
 
 - **Production branch:** `master`
-- **Build command:** `npm run build:cloudflare`
-- **Deploy command:** `npx wrangler deploy`
+- **Build command:** leave blank
+- **Deploy command:** `npm run deploy:cloudflare`
 - **Root directory:** `/` (or leave it blank)
 
-Cloudflare will install dependencies from `package-lock.json`. A push to the production branch starts a production build/deployment when Git integration is enabled.
+The deploy script runs `opennextjs-cloudflare build` and `opennextjs-cloudflare deploy` in the same command. This ensures the generated OpenNext config is present when the Worker is deployed. Do not use `npx wrangler deploy` as the deploy command for this setup, because it can try to deploy OpenNext output without running the OpenNext build first.
 
 ## Runtime secrets
 
-In **Settings → Variables & Secrets**, add `OPENAI_API_KEY` as a secret for the assistant API route. You can optionally set `OPENAI_MODEL` as a regular variable. Do not put secret values in this repository. If you use any `NEXT_PUBLIC_` variables later, set them as **Workers Builds variables** too when the build needs them.
+In **Settings → Variables & Secrets**, add `OPENAI_API_KEY` as a secret for the assistant API route. You can optionally set `OPENAI_MODEL` as a regular variable. Do not put secret values in this repository. If you add `NEXT_PUBLIC_` variables later, configure them as Workers Builds variables too when the build needs them.
 
 ## Local preview or manual deployment
 
@@ -24,4 +24,3 @@ npm run preview:cloudflare
 npm run deploy:cloudflare
 ```
 
-`npm run deploy:cloudflare` builds the OpenNext worker and deploys it using Wrangler. Cloudflare’s Git-connected build should use the settings above instead.
