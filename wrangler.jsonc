@@ -11,18 +11,18 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "e839211c430e463cbba96726bbfa6701"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "MEDIA_BUCKET",
-      "bucket_name": "gcc-foundation-media"
-    }
-  ],
+  // "hyperdrive": [
+  //   {
+  //     "binding": "HYPERDRIVE",
+  //     "id": "e839211c430e463cbba96726bbfa6701"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MEDIA_BUCKET",
+  //     "bucket_name": "gcc-foundation-media"
+  //   }
+  // ],
   "ai": {
     "binding": "AI"
   },
