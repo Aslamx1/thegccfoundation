@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 type HistoryItem = { role: 'user' | 'assistant'; content: string };
-type ResponsesResult = { output_text?: unknown; error?: { message?: string } };
 
 const recentRequests = new Map<string, number[]>();
 const systemInstructions = `You are HopeBot, the warm, capable assistant for GCC Foundation, a crowdfunding project focused on East African community support. Answer the user's actual question in a natural, useful way, including general questions beyond the platform. Think through complex requests and give clear steps, examples, and sensible next actions. Be empathetic with emergencies, illness, loss, and hardship. Keep answers concise unless the user asks for detail.
@@ -27,9 +27,6 @@ function withinRateLimit(key: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'AI is not configured on the server yet.' }, { status: 503 });
-
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   const clientKey = forwardedFor || request.headers.get('x-real-ip') || 'local';
   if (!withinRateLimit(clientKey)) return NextResponse.json({ error: 'Please wait a moment before asking another question.' }, { status: 429 });
@@ -46,29 +43,35 @@ export async function POST(request: NextRequest) {
     : [];
 
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-6-luna',
-        instructions: systemInstructions,
-        input: [...history, { role: 'user', content: body.message.trim() }],
-        max_output_tokens: 600,
-        store: false,
-      }),
-      signal: AbortSignal.timeout(25_000),
-    });
-    const result = await response.json() as ResponsesResult;
-    if (!response.ok) {
-      console.error('HopeBot model request failed:', response.status, result.error?.message ?? 'No provider details');
-      return NextResponse.json({ error: 'The assistant could not get a response right now. Please try again.' }, { status: 502 });
-    }
-    if (typeof result.output_text !== 'string' || !result.output_text.trim()) {
+    const { env } = await getCloudflareContext({ async: true });
+    const ai = (env as { AI?: { run: (model: string, input: unknown) => Promise<unknown> } }).AI;
+    if (!ai) return NextResponse.json({ error: 'AI is not configured on the server yet.' }, { status: 503 });
+
+    const model = (env as { WORKERS_AI_MODEL?: string }).WORKERS_AI_MODEL || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+    const messages = [
+      { role: 'system', content: systemInstructions },
+      ...history,
+      { role: 'user', content: body.message.trim() },
+    ];
+
+    const result = await ai.run(model, { messages, max_tokens: 600 }) as { response?: unknown; result?: { response?: unknown } };
+    const answer = typeof result?.response === 'string'
+      ? result.response
+      : typeof result?.result?.response === 'string'
+        ? result.result.response
+        : '';
+
+    if (!answer.trim()) {
       return NextResponse.json({ error: 'The assistant returned an empty answer. Please try again.' }, { status: 502 });
     }
-    return NextResponse.json({ answer: result.output_text.trim() }, { headers: { 'Cache-Control': 'no-store' } });
+
+    const text = answer.trim();
+    return NextResponse.json(
+      { answer: text, reply: text, output_text: text },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
   } catch (error) {
-    console.error('HopeBot request error:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('HopeBot Workers AI request error:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json({ error: 'The assistant is temporarily unavailable. Please try again.' }, { status: 502 });
   }
 }

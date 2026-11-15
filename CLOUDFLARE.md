@@ -13,9 +13,9 @@ In **Workers & Pages → thegccfoundation → Settings → Builds**, use:
 
 The deploy script runs `opennextjs-cloudflare build` and `opennextjs-cloudflare deploy` in the same command. This ensures the generated OpenNext config is present when the Worker is deployed. Do not use `npx wrangler deploy` as the deploy command for this setup, because it can try to deploy OpenNext output without running the OpenNext build first.
 
-## Runtime secrets
+## Runtime configuration
 
-In **Settings → Variables & Secrets**, add `OPENAI_API_KEY` as a secret for the assistant API route and `JWT_SECRET` as a secret containing at least 32 random characters. You can optionally set `OPENAI_MODEL` as a regular variable. Do not put secret values in this repository. If you add `NEXT_PUBLIC_` variables later, configure them as Workers Builds variables too when the build needs them.
+In **Settings → Variables & Secrets**, add `JWT_SECRET` as a secret containing at least 32 random characters. The HopeBot assistant uses the Cloudflare Workers AI binding (`AI` in `wrangler.jsonc`) on Workers — no external AI API key is required. You can optionally set `WORKERS_AI_MODEL` as a variable to override the default model (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`). Do not put secret values in this repository. If you add `NEXT_PUBLIC_` variables later, configure them as Workers Builds variables too when the build needs them.
 
 ## PostgreSQL setup for accounts
 

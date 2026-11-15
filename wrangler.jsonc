@@ -23,6 +23,9 @@
       "bucket_name": "gcc-foundation-media"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
   "kv_namespaces": [
     {
       "binding": "NEXT_CACHE_WORKERS_KV",

@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data: https://images.unsplash.com https://flagcdn.com",
     "font-src 'self' data:",
-    "connect-src 'self' https://open.er-api.com https://api.openai.com https://challenges.cloudflare.com https://media.thegccfoundation.org",
+    "connect-src 'self' https://open.er-api.com https://challenges.cloudflare.com https://media.thegccfoundation.org",
     "frame-src https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
