@@ -77,9 +77,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     fetch(RATES_URL, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error('Could not load exchange rates.');
-        return response.json();
+        return response.json() as Promise<{ result?: string; base_code?: string; time_last_update_utc?: string; rates?: Record<string, number> }>;
       })
-      .then((data: { result?: string; base_code?: string; time_last_update_utc?: string; rates?: Record<string, number> }) => {
+      .then((data) => {
         if (data.result !== 'success' || data.base_code !== 'USD' || !data.rates) throw new Error('Exchange rates were unavailable.');
         const nextRates: ExchangeRates = { ...FALLBACK_RATES, ...data.rates, USD: 1 };
         setRates(nextRates);

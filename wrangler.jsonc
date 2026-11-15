@@ -1,13 +1,38 @@
-﻿{
+{
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "thegccfoundation",
   "main": ".open-next/worker.js",
   "upload_source_maps": true,
   "compatibility_date": "2026-11-13",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "e839211c430e463cbba96726bbfa6701"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "gcc-foundation-media"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_CACHE_WORKERS_KV",
+      "id": "e7559acb5a024085b02204d69d56637a"
+    }
+  ],
+  "vars": {
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_APP_URL": "https://thegccfoundation.org",
+    "NEXT_PUBLIC_DEFAULT_CURRENCY": "USD"
   },
   "observability": {
     "enabled": true
