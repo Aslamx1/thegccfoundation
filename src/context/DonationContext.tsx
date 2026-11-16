@@ -11,10 +11,6 @@ interface DonationContextType {
   isDonationModalOpen: boolean;
   openDonationModal: (campaign: Campaign) => void;
   closeDonationModal: () => void;
-  processDonation: (
-    campaignId: string,
-    donorData: Omit<DonorRecord, 'id' | 'timestamp'>
-  ) => Promise<{ success: boolean; txRef: string }>;
 
   // Volunteer & Material Pledge Modal
   isPledgeModalOpen: boolean;
@@ -36,6 +32,7 @@ interface DonationContextType {
 }
 
 const STORAGE_KEY = 'gcc_foundation_campaigns';
+const DONORBOX_URL = 'https://donorbox.org/gcc-foundation';
 
 const DonationContext = createContext<DonationContextType | undefined>(undefined);
 
@@ -76,7 +73,8 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
 
   const openDonationModal = (campaign: Campaign) => {
     setActiveCampaignForDonation(campaign);
-    setIsDonationModalOpen(true);
+    window.open(DONORBOX_URL, '_blank', 'noopener,noreferrer');
+    setIsDonationModalOpen(false);
   };
 
   const closeDonationModal = () => {
@@ -97,66 +95,6 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
 
   const addNewCampaign = (newCamp: Campaign) => {
     setCampaigns((prev) => [{ ...newCamp, ownerUserId: user?.id }, ...prev]);
-  };
-
-  const processDonation = async (
-    campaignId: string,
-    donorData: Omit<DonorRecord, 'id' | 'timestamp'>
-  ): Promise<{ success: boolean; txRef: string }> => {
-    const txRef = `GCC-TXN-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    
-    const newRecord: DonorRecord = {
-      ...donorData,
-      id: `dn-live-${Date.now()}`,
-      timestamp: 'Just now',
-    };
-
-    if (user) {
-      try {
-        const key = `gcc_foundation_donations_${user.id}`;
-        const saved = JSON.parse(localStorage.getItem(key) || '[]') as Array<Record<string, unknown>>;
-        localStorage.setItem(key, JSON.stringify([{
-          id: txRef,
-          campaignId,
-          campaignTitle: campaigns.find((campaign) => campaign.id === campaignId)?.title ?? 'GCC fundraiser',
-          amountUGX: donorData.amountUGX,
-          currencyPaid: donorData.currencyPaid,
-          date: new Date().toISOString(),
-          isAnonymous: !!donorData.isAnonymous,
-        }, ...saved]));
-      } catch {
-        // The donation remains in the current campaign if browser storage is unavailable.
-      }
-    }
-
-    setCampaigns((prev) =>
-      prev.map((c) => {
-        if (c.id === campaignId) {
-          return {
-            ...c,
-            raisedUGX: c.raisedUGX + donorData.amountUGX,
-            donorCount: c.donorCount + 1,
-            recentDonors: [newRecord, ...c.recentDonors],
-          };
-        }
-        return c;
-      })
-    );
-
-    if (activeCampaignForDonation && activeCampaignForDonation.id === campaignId) {
-      setActiveCampaignForDonation((prev) =>
-        prev
-          ? {
-              ...prev,
-              raisedUGX: prev.raisedUGX + donorData.amountUGX,
-              donorCount: prev.donorCount + 1,
-              recentDonors: [newRecord, ...prev.recentDonors],
-            }
-          : null
-      );
-    }
-
-    return { success: true, txRef };
   };
 
   const submitVolunteerPledge = async (
@@ -193,7 +131,6 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         isDonationModalOpen,
         openDonationModal,
         closeDonationModal,
-        processDonation,
         isPledgeModalOpen,
         activeCampaignForPledge,
         openPledgeModal,
