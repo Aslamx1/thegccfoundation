@@ -24,6 +24,18 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "dbox-widget": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        campaign?: string;
+        type?: string;
+        "enable-auto-scroll"?: string;
+      };
+    }
+  }
+}
+
 interface CampaignDetail {
   id: string;
   slug: string;
@@ -438,25 +450,30 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Link
-                  href={`/campaigns/${encodeURIComponent(campaign.slug)}/donate`}
-                  className="w-full flex items-center justify-center gap-2 rounded-full bg-[#02A95C] px-6 py-4 text-base font-extrabold text-white shadow-md hover:bg-[#028F4D] transition-transform active:scale-[0.98]"
-                >
-                  <Heart className="h-5 w-5 fill-current" />
-                  Donate Now
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-gray-200 bg-white px-6 py-3.5 text-base font-bold text-gray-800 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  <Share2 className="h-5 w-5 text-gray-600" />
-                  Share Fundraiser
-                </button>
+              {/* Donorbox Widget */}
+              <div className="rounded-2xl bg-white p-6 border border-gray-100">
+                <script
+                  type="module"
+                  src="https://donorbox.org/widgets.js"
+                  async
+                  dangerouslySetInnerHTML={{ __html: "" }}
+                />
+                <dbox-widget
+                  campaign="gcc-foundation"
+                  type="donation_form"
+                  enable-auto-scroll="true"
+                />
               </div>
+
+              {/* Share Button */}
+              <button
+                type="button"
+                onClick={() => setShareModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-gray-200 bg-white px-6 py-3.5 text-base font-bold text-gray-800 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                <Share2 className="h-5 w-5 text-gray-600" />
+                Share Fundraiser
+              </button>
 
               {/* Top Recent Supporters Preview */}
               {topDonations.length > 0 && (
