@@ -101,8 +101,25 @@ export default function Header() {
 
             {donateDropdownOpen && (
               <div onMouseLeave={() => setDonateDropdownOpen(false)} className="absolute left-0 top-full z-50 mt-0 w-[min(440px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-[#E5E7EB] bg-white p-5 shadow-2xl animate-fadeIn">
+                <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[#F5F8F4] p-3.5 border border-[#DCE9DD]">
+                  <div>
+                    <strong className="block text-sm text-[#20251F]">Support GCC Foundation</strong>
+                    <span className="text-xs text-gray-600">100% direct institutional payouts</span>
+                  </div>
+                  <a
+                    href="https://donorbox.org/gcc-foundation"
+                    onClick={() => setDonateDropdownOpen(false)}
+                    className="shrink-0 rounded-full bg-[#02A95C] px-4 py-2 text-xs font-bold text-white hover:bg-[#028F4D] transition-colors"
+                  >
+                    Donate Now
+                  </a>
+                </div>
                 <h3 className="px-2 text-sm font-bold text-[#20251F]">Discover fundraisers and community causes to support</h3>
-                <div className="mt-3 grid grid-cols-1 gap-1">
+                <div className="mt-2 grid grid-cols-1 gap-1">
+                  <Link href="/donate" onClick={() => setDonateDropdownOpen(false)} className="group rounded-2xl p-3 hover:bg-[#F6F8F5]">
+                    <strong className="block text-sm text-[#20251F] group-hover:text-[#087443]">Donation Form</strong>
+                    <span className="mt-1 block text-xs text-gray-500">Give directly using our embedded Donorbox form</span>
+                  </Link>
                   <Link href="/#discover" onClick={() => setDonateDropdownOpen(false)} className="group rounded-2xl p-3 hover:bg-[#F6F8F5]">
                     <strong className="block text-sm text-[#20251F] group-hover:text-[#087443]">Categories</strong>
                     <span className="mt-1 block text-xs text-gray-500">Browse fundraisers by category</span>
@@ -248,6 +265,20 @@ export default function Header() {
           </button>
 
           <div className="space-y-1 pt-2">
+            <a
+              href="https://donorbox.org/gcc-foundation"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 px-3 text-sm font-bold text-[#02A95C] hover:bg-[#FBF9F6] rounded-lg"
+            >
+              Donate Now
+            </a>
+            <Link
+              href="/donate"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 px-3 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6] rounded-lg"
+            >
+              Donation Form
+            </Link>
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}

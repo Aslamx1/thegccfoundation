@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Campaign, DonorRecord, VolunteerPledge } from '@/types';
+import { Campaign, VolunteerPledge } from '@/types';
 import { CAMPAIGNS_DATA } from '@/data/campaigns';
 import { useAuth } from '@/context/AuthContext';
 
@@ -32,7 +32,7 @@ interface DonationContextType {
 }
 
 const STORAGE_KEY = 'gcc_foundation_campaigns';
-const DONORBOX_URL = 'https://donorbox.org/gcc-foundation';
+export const DONORBOX_URL = 'https://donorbox.org/gcc-foundation';
 
 const DonationContext = createContext<DonationContextType | undefined>(undefined);
 
@@ -73,8 +73,10 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
 
   const openDonationModal = (campaign: Campaign) => {
     setActiveCampaignForDonation(campaign);
-    window.open(DONORBOX_URL, '_blank', 'noopener,noreferrer');
     setIsDonationModalOpen(false);
+    if (typeof window !== 'undefined') {
+      window.location.href = DONORBOX_URL;
+    }
   };
 
   const closeDonationModal = () => {
@@ -154,6 +156,3 @@ export function useDonation() {
   }
   return context;
 }
-
-
-

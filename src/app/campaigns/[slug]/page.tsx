@@ -439,6 +439,15 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
 
+              {/* Donate Now Redirect Button */}
+              <a
+                href="https://donorbox.org/gcc-foundation"
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-[#02A95C] px-6 py-4 text-base font-extrabold text-white shadow-md hover:bg-[#028F4D] transition-transform active:scale-[0.98]"
+              >
+                <Heart className="h-5 w-5 fill-current" />
+                Donate Now
+              </a>
+
               {/* Donorbox Widget */}
               <DonorboxWidget
                 campaign="gcc-foundation"

@@ -86,6 +86,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <script type="module" src="https://donorbox.org/widgets.js" async></script>
       </head>
       <body className="min-h-screen flex flex-col font-body antialiased selection:bg-[#E6EED8] selection:text-[#1F310C]">
         <AuthProvider>

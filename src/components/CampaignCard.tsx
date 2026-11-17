@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Campaign } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
-import { useDonation } from '@/context/DonationContext';
-import { MapPin, Building2, ShieldCheck, HeartHandshake } from 'lucide-react';
+import { DONORBOX_URL } from '@/context/DonationContext';
+import { MapPin } from 'lucide-react';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -15,7 +15,6 @@ interface CampaignCardProps {
 
 export default function CampaignCard({ campaign, isLargeFeatured = false }: CampaignCardProps) {
   const { formatUGX } = useCurrency();
-  const { openDonationModal } = useDonation();
 
   const percentRaised = Math.min(100, Math.round((campaign.raisedUGX / campaign.goalUGX) * 100));
 
@@ -98,13 +97,12 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
 
           {/* Action Row */}
           <div className="pt-2 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => openDonationModal(campaign)}
+            <a
+              href={DONORBOX_URL}
               className="flex-1 bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-3 px-4 rounded-full shadow-sm transition-all text-center"
             >
               Donate Now
-            </button>
+            </a>
             <Link
               href={`/campaign/${campaign.id}`}
               className="px-5 py-3 border border-gray-300 hover:border-gray-900 text-gray-800 text-xs font-bold rounded-full transition-colors text-center"
@@ -164,7 +162,7 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
       </div>
 
       {/* Progress & Single Line Bold Metric */}
-      <div className="px-4 pb-4 pt-1 space-y-2">
+      <div className="px-4 pb-4 pt-1 space-y-2.5">
         {/* Thin 6px rounded progress bar */}
         <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
           <div
@@ -177,6 +175,21 @@ export default function CampaignCard({ campaign, isLargeFeatured = false }: Camp
         <div className="flex items-baseline justify-between text-xs font-heading font-extrabold text-[#1A1A1A] tabular-nums">
           <span>{formatUGX(campaign.raisedUGX)} raised</span>
           <span className="text-[11px] text-gray-500 font-normal">of {formatUGX(campaign.goalUGX)}</span>
+        </div>
+
+        <div className="pt-1 flex items-center gap-2">
+          <a
+            href={DONORBOX_URL}
+            className="flex-1 bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs font-bold py-2.5 px-3 rounded-full shadow-sm transition-all text-center"
+          >
+            Donate Now
+          </a>
+          <Link
+            href={`/campaign/${campaign.id}`}
+            className="px-3.5 py-2.5 border border-gray-300 hover:border-gray-900 text-gray-800 text-xs font-bold rounded-full transition-colors text-center"
+          >
+            Details
+          </Link>
         </div>
       </div>
 

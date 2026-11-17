@@ -115,12 +115,23 @@ export default function CheckoutPage() {
         </div>
 
         {/* Donorbox Widget */}
-        <DonorboxWidget
-          campaign="gcc-foundation"
-          type="donation_form"
-          enableAutoScroll={true}
-          className="rounded-3xl shadow-card"
-        />
+        <div className="space-y-6">
+          <DonorboxWidget
+            campaign="gcc-foundation"
+            type="donation_form"
+            enableAutoScroll={true}
+            className="rounded-3xl shadow-card"
+          />
+
+          <div className="text-center">
+            <a
+              href="https://donorbox.org/gcc-foundation"
+              className="inline-flex items-center justify-center rounded-full bg-[#02A95C] px-8 py-3.5 text-base font-extrabold text-white shadow-md hover:bg-[#028F4D] transition-all"
+            >
+              Donate Now on Donorbox
+            </a>
+          </div>
+        </div>
       </main>
 
       <Footer />

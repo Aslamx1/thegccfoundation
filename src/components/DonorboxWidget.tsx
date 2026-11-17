@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface DonorboxWidgetProps {
   campaign?: string;
@@ -9,75 +9,39 @@ interface DonorboxWidgetProps {
   className?: string;
 }
 
-export default function DonorboxWidget({ 
+const DONORBOX_SCRIPT_SRC = 'https://donorbox.org/widgets.js';
+
+export default function DonorboxWidget({
   campaign = 'gcc-foundation',
   type = 'donation_form',
   enableAutoScroll = true,
-  className = ''
+  className = '',
 }: DonorboxWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [scriptError, setScriptError] = useState(false);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://donorbox.org/widgets.js';
-    script.async = true;
-    
-    script.onload = () => {
-      setScriptLoaded(true);
-    };
-    
-    script.onerror = () => {
-      setScriptError(true);
-    };
+    if (typeof document === 'undefined') return;
 
-    document.head.appendChild(script);
-
-    return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (scriptLoaded && containerRef.current) {
-      const widget = containerRef.current.querySelector('dbox-widget');
-      if (widget) {
-        widget.setAttribute('campaign', campaign);
-        widget.setAttribute('type', type);
-        widget.setAttribute('enable-auto-scroll', enableAutoScroll.toString());
-      }
+    // 1. Render <dbox-widget> with attributes in place before/during custom element upgrade
+    if (containerRef.current) {
+      containerRef.current.innerHTML = `<dbox-widget campaign="${campaign}" type="${type}" enable-auto-scroll="${enableAutoScroll}"></dbox-widget>`;
     }
-  }, [scriptLoaded, campaign, type, enableAutoScroll]);
 
-  if (scriptError) {
-    return (
-      <div className={`rounded-2xl bg-white p-6 border border-red-200 text-red-700 ${className}`}>
-        <p className="font-semibold">Unable to load donation widget</p>
-        <p className="text-sm mt-1">Please visit <a href="https://donorbox.org/gcc-foundation" target="_blank" rel="noopener noreferrer" className="underline text-[#02A95C]">donorbox.org/gcc-foundation</a> to donate.</p>
-      </div>
-    );
-  }
+    // 2. Ensure the Donorbox module script is loaded once in document.head
+    const existingScript = document.querySelector(`script[src="${DONORBOX_SCRIPT_SRC}"]`);
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = DONORBOX_SCRIPT_SRC;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }, [campaign, type, enableAutoScroll]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`rounded-2xl bg-white p-6 border border-gray-100 ${className}`}
-    >
-      {scriptLoaded ? (
-        <dbox-widget
-          campaign={campaign}
-          type={type}
-          enable-auto-scroll={enableAutoScroll.toString()}
-        />
-      ) : (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#02A95C]"></div>
-        </div>
-      )}
-    </div>
+    <div
+      ref={containerRef}
+      className={`rounded-2xl bg-white p-4 sm:p-6 border border-gray-100 flex justify-center min-h-[420px] ${className}`}
+    />
   );
 }
