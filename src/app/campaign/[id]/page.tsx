@@ -6,8 +6,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import ReportCampaignButton from '@/components/ReportCampaignButton';
-import DonorboxWidget from '@/components/DonorboxWidget';
-import { useDonation, DONORBOX_URL } from '@/context/DonationContext';
+import { useDonation } from '@/context/DonationContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { copyTextToClipboard } from '@/lib/browser';
 import {
@@ -417,20 +416,13 @@ export default function CampaignDetailPage({ params }: CampaignPageProps) {
               {/* Exact GoFundMe CTA Pill Buttons */}
               <div className="space-y-2.5">
                 {/* Full-width Solid Green Pill "Donate now" */}
-                <a
-                  href={DONORBOX_URL}
-                  className="block w-full bg-[#02A95C] hover:bg-[#028F4D] text-white font-extrabold text-base py-3.5 px-6 rounded-full shadow-sm hover:shadow transition-all transform active:scale-98 text-center"
+                <button
+                  type="button"
+                  onClick={() => openDonationModal(campaign)}
+                  className="w-full bg-[#02A95C] hover:bg-[#028F4D] text-white font-extrabold text-base py-3.5 px-6 rounded-full shadow-sm hover:shadow transition-all transform active:scale-98 text-center"
                 >
                   Donate now
-                </a>
-
-                {/* Embedded Donorbox Form */}
-                <DonorboxWidget
-                  campaign="gcc-foundation"
-                  type="donation_form"
-                  enableAutoScroll={true}
-                  className="p-2 border-0"
-                />
+                </button>
 
                 {/* Full-width Warm Amber/Yellow Pill "Share" */}
                 <button

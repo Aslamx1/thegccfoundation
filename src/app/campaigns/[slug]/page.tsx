@@ -23,7 +23,7 @@ import {
   HelpCircle,
   BadgeCheck,
 } from "lucide-react";
-import DonorboxWidget from "@/components/DonorboxWidget";
+import { useDonation } from "@/context/DonationContext";
 
 interface CampaignDetail {
   id: string;
@@ -68,6 +68,7 @@ interface DonorItem {
 export default function CampaignDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { openDonationModal } = useDonation();
   const slug = (params?.slug as string) || "";
 
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
@@ -439,21 +440,15 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
 
-              {/* Donate Now Redirect Button */}
-              <a
-                href="https://donorbox.org/gcc-foundation"
+              {/* Donate Now Button (opens Donorbox payment modal on click) */}
+              <button
+                type="button"
+                onClick={() => openDonationModal()}
                 className="w-full flex items-center justify-center gap-2 rounded-full bg-[#02A95C] px-6 py-4 text-base font-extrabold text-white shadow-md hover:bg-[#028F4D] transition-transform active:scale-[0.98]"
               >
                 <Heart className="h-5 w-5 fill-current" />
                 Donate Now
-              </a>
-
-              {/* Donorbox Widget */}
-              <DonorboxWidget
-                campaign="gcc-foundation"
-                type="donation_form"
-                enableAutoScroll={true}
-              />
+              </button>
 
               {/* Share Button */}
               <button

@@ -9,7 +9,7 @@ interface DonationContextType {
   campaigns: Campaign[];
   activeCampaignForDonation: Campaign | null;
   isDonationModalOpen: boolean;
-  openDonationModal: (campaign: Campaign) => void;
+  openDonationModal: (campaign?: Campaign) => void;
   closeDonationModal: () => void;
 
   // Volunteer & Material Pledge Modal
@@ -71,12 +71,9 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
     }
   }, [campaigns, campaignsLoaded]);
 
-  const openDonationModal = (campaign: Campaign) => {
-    setActiveCampaignForDonation(campaign);
-    setIsDonationModalOpen(false);
-    if (typeof window !== 'undefined') {
-      window.location.href = DONORBOX_URL;
-    }
+  const openDonationModal = (campaign?: Campaign) => {
+    setActiveCampaignForDonation(campaign || campaigns[0] || null);
+    setIsDonationModalOpen(true);
   };
 
   const closeDonationModal = () => {
