@@ -23,18 +23,7 @@ import {
   HelpCircle,
   BadgeCheck,
 } from "lucide-react";
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "dbox-widget": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        campaign?: string;
-        type?: string;
-        "enable-auto-scroll"?: string;
-      };
-    }
-  }
-}
+import DonorboxWidget from "@/components/DonorboxWidget";
 
 interface CampaignDetail {
   id: string;
@@ -451,19 +440,11 @@ export default function CampaignDetailPage() {
               </div>
 
               {/* Donorbox Widget */}
-              <div className="rounded-2xl bg-white p-6 border border-gray-100">
-                <script
-                  type="module"
-                  src="https://donorbox.org/widgets.js"
-                  async
-                  dangerouslySetInnerHTML={{ __html: "" }}
-                />
-                <dbox-widget
-                  campaign="gcc-foundation"
-                  type="donation_form"
-                  enable-auto-scroll="true"
-                />
-              </div>
+              <DonorboxWidget
+                campaign="gcc-foundation"
+                type="donation_form"
+                enableAutoScroll={true}
+              />
 
               {/* Share Button */}
               <button

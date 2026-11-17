@@ -7,18 +7,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "dbox-widget": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        campaign?: string;
-        type?: string;
-        "enable-auto-scroll"?: string;
-      };
-    }
-  }
-}
+import DonorboxWidget from "@/components/DonorboxWidget";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -126,19 +115,12 @@ export default function CheckoutPage() {
         </div>
 
         {/* Donorbox Widget */}
-        <div className="rounded-3xl bg-white p-6 sm:p-10 shadow-card border border-gray-100">
-          <script
-            type="module"
-            src="https://donorbox.org/widgets.js"
-            async
-            dangerouslySetInnerHTML={{ __html: "" }}
-          />
-          <dbox-widget
-            campaign="gcc-foundation"
-            type="donation_form"
-            enable-auto-scroll="true"
-          />
-        </div>
+        <DonorboxWidget
+          campaign="gcc-foundation"
+          type="donation_form"
+          enableAutoScroll={true}
+          className="rounded-3xl shadow-card"
+        />
       </main>
 
       <Footer />
