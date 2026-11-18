@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { HonoEnv } from "../types";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { requireAdmin } from "../middleware/auth";
 
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -15,6 +16,7 @@ const ALLOWED_MIME_TYPES = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const uploadsRoute = new Hono<HonoEnv>()
+  .use("*", requireAdmin)
   // ---------------------------------------------------------------------------
   // 1. Authorize Upload / Generate Cloudflare R2 Key
   // ---------------------------------------------------------------------------
@@ -84,6 +86,10 @@ export const uploadsRoute = new Hono<HonoEnv>()
         bucket = c.env.MEDIA_BUCKET;
       }
 
+      if (!bucket) {
+        return c.json({ error: "File storage is not configured. Add the MEDIA_BUCKET binding before uploading files." }, 503);
+      }
+
       const fileBuffer = await file.arrayBuffer();
 
       if (bucket) {
@@ -97,9 +103,7 @@ export const uploadsRoute = new Hono<HonoEnv>()
 
       const publicDomain =
         process.env.NEXT_PUBLIC_MEDIA_URL || "https://media.thegccfoundation.org";
-      const publicUrl = bucket
-        ? `${publicDomain}/${key}`
-        : "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop";
+      const publicUrl = `${publicDomain}/${key}`;
 
       return c.json({
         success: true,

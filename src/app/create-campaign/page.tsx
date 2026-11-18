@@ -62,10 +62,12 @@ export default function CreateCampaignPage() {
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCampaignId, setNewCampaignId] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError('');
 
     const generatedId = `gcc-user-${Date.now().toString().slice(-4)}`;
     const parsedGoal = parseFloat(goalAmount) || 15000000;
@@ -140,12 +142,15 @@ export default function CreateCampaignPage() {
       volunteerPledges: [],
     };
 
-    setTimeout(() => {
-      addNewCampaign(createdCampaign);
-      setNewCampaignId(generatedId);
+    try {
+      const campaignId = await addNewCampaign(createdCampaign);
+      setNewCampaignId(campaignId);
+      setStep(5);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not submit this campaign.');
+    } finally {
       setIsSubmitting(false);
-      setStep(5); // Success step
-    }, 1200);
+    }
   };
 
   return (
@@ -321,6 +326,7 @@ export default function CreateCampaignPage() {
             </div>
 
             <div className="pt-4 flex justify-between">
+              {submitError && <p role="alert" className="text-sm text-red-700">{submitError}</p>}
               <button
                 type="button"
                 onClick={() => setStep(1)}

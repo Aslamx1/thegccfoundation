@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useDonation } from '@/context/DonationContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/context/AuthContext';
 import { Campaign, Category } from '@/types';
@@ -76,6 +75,29 @@ interface PayoutRow {
   date: string;
 }
 
+interface AdminCampaignRecord {
+  id: string; slug: string; title: string; story: string; category: string; country: string; district?: string | null; receivingInstitution?: string | null; currency: string;
+  goalAmount: number; raisedAmount: number; donorCount: number; coverImageUrl: string;
+  status: 'draft' | 'active' | 'paused' | 'completed'; isVerified: boolean; createdAt: string | Date;
+  organizer?: { id?: string; name?: string; email?: string } | null;
+}
+
+function mapAdminCampaign(record: AdminCampaignRecord): Campaign {
+  const story = record.story || '';
+  return {
+    id: record.id, slug: record.slug, title: record.title, subtitle: story.slice(0, 160),
+    category: (record.category as Category) || 'Community Infrastructure',
+    location: { district: record.district || record.country, subCounty: '', country: record.country, facilityName: record.receivingInstitution || undefined },
+    goalUGX: record.goalAmount / 100, raisedUGX: record.raisedAmount / 100, donorCount: record.donorCount,
+    daysRemaining: 0, createdAt: new Date(record.createdAt).toISOString(), urgent: false, featured: record.isVerified,
+    coverImage: record.coverImageUrl, galleryImages: [],
+    payoutVerification: { type: 'Vetted Trustee', institutionName: record.receivingInstitution || 'Not recorded', accountNumberMasked: '', bankName: '', verificationReference: '', complianceOfficer: '' },
+    organizer: { name: record.organizer?.name || 'Not recorded', role: 'Organizer', ninOrIdMasked: '', verifiedBadge: false, relationshipToBeneficiary: '', phoneMasked: '', avatarUrl: '', residence: '' },
+    beneficiary: { name: record.title, storySummary: story.slice(0, 200) },
+    fullStoryHtml: story.split(/\n\n+/).filter(Boolean), itemizedBudget: [], fieldUpdates: [], recentDonors: [], volunteerPledges: [],
+  };
+}
+
 const INITIAL_PAYOUTS: PayoutRow[] = [
   {
     id: 'PAY-2026-401',
@@ -107,9 +129,10 @@ const INITIAL_PAYOUTS: PayoutRow[] = [
 ];
 
 export default function AdminDashboardPage() {
-  const { campaigns, addNewCampaign, updateCampaign } = useDonation();
   const { formatUGX } = useCurrency();
   const { user, logout } = useAuth();
+  const [campaignRecords, setCampaignRecords] = useState<AdminCampaignRecord[]>([]);
+  const campaigns = useMemo(() => campaignRecords.map(mapAdminCampaign), [campaignRecords]);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('command');
   const [adminToast, setAdminToast] = useState('');
@@ -121,49 +144,46 @@ export default function AdminDashboardPage() {
   };
 
   // ================= STATE: 1. COMMAND CENTER & PAYOUTS =================
-  const [payouts, setPayouts] = useState<PayoutRow[]>(INITIAL_PAYOUTS);
+  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
 
   // ================= STATE: 2. CHILD SPONSORSHIP MANAGEMENT (CMS) =================
-  const [childrenList, setChildrenList] = useState<ChildProfile[]>(DEFAULT_CHILDREN);
+  const [childrenList, setChildrenList] = useState<ChildProfile[]>([]);
   const [editingChild, setEditingChild] = useState<ChildProfile | null>(null);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childName, setChildName] = useState('');
   const [childAge, setChildAge] = useState('9');
   const [childGender, setChildGender] = useState<'Girl' | 'Boy'>('Girl');
-  const [childDistrict, setChildDistrict] = useState('Soroti District, Uganda');
+  const [childDistrict, setChildDistrict] = useState('');
   const [childSchool, setChildSchool] = useState('');
   const [childMonthlyUSD, setChildMonthlyUSD] = useState('35');
   const [childBio, setChildBio] = useState('');
   const [childDream, setChildDream] = useState('');
-  const [childPhotoUrl, setChildPhotoUrl] = useState(
-    'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'
-  );
+  const [childPhotoUrl, setChildPhotoUrl] = useState('');
   const [childStatus, setChildStatus] = useState<'available' | 'sponsored'>('available');
   const [childSponsorName, setChildSponsorName] = useState('');
   const [childSponsorEmail, setChildSponsorEmail] = useState('');
   const [childFormError, setChildFormError] = useState('');
 
   // ================= STATE: 3. LETTER MODERATION & FIELD UPLOADS =================
-  const [letters, setLetters] = useState<ChildLetter[]>(DEFAULT_LETTERS);
+  const [letters, setLetters] = useState<ChildLetter[]>([]);
   const [editingLetterId, setEditingLetterId] = useState<string | null>(null);
   const [editingLetterText, setEditingLetterText] = useState('');
   const [letterFilter, setLetterFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  const [fieldUploads, setFieldUploads] = useState<FieldUpdateUpload[]>(DEFAULT_FIELD_UPDATES);
+  const [fieldUploads, setFieldUploads] = useState<FieldUpdateUpload[]>([]);
   const [showFieldUploadForm, setShowFieldUploadForm] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDocType, setUploadDocType] = useState<FieldUpdateUpload['documentType']>('Termly Report Card');
   const [uploadTargetType, setUploadTargetType] = useState<'child' | 'project'>('child');
-  const [uploadTargetId, setUploadTargetId] = useState('child-04');
+  const [uploadTargetId, setUploadTargetId] = useState('');
   const [uploadTerm, setUploadTerm] = useState('Term 3 · 2026');
   const [uploadNotes, setUploadNotes] = useState('');
-  const [uploadAttachmentUrl, setUploadAttachmentUrl] = useState(
-    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'
-  );
-  const [uploadFileName, setUploadFileName] = useState('term3_report_card_batch.pdf');
+  const [uploadAttachmentUrl, setUploadAttachmentUrl] = useState('');
+  const [uploadFileName, setUploadFileName] = useState('');
 
   // ================= STATE: 4. DONATION & FINANCIAL RECORDS =================
-  const [ledger, setLedger] = useState<LedgerTransaction[]>(DEFAULT_LEDGER);
+  const [ledger, setLedger] = useState<LedgerTransaction[]>([]);
+  const [raisedTotals, setRaisedTotals] = useState<Array<{ currency: string; allTimeMinor: number; monthMinor: number; yearMinor: number }>>([]);
   const [ledgerSearch, setLedgerSearch] = useState('');
   const [ledgerMethodFilter, setLedgerMethodFilter] = useState('All');
   const [ledgerTypeFilter, setLedgerTypeFilter] = useState('All');
@@ -181,7 +201,7 @@ export default function AdminDashboardPage() {
   const [selectedReceiptTx, setSelectedReceiptTx] = useState<LedgerTransaction | null>(null);
 
   // ================= STATE: 5. DONOR & MEMBER DIRECTORY =================
-  const [donors, setDonors] = useState<DonorDirectoryEntry[]>(DEFAULT_DONORS);
+  const [donors, setDonors] = useState<DonorDirectoryEntry[]>([]);
   const [donorSearch, setDonorSearch] = useState('');
   const [donorRoleFilter, setDonorRoleFilter] = useState('All');
   const [showAddDonor, setShowAddDonor] = useState(false);
@@ -190,18 +210,13 @@ export default function AdminDashboardPage() {
   const [newDonorEmail, setNewDonorEmail] = useState('');
   const [newDonorPhone, setNewDonorPhone] = useState('');
   const [newDonorAddress, setNewDonorAddress] = useState('');
-  const [newDonorAmount, setNewDonorAmount] = useState('250000');
-  const [newDonorPlan, setNewDonorPlan] = useState('One-Time Supporter');
-  const [newDonorRole, setNewDonorRole] = useState<'user' | 'volunteer' | 'admin'>('user');
 
   // ================= STATE: 6. CAMPAIGN & CONTENT MANAGER =================
-  const [newsList, setNewsList] = useState<NewsMilestoneItem[]>(DEFAULT_NEWS);
+  const [newsList, setNewsList] = useState<NewsMilestoneItem[]>([]);
   const [newsTitle, setNewsTitle] = useState('');
   const [newsCategory, setNewsCategory] = useState('Project Milestone');
   const [newsCampaignId, setNewsCampaignId] = useState('');
-  const [newsImageUrl, setNewsImageUrl] = useState(
-    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80'
-  );
+  const [newsImageUrl, setNewsImageUrl] = useState('');
   const [newsSummary, setNewsSummary] = useState('');
 
   const [showCampaignEditor, setShowCampaignEditor] = useState(false);
@@ -209,87 +224,107 @@ export default function AdminDashboardPage() {
   const [campTitle, setCampTitle] = useState('');
   const [campSubtitle, setCampSubtitle] = useState('');
   const [campCategory, setCampCategory] = useState<Category>('Medical Care');
-  const [campDistrict, setCampDistrict] = useState('Kampala, Uganda');
-  const [campInstitution, setCampInstitution] = useState('Uganda Heart Institute Accounts Treasury');
+  const [campDistrict, setCampDistrict] = useState('');
+  const [campInstitution, setCampInstitution] = useState('');
   const [campGoalUGX, setCampGoalUGX] = useState('15000000');
-  const [campCoverImage, setCampCoverImage] = useState(
-    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80'
-  );
+  const [campCoverImage, setCampCoverImage] = useState('');
   const [campStory, setCampStory] = useState('');
   const [campaignStatuses, setCampaignStatuses] = useState<Record<string, 'active' | 'paused'>>({});
   const [campaignVerified, setCampaignVerified] = useState<Record<string, boolean>>({});
 
-  // Load persisted data from localStorage
+  // Load staff records from the authenticated admin API.
   useEffect(() => {
-    try {
-      const savedChildren = localStorage.getItem(CHILDREN_STORAGE_KEY);
-      if (savedChildren) setChildrenList(JSON.parse(savedChildren));
-
-      const savedLetters = localStorage.getItem(LETTERS_STORAGE_KEY);
-      if (savedLetters) setLetters(JSON.parse(savedLetters));
-
-      const savedField = localStorage.getItem(FIELD_UPDATES_STORAGE_KEY);
-      if (savedField) setFieldUploads(JSON.parse(savedField));
-
-      const savedLedger = localStorage.getItem(LEDGER_STORAGE_KEY);
-      if (savedLedger) setLedger(JSON.parse(savedLedger));
-
-      const savedDonors = localStorage.getItem(DONORS_STORAGE_KEY);
-      if (savedDonors) setDonors(JSON.parse(savedDonors));
-
-      const savedNews = localStorage.getItem(NEWS_STORAGE_KEY);
-      if (savedNews) setNewsList(JSON.parse(savedNews));
-    } catch {}
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [childrenRes, lettersRes, updatesRes, supportersRes, transactionsRes, campaignsRes, newsRes] = await Promise.all([
+          fetch('/api/admin/children', { credentials: 'include' }),
+          fetch('/api/admin/letters', { credentials: 'include' }),
+          fetch('/api/admin/field-updates', { credentials: 'include' }),
+          fetch('/api/admin/supporters', { credentials: 'include' }),
+          fetch('/api/admin/transactions', { credentials: 'include' }),
+          fetch('/api/admin/campaigns', { credentials: 'include' }),
+          fetch('/api/admin/updates', { credentials: 'include' }),
+        ]);
+        if (!childrenRes.ok || !lettersRes.ok || !updatesRes.ok || !supportersRes.ok || !transactionsRes.ok || !campaignsRes.ok || !newsRes.ok) throw new Error('Admin records could not be loaded. Check your admin session and database connection.');
+        const [childrenData, lettersData, updatesData, supportersData, transactionsData, campaignsData, newsData] = await Promise.all([
+          childrenRes.json() as Promise<{ children: any[] }>,
+          lettersRes.json() as Promise<{ letters: any[] }>,
+          updatesRes.json() as Promise<{ updates: any[] }>,
+          supportersRes.json() as Promise<{ supporters: any[] }>,
+          transactionsRes.json() as Promise<{ transactions: any[]; totalsByCurrency: any[] }>,
+          campaignsRes.json() as Promise<{ campaigns: AdminCampaignRecord[] }>,
+          newsRes.json() as Promise<{ updates: any[] }>,
+        ]);
+        if (cancelled) return;
+        setCampaignRecords(campaignsData.campaigns);
+        setCampaignStatuses(Object.fromEntries(campaignsData.campaigns.map((campaign) => [campaign.id, campaign.status === 'paused' ? 'paused' : 'active'])));
+        setCampaignVerified(Object.fromEntries(campaignsData.campaigns.map((campaign) => [campaign.id, campaign.isVerified])));
+        setNewsList(newsData.updates.map((update: any) => ({ id: update.id, title: update.title, category: update.category, summary: update.content, publishedAt: new Date(update.createdAt).toLocaleDateString('en-GB'), author: update.authorName, campaignId: update.campaignId, campaignTitle: update.campaignTitle, imageUrl: update.imageUrl || undefined })));
+        setChildrenList(childrenData.children.map((child: any) => ({ ...child, sponsoredSince: child.sponsoredSince ? new Date(child.sponsoredSince).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : undefined })));
+        setLetters(lettersData.letters.map((letter: any) => ({ ...letter, createdAt: new Date(letter.createdAt).toLocaleDateString('en-GB'), editedByAdmin: false })));
+        setFieldUploads(updatesData.updates.map((update: any) => ({
+          ...update,
+          targetName: update.targetType === 'child' ? childrenData.children.find((child: any) => child.id === update.targetId)?.name || 'Child' : campaigns.find((campaign) => campaign.id === update.targetId)?.title || 'Project',
+          termOrPeriod: update.termOrPeriod,
+          uploadedAt: new Date(update.createdAt).toLocaleDateString('en-GB'),
+        })));
+        const supporterGroups = new Map<string, DonorDirectoryEntry>();
+        supportersData.supporters.forEach((row: any) => {
+          const supporter = supporterGroups.get(row.id) || {
+            id: row.id, name: row.name, email: row.email, phone: row.phone || '', address: row.location || '', totalDonatedUGX: 0,
+            donationsCount: 0, recurringPlan: 'No recurring plan', joinedDate: new Date(row.joinedAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+            role: row.role === 'admin' ? 'admin' : 'user', accountStatus: row.isActive ? 'active' : 'deactivated', contributionsByCurrency: [] as NonNullable<DonorDirectoryEntry['contributionsByCurrency']>,
+          };
+          supporter.donationsCount += Number(row.donationsCount || 0);
+          if (row.currency && Number(row.totalDonatedMinor) > 0) supporter.contributionsByCurrency?.push({ currency: row.currency, amountMinor: Number(row.totalDonatedMinor) });
+          supporterGroups.set(row.id, supporter);
+        });
+        setDonors(Array.from(supporterGroups.values()));
+        setRaisedTotals(transactionsData.totalsByCurrency.map((item) => ({ currency: item.currency, allTimeMinor: Number(item.allTimeMinor), monthMinor: Number(item.monthMinor), yearMinor: Number(item.yearMinor) })));
+        setLedger(transactionsData.transactions.map((item: any) => ({
+          id: item.id,
+          receiptNumber: `GCC-${item.id}`,
+          donorName: item.isAnonymous ? 'Anonymous Supporter' : item.donorName,
+          donorEmail: item.donorEmail,
+          campaignId: item.campaignId,
+          campaignTitle: item.campaignTitle,
+          amountUGX: 0,
+          amountMinor: Number(item.amountMinor),
+          currencyCode: item.currency,
+          paymentMethod: item.paymentMethod || 'Online',
+          entryType: item.entryType === 'offline' ? 'Manual Offline Entry' : 'Online',
+          date: new Date(item.createdAt).toLocaleDateString('en-GB'),
+          monthTag: new Date(item.createdAt).getUTCFullYear() === new Date().getUTCFullYear() ? 'this-year' : 'prior-year',
+          referenceCode: item.referenceCode || item.paymentProviderRef,
+          notes: item.notes || '',
+        })));
+      } catch (error) {
+        if (!cancelled) notify(error instanceof Error ? error.message : 'Admin records could not be loaded.');
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
   }, []);
 
-  // Combined transactions (Global Ledger + Campaign Recent Donors)
+  // Financial data comes from completed database donations only.
   const combinedTransactions = useMemo<LedgerTransaction[]>(() => {
-    const campaignTxs: LedgerTransaction[] = campaigns.flatMap((c, cIdx) =>
-      c.recentDonors.map((d, dIdx) => ({
-        id: `camp-tx-${c.id}-${d.id}`,
-        receiptNumber: `GCC-RCP-2026-${1000 + cIdx * 100 + dIdx}`,
-        donorName: d.isAnonymous ? 'Anonymous Supporter' : d.name,
-        donorEmail: 'verified.supporter@thegccfoundation.com',
-        campaignId: c.id,
-        campaignTitle: c.title,
-        amountUGX: d.amountUGX,
-        paymentMethod:
-          d.paymentMethod === 'MTN Mobile Money'
-            ? 'MTN MoMo'
-            : d.paymentMethod === 'Airtel Money'
-            ? 'Airtel Money'
-            : 'Visa / Mastercard',
-        entryType: 'Online',
-        date: d.timestamp,
-        monthTag: 'this-month',
-        referenceCode: `TX-${d.id.toUpperCase()}`,
-        notes: d.message || 'Direct online campaign contribution',
-      }))
+    return ledger;
+  }, [ledger]);
+
+  const formatRaisedTotal = (period: 'monthMinor' | 'yearMinor' | 'allTimeMinor') => {
+    const values = raisedTotals.filter((item) => item[period] > 0).map((item) =>
+      new Intl.NumberFormat('en', { style: 'currency', currency: item.currency, maximumFractionDigits: 2 }).format(item[period] / 100)
     );
-    return [...ledger, ...campaignTxs];
-  }, [ledger, campaigns]);
+    return values.length ? values.join(' · ') : 'UGX 0';
+  };
+
+  const formatTransactionAmount = (transaction: LedgerTransaction) =>
+    transaction.currencyCode && transaction.amountMinor !== undefined
+      ? new Intl.NumberFormat('en', { style: 'currency', currency: transaction.currencyCode, maximumFractionDigits: 2 }).format(transaction.amountMinor / 100)
+      : formatUGX(transaction.amountUGX);
 
   // High-Level Financial Metrics
-  const allTimeRaisedUGX = useMemo(() => {
-    const campaignSum = campaigns.reduce((sum, c) => sum + c.raisedUGX, 0);
-    const manualOfflineSum = ledger
-      .filter((tx) => tx.entryType !== 'Online')
-      .reduce((sum, tx) => sum + tx.amountUGX, 0);
-    return campaignSum + manualOfflineSum;
-  }, [campaigns, ledger]);
-
-  const thisMonthRaisedUGX = useMemo(() => {
-    return combinedTransactions
-      .filter((tx) => tx.monthTag === 'this-month')
-      .reduce((sum, tx) => sum + tx.amountUGX, 0);
-  }, [combinedTransactions]);
-
-  const thisYearRaisedUGX = useMemo(() => {
-    return combinedTransactions
-      .filter((tx) => tx.monthTag === 'this-month' || tx.monthTag === 'this-year')
-      .reduce((sum, tx) => sum + tx.amountUGX, 0);
-  }, [combinedTransactions]);
-
   const activeMonthlyRecurringDonors = useMemo(
     () =>
       donors.filter(
@@ -367,14 +402,12 @@ export default function AdminDashboardPage() {
     setChildName('');
     setChildAge('9');
     setChildGender('Girl');
-    setChildDistrict('Soroti District, Uganda');
-    setChildSchool('St. Mary\'s Primary · Primary 4');
+    setChildDistrict('');
+    setChildSchool('');
     setChildMonthlyUSD('35');
     setChildBio('');
     setChildDream('');
-    setChildPhotoUrl(
-      'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'
-    );
+    setChildPhotoUrl('');
     setChildStatus('available');
     setChildSponsorName('');
     setChildSponsorEmail('');
@@ -400,7 +433,7 @@ export default function AdminDashboardPage() {
     setShowChildForm(true);
   };
 
-  const handleImageFileUpload = (
+  const handleImageFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (val: string) => void,
     nameSetter?: (val: string) => void
@@ -408,16 +441,21 @@ export default function AdminDashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (nameSetter) nameSetter(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setter(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const authorization = await fetch('/api/uploads/authorize', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, fileType: file.type, fileSize: file.size }) });
+      const uploadPlan = await authorization.json() as { error?: string; uploadEndpoint: string };
+      if (!authorization.ok) throw new Error(uploadPlan.error || 'Could not prepare the upload.');
+      const form = new FormData();
+      form.append('file', file);
+      const upload = await fetch(uploadPlan.uploadEndpoint, { method: 'POST', credentials: 'include', body: form });
+      const uploaded = await upload.json() as { error?: string; url: string };
+      if (!upload.ok) throw new Error(uploaded.error || 'Could not upload the file.');
+      setter(uploaded.url);
+      notify(`${file.name} uploaded successfully.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not upload the file.'); }
   };
 
-  const handleSaveChild = (e: React.FormEvent) => {
+  const handleSaveChild = async (e: React.FormEvent) => {
     e.preventDefault();
     setChildFormError('');
     if (!childName.trim()) return;
@@ -429,8 +467,7 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    const record: ChildProfile = {
-      id: editingChild ? editingChild.id : `child-${Date.now()}`,
+    const record = {
       name: childName.trim(),
       age: Number(childAge) || 9,
       gender: childGender,
@@ -443,21 +480,20 @@ export default function AdminDashboardPage() {
       status: childStatus,
       sponsorName: childStatus === 'sponsored' ? childSponsorName.trim() : undefined,
       sponsorEmail: childStatus === 'sponsored' ? childSponsorEmail.trim() : undefined,
-      sponsoredSince:
-        childStatus === 'sponsored'
-          ? editingChild?.sponsoredSince ||
-            new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-          : undefined,
     };
-
-    const next = editingChild
-      ? childrenList.map((c) => (c.id === editingChild.id ? record : c))
-      : [record, ...childrenList];
-
-    setChildrenList(next);
     try {
-      localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+      const response = await fetch(editingChild ? `/api/admin/children/${editingChild.id}` : '/api/admin/children', {
+        method: editingChild ? 'PATCH' : 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record),
+      });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save child profile.');
+      const savedChild = { ...data.child, sponsoredSince: data.child.sponsoredSince ? new Date(data.child.sponsoredSince).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : undefined } as ChildProfile;
+      setChildrenList((prev) => editingChild ? prev.map((child) => child.id === savedChild.id ? savedChild : child) : [savedChild, ...prev]);
+    } catch (error) {
+      setChildFormError(error instanceof Error ? error.message : 'Could not save child profile.');
+      return;
+    }
     setShowChildForm(false);
     setEditingChild(null);
     notify(
@@ -467,51 +503,30 @@ export default function AdminDashboardPage() {
     );
   };
 
-  const assignSponsorToChild = (child: ChildProfile, donor: DonorDirectoryEntry) => {
+  const assignSponsorToChild = async (child: ChildProfile, donor: DonorDirectoryEntry) => {
     if (child.status === 'sponsored' && child.sponsorName) {
       notify(
         `Double-sponsorship prevented: ${child.name} is already sponsored by ${child.sponsorName}.`
       );
       return;
     }
-    const next = childrenList.map((c) =>
-      c.id === child.id
-        ? {
-            ...c,
-            status: 'sponsored' as const,
-            sponsorName: donor.name,
-            sponsorEmail: donor.email,
-            sponsoredSince: new Date().toLocaleDateString('en-GB', {
-              month: 'short',
-              year: 'numeric',
-            }),
-          }
-        : c
-    );
-    setChildrenList(next);
     try {
-      localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    notify(`Linked sponsor ${donor.name} to ${child.name}.`);
+      const response = await fetch(`/api/admin/children/${child.id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'sponsored', sponsorName: donor.name, sponsorEmail: donor.email }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not link sponsor.');
+      setChildrenList((prev) => prev.map((item) => item.id === child.id ? { ...item, ...data.child, sponsoredSince: new Date(data.child.sponsoredSince).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) } : item));
+      notify(`Linked sponsor ${donor.name} to ${child.name}.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not link sponsor.'); }
   };
 
-  const unlinkChildSponsor = (childId: string) => {
-    const next = childrenList.map((c) =>
-      c.id === childId
-        ? {
-            ...c,
-            status: 'available' as const,
-            sponsorName: undefined,
-            sponsorEmail: undefined,
-            sponsoredSince: undefined,
-          }
-        : c
-    );
-    setChildrenList(next);
+  const unlinkChildSponsor = async (childId: string) => {
     try {
-      localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    notify('Child sponsorship unlinked and status returned to Available.');
+      const response = await fetch(`/api/admin/children/${childId}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'available', sponsorName: null, sponsorEmail: null }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update sponsorship.');
+      setChildrenList((prev) => prev.map((child) => child.id === childId ? { ...child, ...data.child, sponsoredSince: undefined } : child));
+      notify('Child sponsorship unlinked and status returned to Available.');
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not update sponsorship.'); }
   };
 
   // ================= HANDLERS: MODULE 3 (LETTERS & FIELD UPLOADS) =================
@@ -520,25 +535,26 @@ export default function AdminDashboardPage() {
     setEditingLetterText(letter.message);
   };
 
-  const saveEditedLetter = (id: string) => {
+  const saveEditedLetter = async (id: string) => {
     if (!editingLetterText.trim()) return;
-    const next = letters.map((l) =>
-      l.id === id ? { ...l, message: editingLetterText.trim(), editedByAdmin: true } : l
-    );
-    setLetters(next);
     try {
-      localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+      const response = await fetch(`/api/admin/letters/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: editingLetterText.trim() }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save the edited letter.');
+      setLetters((prev) => prev.map((letter) => letter.id === id ? { ...letter, message: data.letter.message, editedByAdmin: true } : letter));
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not save the edited letter.'); return; }
     setEditingLetterId(null);
     notify('Message edited for child safety & privacy compliance.');
   };
 
-  const moderateLetter = (id: string, status: ChildLetter['status']) => {
-    const next = letters.map((l) => (l.id === id ? { ...l, status } : l));
-    setLetters(next);
+  const moderateLetter = async (id: string, status: ChildLetter['status']) => {
+    if (status === 'flagged') return;
     try {
-      localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+      const response = await fetch(`/api/admin/letters/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save the review decision.');
+      setLetters((prev) => prev.map((letter) => letter.id === id ? { ...letter, status: data.letter.status } : letter));
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not save the review decision.'); return; }
     notify(
       status === 'approved'
         ? 'Letter approved and queued for field delivery.'
@@ -546,7 +562,7 @@ export default function AdminDashboardPage() {
     );
   };
 
-  const handleFieldUploadSubmit = (e: React.FormEvent) => {
+  const handleFieldUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadTitle.trim() || !uploadNotes.trim()) return;
 
@@ -555,8 +571,7 @@ export default function AdminDashboardPage() {
         ? childrenList.find((c) => c.id === uploadTargetId)?.name || 'Sponsored Child'
         : campaigns.find((c) => c.id === uploadTargetId)?.title || 'Community Project';
 
-    const newUpload: FieldUpdateUpload = {
-      id: `fld-${Date.now()}`,
+    const newUpload = {
       title: uploadTitle.trim(),
       documentType: uploadDocType,
       targetType: uploadTargetType,
@@ -566,66 +581,50 @@ export default function AdminDashboardPage() {
       notes: uploadNotes.trim(),
       attachmentUrl: uploadAttachmentUrl.trim(),
       fileName: uploadFileName.trim() || 'field_update_attachment.pdf',
-      uploadedAt: new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      uploadedBy: 'NGO Field Officer',
     };
-
-    const next = [newUpload, ...fieldUploads];
-    setFieldUploads(next);
     try {
-      localStorage.setItem(FIELD_UPDATES_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+      const response = await fetch('/api/admin/field-updates', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newUpload) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save field update.');
+      setFieldUploads((prev) => [{ ...data.update, targetName, uploadedAt: new Date(data.update.createdAt).toLocaleDateString('en-GB') }, ...prev]);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not save field update.'); return; }
     setUploadTitle('');
     setUploadNotes('');
     setShowFieldUploadForm(false);
-    notify(`Uploaded ${newUpload.documentType} for ${targetName} and broadcast to donor feeds.`);
+    notify(`Saved ${newUpload.documentType} for ${targetName}.`);
   };
 
   // ================= HANDLERS: MODULE 4 (DONATION & FINANCIAL RECORDS) =================
-  const handleManualLedgerSubmit = (e: React.FormEvent) => {
+  const handleManualLedgerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = Number(manualAmountUGX);
     if (!manualDonorName.trim() || !amount || amount <= 0) return;
 
-    const targetCamp = campaigns.find((c) => c.id === manualCampaignId) || campaigns[0];
-    const receiptNum = `GCC-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newTx: LedgerTransaction = {
-      id: `tx-${Date.now()}`,
-      receiptNumber: receiptNum,
-      donorName: manualDonorName.trim(),
-      donorEmail: manualDonorEmail.trim() || 'offline.receipt@thegccfoundation.com',
-      campaignId: targetCamp?.id || 'general-fund',
-      campaignTitle: targetCamp?.title || 'General Institutional Fund',
-      amountUGX: amount,
-      paymentMethod: manualPaymentMethod,
-      entryType: manualEntryType,
-      date: new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      monthTag: 'this-month',
-      referenceCode: manualReferenceCode.trim() || `MAN-${Date.now().toString().slice(-6)}`,
-      notes: manualNotes.trim() || 'Logged by Admin Finance Desk',
-    };
-
-    const nextLedger = [newTx, ...ledger];
-    setLedger(nextLedger);
+    const targetCamp = campaignRecords.find((campaign) => campaign.id === manualCampaignId) || campaignRecords[0];
+    if (!targetCamp) { notify('Create a campaign before logging an offline donation.'); return; }
     try {
-      localStorage.setItem(LEDGER_STORAGE_KEY, JSON.stringify(nextLedger));
-    } catch {}
-
-    if (targetCamp) {
-      updateCampaign({
-        ...targetCamp,
-        raisedUGX: targetCamp.raisedUGX + amount,
-        donorCount: targetCamp.donorCount + 1,
-      });
-    }
+      const response = await fetch('/api/admin/offline-donations', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        campaignId: targetCamp.id, donorName: manualDonorName.trim(), donorEmail: manualDonorEmail.trim() || 'offline.receipt@thegccfoundation.com',
+        amountUGX: amount, paymentMethod: manualPaymentMethod, referenceCode: manualReferenceCode.trim() || undefined, notes: manualNotes.trim() || undefined,
+      }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not record this offline donation.');
+      const newTx: LedgerTransaction = {
+        id: data.id, receiptNumber: data.receiptNumber, donorName: manualDonorName.trim(), donorEmail: manualDonorEmail.trim(),
+        campaignId: targetCamp.id, campaignTitle: targetCamp.title, amountUGX: amount, currencyCode: 'UGX', amountMinor: amount * 100,
+        paymentMethod: manualPaymentMethod, entryType: 'Manual Offline Entry', date: new Date().toLocaleDateString('en-GB'),
+        monthTag: 'this-month', referenceCode: manualReferenceCode.trim() || data.id, notes: manualNotes.trim(),
+      };
+      setLedger((prev) => [newTx, ...prev]);
+      setCampaignRecords((prev) => prev.map((campaign) => campaign.id === targetCamp.id ? { ...campaign, raisedAmount: campaign.raisedAmount + amount * 100, donorCount: campaign.donorCount + 1 } : campaign));
+      const totalsResponse = await fetch('/api/admin/transactions', { credentials: 'include' });
+      if (totalsResponse.ok) {
+      const totalsData: any = await totalsResponse.json();
+        setRaisedTotals(totalsData.totalsByCurrency.map((item: any) => ({ currency: item.currency, allTimeMinor: Number(item.allTimeMinor), monthMinor: Number(item.monthMinor), yearMinor: Number(item.yearMinor) })));
+      }
+      setSelectedReceiptTx(newTx);
+      notify(`Recorded ${formatUGX(amount)} (${manualPaymentMethod}) and generated receipt ${data.receiptNumber}.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not record this offline donation.'); return; }
 
     setManualDonorName('');
     setManualDonorEmail('');
@@ -633,8 +632,6 @@ export default function AdminDashboardPage() {
     setManualReferenceCode('');
     setManualNotes('');
     setShowManualEntryForm(false);
-    setSelectedReceiptTx(newTx);
-    notify(`Logged ${formatUGX(amount)} (${manualPaymentMethod}) and generated receipt ${receiptNum}.`);
   };
 
   const exportTransactions = (format: 'csv' | 'excel') => {
@@ -688,54 +685,19 @@ export default function AdminDashboardPage() {
     setNewDonorEmail(donor.email);
     setNewDonorPhone(donor.phone);
     setNewDonorAddress(donor.address);
-    setNewDonorAmount(String(donor.totalDonatedUGX));
-    setNewDonorPlan(donor.recurringPlan);
-    setNewDonorRole(donor.role || 'user');
     setShowAddDonor(true);
   };
 
-  const handleSaveDonor = (e: React.FormEvent) => {
+  const handleSaveDonor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDonorName.trim() || !newDonorEmail.trim()) return;
-
-    if (editingDonor) {
-      const updated: DonorDirectoryEntry = {
-        ...editingDonor,
-        name: newDonorName.trim(),
-        email: newDonorEmail.trim(),
-        phone: newDonorPhone.trim() || editingDonor.phone,
-        address: newDonorAddress.trim() || editingDonor.address,
-        totalDonatedUGX: Number(newDonorAmount) || 0,
-        recurringPlan: newDonorPlan,
-        role: newDonorRole,
-      };
-      const next = donors.map((d) => (d.id === editingDonor.id ? updated : d));
-      setDonors(next);
-      try {
-        localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
-      } catch {}
-      notify(`Updated member profile for ${updated.name}.`);
-    } else {
-      const entry: DonorDirectoryEntry = {
-        id: `dnr-${Date.now()}`,
-        name: newDonorName.trim(),
-        email: newDonorEmail.trim(),
-        phone: newDonorPhone.trim() || '+256 703 601 200',
-        address: newDonorAddress.trim() || 'Kampala, Uganda',
-        totalDonatedUGX: Number(newDonorAmount) || 0,
-        donationsCount: 1,
-        recurringPlan: newDonorPlan,
-        joinedDate: 'Nov 2026',
-        role: newDonorRole,
-        accountStatus: 'active',
-      };
-      const next = [entry, ...donors];
-      setDonors(next);
-      try {
-        localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
-      } catch {}
-      notify(`Added supporter ${entry.name} to the directory.`);
-    }
+    if (!editingDonor || !newDonorName.trim() || !newDonorEmail.trim()) return;
+    try {
+      const response = await fetch(`/api/admin/supporters/${editingDonor.id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newDonorName.trim(), email: newDonorEmail.trim(), phone: newDonorPhone.trim() || null, location: newDonorAddress.trim() || null }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update supporter details.');
+      setDonors((prev) => prev.map((donor) => donor.id === editingDonor.id ? { ...donor, name: newDonorName.trim(), email: newDonorEmail.trim(), phone: newDonorPhone.trim(), address: newDonorAddress.trim() } : donor));
+      notify(`Updated supporter details for ${newDonorName.trim()}.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not update supporter details.'); return; }
 
     setEditingDonor(null);
     setNewDonorName('');
@@ -745,35 +707,28 @@ export default function AdminDashboardPage() {
     setShowAddDonor(false);
   };
 
-  const changeDonorRole = (id: string, role: 'user' | 'volunteer' | 'admin') => {
-    const next = donors.map((d) => (d.id === id ? { ...d, role } : d));
-    setDonors(next);
+  const changeDonorRole = async (id: string, role: 'user' | 'admin') => {
     try {
-      localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    const target = donors.find((d) => d.id === id);
-    notify(`Updated role for ${target?.name || 'member'} to ${role.toUpperCase()}.`);
+      const response = await fetch(`/api/admin/supporters/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update supporter role.');
+      setDonors((prev) => prev.map((donor) => donor.id === id ? { ...donor, role } : donor));
+      const target = donors.find((donor) => donor.id === id);
+      notify(`Updated role for ${target?.name || 'supporter'} to ${role.toUpperCase()}.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not update supporter role.'); }
   };
 
-  const toggleDonorAccountStatus = (id: string) => {
-    const next = donors.map((d) =>
-      d.id === id
-        ? {
-            ...d,
-            accountStatus: (d.accountStatus === 'deactivated' ? 'active' : 'deactivated') as
-              | 'active'
-              | 'deactivated',
-          }
-        : d
-    );
-    setDonors(next);
+  const toggleDonorAccountStatus = async (id: string) => {
+    const target = donors.find((donor) => donor.id === id);
+    if (!target) return;
+    const isActive = target.accountStatus === 'deactivated';
     try {
-      localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    const target = next.find((d) => d.id === id);
-    notify(
-      `Account for ${target?.name} is now ${target?.accountStatus?.toUpperCase()}.`
-    );
+      const response = await fetch(`/api/admin/supporters/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update supporter account.');
+      setDonors((prev) => prev.map((donor) => donor.id === id ? { ...donor, accountStatus: isActive ? 'active' : 'deactivated' } : donor));
+      notify(`Account for ${target.name} is now ${isActive ? 'ACTIVE' : 'DEACTIVATED'}.`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not update supporter account.'); }
   };
 
   // ================= HANDLERS: MODULE 6 (CAMPAIGN & CONTENT MANAGER) =================
@@ -782,12 +737,10 @@ export default function AdminDashboardPage() {
     setCampTitle('');
     setCampSubtitle('');
     setCampCategory('Medical Care');
-    setCampDistrict('Kampala, Uganda');
-    setCampInstitution('Uganda Heart Institute Accounts Treasury');
+    setCampDistrict('');
+    setCampInstitution('');
     setCampGoalUGX('15000000');
-    setCampCoverImage(
-      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80'
-    );
+    setCampCoverImage('');
     setCampStory('');
     setShowCampaignEditor(true);
   };
@@ -797,7 +750,7 @@ export default function AdminDashboardPage() {
     setCampTitle(camp.title);
     setCampSubtitle(camp.subtitle);
     setCampCategory(camp.category);
-    setCampDistrict(`${camp.location.district}, ${camp.location.country}`);
+    setCampDistrict(camp.location.district);
     setCampInstitution(camp.payoutVerification.institutionName);
     setCampGoalUGX(String(camp.goalUGX));
     setCampCoverImage(camp.coverImage);
@@ -805,8 +758,26 @@ export default function AdminDashboardPage() {
     setShowCampaignEditor(true);
   };
 
-  const handleSaveCampaign = (e: React.FormEvent) => {
+  const handleSaveCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!campTitle.trim() || campStory.trim().length < 20 || !campCoverImage.trim() || !campDistrict.trim() || !campInstitution.trim()) return;
+    const body = { title: campTitle.trim(), story: campStory.trim(), category: campCategory, country: 'UG', currency: 'UGX', district: campDistrict.trim(), receivingInstitution: campInstitution.trim(), goalAmount: (Number(campGoalUGX) || 0) * 100, coverImageUrl: campCoverImage.trim() };
+    try {
+      const response = editingCampaign
+        ? await fetch(`/api/admin/campaigns/${editingCampaign.id}/details`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        : await fetch('/api/campaigns', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, organizerName: user?.name, organizerEmail: user?.email }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save campaign.');
+      const listResponse = await fetch('/api/admin/campaigns', { credentials: 'include' });
+      const listData: any = await listResponse.json();
+      if (!listResponse.ok) throw new Error(listData.error || 'Campaign saved, but the directory could not be refreshed.');
+      setCampaignRecords(listData.campaigns);
+      notify(editingCampaign ? `Updated campaign "${campTitle.trim()}".` : `Created campaign "${campTitle.trim()}".`);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not save campaign.'); return; }
+    setShowCampaignEditor(false);
+    setEditingCampaign(null);
+    return;
+    /*
     if (!campTitle.trim()) return;
 
     if (editingCampaign) {
@@ -899,55 +870,24 @@ export default function AdminDashboardPage() {
 
     setShowCampaignEditor(false);
     setEditingCampaign(null);
+    */
   };
 
-  const handlePublishNews = (e: React.FormEvent) => {
+  const handlePublishNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsTitle.trim() || !newsSummary.trim()) return;
-    const linkedCamp = campaigns.find((c) => c.id === newsCampaignId);
-    const item: NewsMilestoneItem = {
-      id: `news-${Date.now()}`,
-      title: newsTitle.trim(),
-      category: newsCategory,
-      summary: newsSummary.trim(),
-      publishedAt: new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      author: 'GCC Staff Operations',
-      campaignId: linkedCamp?.id,
-      campaignTitle: linkedCamp?.title,
-      imageUrl: newsImageUrl.trim() || undefined,
-    };
-    const next = [item, ...newsList];
-    setNewsList(next);
+    if (!newsTitle.trim() || !newsSummary.trim() || !newsCampaignId) return;
+    const linkedCamp = campaigns.find((campaign) => campaign.id === newsCampaignId);
+    if (!linkedCamp) { notify('Select a saved campaign for this update.'); return; }
     try {
-      localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-
-    if (linkedCamp) {
-      updateCampaign({
-        ...linkedCamp,
-        fieldUpdates: [
-          {
-            id: `fu-${Date.now()}`,
-            date: item.publishedAt,
-            title: item.title,
-            authorName: 'GCC Field Operations',
-            authorRole: 'Verified Program Officer',
-            content: item.summary,
-            imageUrl: item.imageUrl,
-            verifiedByOfficer: 'Pauline Namukasa, FCCA',
-          },
-          ...linkedCamp.fieldUpdates,
-        ],
-      });
-    }
-
+      const response = await fetch(`/api/admin/campaigns/${linkedCamp.id}/updates`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: newsTitle.trim(), content: newsSummary.trim(), category: newsCategory, imageUrl: newsImageUrl.trim() || undefined }) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not publish the project update.');
+      const update: NewsMilestoneItem = { id: data.update.id, title: data.update.title, category: data.update.category, summary: data.update.content, publishedAt: new Date(data.update.createdAt).toLocaleDateString('en-GB'), author: data.update.authorName, campaignId: linkedCamp.id, campaignTitle: linkedCamp.title, imageUrl: data.update.imageUrl || undefined };
+      setNewsList((prev) => [update, ...prev]);
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not publish the project update.'); return; }
     setNewsTitle('');
     setNewsSummary('');
-    notify('Milestone update published and broadcast to supporters\' Your Impact feeds!');
+    notify(`Published update on ${linkedCamp.title}.`);
   };
 
   const updatePayout = (id: string, status: PayoutRow['status']) => {
@@ -955,46 +895,58 @@ export default function AdminDashboardPage() {
     notify(`Payout voucher ${id} marked as ${status}.`);
   };
 
+  const updateCampaignModeration = async (id: string, update: { status?: 'active' | 'paused'; isVerified?: boolean }) => {
+    try {
+      const response = await fetch(`/api/admin/campaigns/${id}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(update) });
+      const data: any = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update campaign.');
+      setCampaignRecords((prev) => prev.map((campaign) => campaign.id === id ? { ...campaign, ...(update.status ? { status: update.status } : {}), ...(update.isVerified !== undefined ? { isVerified: update.isVerified } : {}) } : campaign));
+      if (update.status) setCampaignStatuses((prev) => ({ ...prev, [id]: update.status! }));
+      if (update.isVerified !== undefined) setCampaignVerified((prev) => ({ ...prev, [id]: update.isVerified! }));
+      notify('Campaign settings saved.');
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not update campaign.'); }
+  };
+
   const navItems = [
     {
       id: 'command',
-      code: 'MOD-01',
-      label: 'Command Center',
-      sub: 'Overview & Live Telemetry',
+      code: '01',
+      label: 'Overview',
+      sub: 'Giving and program summary',
       icon: LayoutDashboard,
     },
     {
       id: 'children',
       code: 'MOD-02',
-      label: 'Child Sponsorship CMS',
+      label: 'Children & sponsorships',
       sub: `${childrenList.length} Profiles · Sponsorship Lock`,
       icon: HeartHandshake,
     },
     {
       id: 'letters',
       code: 'MOD-03',
-      label: 'Moderation & Field Files',
+      label: 'Letters & field updates',
       sub: `${letters.filter((l) => l.status === 'pending').length} Pending Review`,
       icon: MailCheck,
     },
     {
       id: 'financials',
       code: 'MOD-04',
-      label: 'Donation & Ledger',
+      label: 'Donations & reports',
       sub: 'Global Records & CSV/XLS',
       icon: DollarSign,
     },
     {
       id: 'donors',
       code: 'MOD-05',
-      label: 'Supporter Directory',
+      label: 'Supporters',
       sub: `${donors.length} Members & Roles`,
       icon: Users,
     },
     {
       id: 'campaigns',
       code: 'MOD-06',
-      label: 'Campaign & Content',
+      label: 'Campaigns & stories',
       sub: 'Project Creator & Broadcast',
       icon: FileText,
     },
@@ -1009,22 +961,22 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <MetricCard
                 label="RAISED THIS MONTH"
-                value={formatUGX(thisMonthRaisedUGX)}
+                value={formatRaisedTotal('monthMinor')}
                 sub="Current calendar month"
                 iconColor="text-[#02A95C]"
                 bgColor="bg-white"
               />
               <MetricCard
-                label="RAISED THIS YEAR (2026)"
-                value={formatUGX(thisYearRaisedUGX)}
+                label="RAISED THIS YEAR"
+                value={formatRaisedTotal('yearMinor')}
                 sub="Fiscal year-to-date"
                 iconColor="text-sky-500"
                 bgColor="bg-white"
               />
               <MetricCard
                 label="TOTAL RAISED (ALL-TIME)"
-                value={formatUGX(allTimeRaisedUGX)}
-                sub="100% Direct Institutional Escrow"
+                value={formatRaisedTotal('allTimeMinor')}
+                sub="Completed donations on record"
                 iconColor="text-amber-500"
                 bgColor="bg-white"
               />
@@ -1102,7 +1054,7 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">
-                          {formatUGX(tx.amountUGX)}
+                          {formatTransactionAmount(tx)}
                         </td>
                       </tr>
                     ))}
@@ -1562,8 +1514,8 @@ export default function AdminDashboardPage() {
             {selectedReceiptTx && (
               <div className="rounded-xl border-2 border-[#02A95C] bg-emerald-50/70 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2"><Receipt className="h-4 w-4 text-[#02A95C]" /><span className="font-mono text-xs font-bold uppercase tracking-wider text-[#02A95C]">Official Tax-Deductible Receipt Generated ({selectedReceiptTx.receiptNumber})</span></div>
-                  <p className="text-sm font-bold text-gray-900">Donor: {selectedReceiptTx.donorName} · Amount: {formatUGX(selectedReceiptTx.amountUGX)} ({selectedReceiptTx.paymentMethod})</p>
+                  <div className="flex items-center gap-2"><Receipt className="h-4 w-4 text-[#02A95C]" /><span className="font-mono text-xs font-bold uppercase tracking-wider text-[#02A95C]">Donation record ({selectedReceiptTx.receiptNumber})</span></div>
+                  <p className="text-sm font-bold text-gray-900">Donor: {selectedReceiptTx.donorName} · Amount: {formatTransactionAmount(selectedReceiptTx)} ({selectedReceiptTx.paymentMethod})</p>
                   <p className="text-xs text-gray-600">Campaign: {selectedReceiptTx.campaignTitle} · Ref: {selectedReceiptTx.referenceCode} · Date: {selectedReceiptTx.date}</p>
                 </div>
                 <button onClick={() => setSelectedReceiptTx(null)} className="rounded-full border border-gray-300 bg-white px-4 py-1.5 text-xs font-bold text-gray-700 shrink-0">Dismiss Receipt</button>
@@ -1589,7 +1541,7 @@ export default function AdminDashboardPage() {
                         <td className="py-3.5 px-4"><strong className="font-bold text-gray-900 block">{tx.donorName}</strong><span className="text-xs font-mono text-gray-500">{tx.referenceCode}</span></td>
                         <td className="py-3.5 px-4 text-gray-700 max-w-xs"><span className="font-medium block">{tx.campaignTitle}</span>{tx.notes && <span className="text-[11px] text-gray-400">{tx.notes}</span>}</td>
                         <td className="py-3.5 px-4"><span className="rounded-full bg-gray-100 px-2.5 py-0.5 font-mono text-xs font-semibold text-gray-700 block w-fit">{tx.paymentMethod}</span><span className="text-[10px] font-mono font-bold text-[#02A95C] uppercase mt-0.5 block">{tx.entryType}</span></td>
-                        <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">{formatUGX(tx.amountUGX)}</td>
+                        <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">{formatTransactionAmount(tx)}</td>
                         <td className="py-3.5 px-4 text-right"><button onClick={() => setSelectedReceiptTx(tx)} className="rounded-full border border-gray-300 hover:bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">Receipt</button></td>
                       </tr>
                     ))}
@@ -1606,25 +1558,21 @@ export default function AdminDashboardPage() {
             <SectionCardHeader
               title="Donor & Member Directory (Supporter Database & User Management)"
               subtitle="Searchable supporter database with lifetime contributions, contact details, role promotion (User / Volunteer / Admin), and account activation controls."
-              action={
-                <button onClick={() => { setEditingDonor(null); setNewDonorName(''); setNewDonorEmail(''); setNewDonorPhone(''); setNewDonorAddress(''); setShowAddDonor((v) => !v); }} className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"><Plus className="h-3.5 w-3.5" /><span>{showAddDonor ? 'CLOSE MEMBER FORM' : 'ADD MEMBER RECORD'}</span></button>
-              }
+              action={<span className="text-xs text-gray-500">Supporter accounts come from website registration.</span>}
             />
 
             {showAddDonor && (
-              <FormCard title={editingDonor ? `Edit User Details: ${editingDonor.name}` : 'Add New Supporter / Member'} onClose={() => { setShowAddDonor(false); setEditingDonor(null); }}>
+              <FormCard title={`Edit supporter details: ${editingDonor?.name || ''}`} onClose={() => { setShowAddDonor(false); setEditingDonor(null); }}>
                 <form onSubmit={handleSaveDonor} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <input type="text" required placeholder="Full Name" value={newDonorName} onChange={(e) => setNewDonorName(e.target.value)} className="input-field" />
                     <input type="email" required placeholder="Email Address" value={newDonorEmail} onChange={(e) => setNewDonorEmail(e.target.value)} className="input-field" />
                     <input type="text" placeholder="Phone (+256...)" value={newDonorPhone} onChange={(e) => setNewDonorPhone(e.target.value)} className="input-field" />
                     <input type="text" placeholder="Billing / Tax Address" value={newDonorAddress} onChange={(e) => setNewDonorAddress(e.target.value)} className="input-field" />
-                    <input type="number" placeholder="Lifetime Donated (UGX)" value={newDonorAmount} onChange={(e) => setNewDonorAmount(e.target.value)} className="input-field" />
-                    <select value={newDonorPlan} onChange={(e) => setNewDonorPlan(e.target.value)} className="input-field"><option>One-Time Supporter</option><option>Monthly ($35 / mo)</option><option>Monthly ($50 / mo)</option><option>Child Sponsor ($45 / mo)</option><option>Major Institutional Donor</option></select>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2"><label className="text-xs font-bold text-gray-700">System Role:</label><select value={newDonorRole} onChange={(e) => setNewDonorRole(e.target.value as 'user' | 'volunteer' | 'admin')} className="input-field h-9 w-auto"><option value="user">Supporter (User)</option><option value="volunteer">Trusted Volunteer</option><option value="admin">NGO Staff Admin</option></select></div>
-                    <button type="submit" className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-6 py-2 text-xs font-bold text-white">{editingDonor ? 'UPDATE MEMBER' : 'SAVE MEMBER'}</button>
+                    <span className="text-xs text-gray-500">Giving history and account roles are managed from verified records.</span>
+                    <button type="submit" className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-6 py-2 text-xs font-bold text-white">Save details</button>
                   </div>
                 </form>
               </FormCard>
@@ -1633,13 +1581,13 @@ export default function AdminDashboardPage() {
             <SectionCard>
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <div className="relative flex-1 max-w-md"><Search className="h-4 w-4 text-gray-400 absolute left-3.5 top-3" /><input type="search" value={donorSearch} onChange={(e) => setDonorSearch(e.target.value)} placeholder="Search supporters by name, email, city, or plan..." className="input-field pl-10" /></div>
-                <select value={donorRoleFilter} onChange={(e) => setDonorRoleFilter(e.target.value)} className="input-field"><option value="All">All Roles</option><option value="user">Supporters (User)</option><option value="volunteer">Volunteers</option><option value="admin">Admins</option></select>
+                <select value={donorRoleFilter} onChange={(e) => setDonorRoleFilter(e.target.value)} className="input-field"><option value="All">All roles</option><option value="user">Supporters</option><option value="admin">Admins</option></select>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-[#FBF9F6] text-gray-600 font-semibold text-xs uppercase tracking-wider">
-                    <tr><th className="py-3.5 px-4">Supporter & Status</th><th className="py-3.5 px-4">Contact & Tax Address</th><th className="py-3.5 px-4">Giving Plan & Lifetime</th><th className="py-3.5 px-4">Role Assignment</th><th className="py-3.5 px-4 text-right">User Management</th></tr>
+                    <tr><th className="py-3.5 px-4">Supporter & Status</th><th className="py-3.5 px-4">Contact & Location</th><th className="py-3.5 px-4">Completed donations</th><th className="py-3.5 px-4">Role</th><th className="py-3.5 px-4 text-right">Account</th></tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredDonors.map((d) => {
@@ -1648,8 +1596,8 @@ export default function AdminDashboardPage() {
                         <tr key={d.id} className={`hover:bg-[#FBF9F6] ${isDeactivated ? 'opacity-60 bg-gray-50' : ''}`}>
                           <td className="py-4 px-4"><div className="flex items-center gap-2"><strong className="font-bold text-gray-900">{d.name}</strong><span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold ${isDeactivated ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'}`}>{isDeactivated ? 'Deactivated' : 'Active'}</span></div><span className="text-xs text-gray-500 block">{d.email}</span><span className="text-[11px] text-gray-400">Joined {d.joinedDate}</span></td>
                           <td className="py-4 px-4 text-xs text-gray-600"><span className="block font-semibold text-gray-800">{d.phone}</span><span>{d.address}</span></td>
-                          <td className="py-4 px-4"><span className="rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-0.5 font-mono text-xs font-bold">{d.recurringPlan}</span><span className="font-mono font-bold text-gray-900 block mt-1">{formatUGX(d.totalDonatedUGX)} ({d.donationsCount} gifts)</span></td>
-                          <td className="py-4 px-4"><select value={d.role || 'user'} onChange={(e) => changeDonorRole(d.id, e.target.value as 'user' | 'volunteer' | 'admin')} className="input-field h-8 w-full max-w-xs"><option value="user">User / Donor</option><option value="volunteer">Volunteer</option><option value="admin">Admin</option></select></td>
+                          <td className="py-4 px-4"><span className="font-mono font-bold text-gray-900 block">{d.contributionsByCurrency?.length ? d.contributionsByCurrency.map((item) => new Intl.NumberFormat('en', { style: 'currency', currency: item.currency, maximumFractionDigits: 2 }).format(item.amountMinor / 100)).join(' · ') : 'No completed donations'}</span><span className="text-xs text-gray-500">{d.donationsCount} completed gifts</span></td>
+                          <td className="py-4 px-4"><select value={d.role || 'user'} onChange={(e) => changeDonorRole(d.id, e.target.value as 'user' | 'admin')} className="input-field h-8 w-full max-w-xs"><option value="user">Supporter</option><option value="admin">Admin</option></select></td>
                           <td className="py-4 px-4 text-right space-x-2"><button onClick={() => openEditDonorModal(d)} className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100"><Edit3 className="h-3 w-3" /><span>Edit</span></button><button onClick={() => toggleDonorAccountStatus(d.id)} className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold ${isDeactivated ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}>{isDeactivated ? (<><UserCheck className="h-3 w-3" /><span>Activate</span></>) : (<><UserX className="h-3 w-3" /><span>Deactivate</span></>)}</button></td>
                         </tr>
                       );
@@ -1722,8 +1670,10 @@ export default function AdminDashboardPage() {
 
                 <div className="space-y-3">
                   {campaigns.map((c) => {
+                    const campaignRecord = campaignRecords.find((record) => record.id === c.id);
                     const status = campaignStatuses[c.id] || 'active';
-                    const verified = campaignVerified[c.id] ?? true;
+                    const verified = campaignVerified[c.id] ?? false;
+                    const formatCampaignAmount = (amount: number) => new Intl.NumberFormat('en', { style: 'currency', currency: campaignRecord?.currency || 'UGX', maximumFractionDigits: 2 }).format(amount);
                     return (
                       <div key={c.id} className="rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start gap-3.5">
@@ -1731,13 +1681,13 @@ export default function AdminDashboardPage() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap"><span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">{c.category}</span><span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{status}</span>{verified && <span className="text-[10px] font-mono font-bold bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full">Verified</span>}</div>
                             <Link href={`/campaigns/${encodeURIComponent(c.slug)}`} className="font-bold text-sm text-gray-900 hover:text-[#02A95C] flex items-center gap-1"><span>{c.title}</span><ExternalLink className="h-3.5 w-3.5 text-gray-400" /></Link>
-                            <p className="text-xs text-gray-500 font-mono">{formatUGX(c.raisedUGX)} / {formatUGX(c.goalUGX)} · {c.payoutVerification.institutionName}</p>
+                            <p className="text-xs text-gray-500">{formatCampaignAmount(c.raisedUGX)} raised of {formatCampaignAmount(c.goalUGX)} · {c.payoutVerification.institutionName}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 flex-wrap">
                           <button onClick={() => openEditCampaignEditor(c)} className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"><Edit3 className="h-3 w-3" /><span>Edit</span></button>
-                          <button onClick={() => setCampaignVerified((prev) => ({ ...prev, [c.id]: !verified }))} className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50">{verified ? 'Revoke Badge' : 'Verify Badge'}</button>
-                          <button onClick={() => setCampaignStatuses((prev) => ({ ...prev, [c.id]: status === 'active' ? 'paused' : 'active' }))} className="rounded-full bg-gray-900 hover:bg-gray-800 px-3 py-1.5 text-xs font-bold text-white">{status === 'active' ? 'Pause' : 'Activate'}</button>
+                          <button onClick={() => updateCampaignModeration(c.id, { isVerified: !verified })} className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50">{verified ? 'Revoke verification' : 'Verify campaign'}</button>
+                          <button onClick={() => updateCampaignModeration(c.id, { status: status === 'active' ? 'paused' : 'active' })} className="rounded-full bg-gray-900 hover:bg-gray-800 px-3 py-1.5 text-xs font-bold text-white">{status === 'active' ? 'Pause' : 'Activate'}</button>
                         </div>
                       </div>
                     );
@@ -1780,17 +1730,17 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-heading font-bold text-xl text-gray-900">GCC Admin</span>
+                <span className="font-heading font-bold text-xl text-gray-900">GCC Foundation</span>
                   <span className="h-2 w-2 rounded-full bg-[#02A95C] animate-pulse" />
                 </div>
-                <p className="text-xs text-gray-500 font-mono">INTERNAL OPERATIONS CONSOLE</p>
+                <p className="text-xs text-gray-500">Foundation administration</p>
               </div>
             </div>
           </div>
 
           {/* Navigation */}
           <div className="flex-1 p-3 space-y-1 overflow-y-auto">
-            <p className="px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-500">Executive Operations Modules</p>
+            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Admin sections</p>
             <nav className="space-y-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -1839,22 +1789,22 @@ export default function AdminDashboardPage() {
             MAIN CONTENT - Matches Website Design
            ===================================================================== */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#FBF9F6]">
-          {/* Top Telemetry Bar */}
+          {/* Admin section header */}
           <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
             <div className="flex items-center gap-3">
-              <Activity className="h-5 w-5 text-[#02A95C]" />
+              <LayoutDashboard className="h-5 w-5 text-[#02A95C]" />
               <div>
                 <h1 className="font-heading font-bold text-lg sm:text-xl text-gray-900">
-                  {navItems.find((n) => n.id === activeTab)?.code} // {navItems.find((n) => n.id === activeTab)?.label.toUpperCase()}
+                  {navItems.find((n) => n.id === activeTab)?.label}
                 </h1>
-                <p className="text-xs text-gray-500">Direct Institutional Escrow · Real-Time Uganda & Diaspora Operations</p>
+                <p className="text-xs text-gray-500">{navItems.find((n) => n.id === activeTab)?.sub}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <button onClick={triggerQuickActionAddChild} className="rounded-full border border-gray-300 bg-white hover:bg-gray-50 px-3.5 py-2 text-xs font-bold text-[#02A95C] transition-colors">+ ADD CHILD PROFILE</button>
-              <button onClick={() => { setShowManualEntryForm(true); setActiveTab('financials'); }} className="rounded-full border border-gray-300 bg-white hover:bg-gray-50 px-3.5 py-2 text-xs font-bold text-amber-600 transition-colors">+ LOG OFFLINE GIFT</button>
-              <button onClick={() => { openCreateCampaignEditor(); setActiveTab('campaigns'); }} className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" /><span>NEW CAMPAIGN</span></button>
+              <button onClick={triggerQuickActionAddChild} className="rounded-full border border-gray-300 bg-white hover:bg-gray-50 px-3.5 py-2 text-xs font-bold text-[#02A95C] transition-colors">Add child profile</button>
+              <button onClick={() => { setShowManualEntryForm(true); setActiveTab('financials'); }} className="rounded-full border border-gray-300 bg-white hover:bg-gray-50 px-3.5 py-2 text-xs font-bold text-amber-700 transition-colors">Log offline donation</button>
+              <button onClick={() => { openCreateCampaignEditor(); setActiveTab('campaigns'); }} className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" /><span>New campaign</span></button>
             </div>
           </header>
 
@@ -1886,16 +1836,16 @@ function MetricCard({ label, value, sub, iconColor, bgColor }: { label: string; 
   );
 }
 
-function SectionCard({ title, subtitle, action, badge, children }: { title: string; subtitle?: string; action?: React.ReactNode; badge?: React.ReactNode; children: React.ReactNode }) {
+function SectionCard({ title, subtitle, action, badge, children, className }: { title?: string; subtitle?: string; action?: React.ReactNode; badge?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4 ${className || ''}`}>
+      {(title || subtitle || action || badge) && <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-heading font-bold text-lg text-gray-900">{title}</h2>
+          {title && <h2 className="font-heading font-bold text-lg text-gray-900">{title}</h2>}
           {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2 flex-wrap">{badge && badge}{action && action}</div>
-      </div>
+      </div>}
       <div>{children}</div>
     </div>
   );

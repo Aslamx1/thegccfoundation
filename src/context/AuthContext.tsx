@@ -51,15 +51,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = "gcc_foundation_auth_user";
 const ACCOUNTS_KEY = "gcc_foundation_accounts";
 
-function isAdminEmailAddress(email?: string): boolean {
-  if (!email) return false;
-  return /^(admin|staff|compliance|director)@/i.test(email.trim());
-}
-
 function normalizeServerUser(raw: any): User {
   const email = raw.email || "";
-  const resolvedRole =
-    raw.role === "admin" || isAdminEmailAddress(email) ? "admin" : raw.role || "user";
+  const resolvedRole = raw.role === "admin" ? "admin" : raw.role || "user";
   return {
     id: raw.id,
     name: raw.name,
@@ -124,42 +118,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password = ""): Promise<boolean> => {
     const normalizedEmail = email.trim().toLowerCase();
 
-    let res = await fetch("/api/auth/signin", {
+    const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ email: normalizedEmail, password }),
     });
-
-    if (!res.ok && isAdminEmailAddress(normalizedEmail) && password === "Admin@GCC2026") {
-      // Sync or provision the default admin credentials automatically
-      await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: normalizedEmail, newPassword: password }),
-      }).catch(() => {});
-
-      res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: normalizedEmail, password }),
-      });
-
-      if (!res.ok) {
-        res = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            name: "GCC Foundation Admin",
-            email: normalizedEmail,
-            password,
-          }),
-        });
-      }
-    }
 
     const data = (await res.json()) as any;
     if (!res.ok) {

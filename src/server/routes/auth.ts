@@ -30,19 +30,6 @@ export interface StoredUserRecord {
 const memoryUsersByEmail = new Map<string, StoredUserRecord>();
 const memoryUsersById = new Map<string, StoredUserRecord>();
 
-const DEFAULT_ADMIN_EMAILS = new Set([
-  "admin@thegccfoundation.com",
-  "admin@gccfoundation.org",
-  "staff@thegccfoundation.com",
-  "director@thegccfoundation.com",
-]);
-const DEFAULT_ADMIN_PASSWORD = "Admin@GCC2026";
-
-function isAdminEmail(email: string): boolean {
-  const normalized = email.trim().toLowerCase();
-  return DEFAULT_ADMIN_EMAILS.has(normalized) || /^(admin|staff|compliance|director)@/i.test(normalized);
-}
-
 function getKvNamespace(c: any): KVNamespace | null {
   try {
     const cf = getCloudflareContext();
@@ -211,7 +198,7 @@ export const authRoute = new Hono<HonoEnv>()
 
       const passwordHash = await hashPassword(password);
       const userId = `usr_${crypto.randomUUID()}`;
-      const role: "user" | "admin" = isAdminEmail(normalizedEmail) ? "admin" : "user";
+      const role: "user" | "admin" = "user";
 
       const newUserRecord: StoredUserRecord = {
         id: userId,
@@ -268,24 +255,6 @@ export const authRoute = new Hono<HonoEnv>()
 
       let userRecord = await getUserByEmail(c, normalizedEmail);
 
-      // Auto-provision default admin account on first sign-in
-      if (!userRecord && DEFAULT_ADMIN_EMAILS.has(normalizedEmail) && password === DEFAULT_ADMIN_PASSWORD) {
-        const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
-        userRecord = {
-          id: `usr_admin_${normalizedEmail.split("@")[0]}`,
-          name: "GCC Foundation Admin",
-          email: normalizedEmail,
-          passwordHash,
-          avatarUrl: null,
-          language: "English (US)",
-          isProfilePublic: true,
-          role: "admin",
-          isVerified: true,
-          createdAt: new Date().toISOString(),
-        };
-        await saveUserRecord(c, userRecord, true);
-      }
-
       if (!userRecord) {
         return c.json(
           { error: "No account found with this email address. Please create an account first." },
@@ -293,23 +262,17 @@ export const authRoute = new Hono<HonoEnv>()
         );
       }
 
-      if (isAdminEmail(normalizedEmail) && userRecord.role !== "admin") {
-        userRecord.role = "admin";
+      const db = c.get("db");
+      if (db) {
+        const account = await db.select({ isActive: users.isActive }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
+        if (account[0]?.isActive === false) {
+          return c.json({ error: "This account has been deactivated. Contact the foundation for help." }, 403);
+        }
       }
-
-      const isDefaultAdminMatch =
-        DEFAULT_ADMIN_EMAILS.has(normalizedEmail) && password === DEFAULT_ADMIN_PASSWORD;
 
       let isValid = userRecord.passwordHash
         ? await verifyPassword(password, userRecord.passwordHash)
         : false;
-
-      if (!isValid && isDefaultAdminMatch) {
-        userRecord.passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
-        userRecord.role = "admin";
-        await saveUserRecord(c, userRecord, false);
-        isValid = true;
-      }
 
       if (!isValid) {
         return c.json({ error: "Incorrect password. Please check your password and try again." }, 401);

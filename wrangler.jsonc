@@ -34,7 +34,7 @@
   ],
   "vars": {
     "NODE_ENV": "production",
-    "NEXT_PUBLIC_APP_URL": "https://thegccfoundation.org",
+    "NEXT_PUBLIC_APP_URL": "https://thegccfoundation.com",
     "NEXT_PUBLIC_DEFAULT_CURRENCY": "USD"
   },
   "observability": {

@@ -12,8 +12,11 @@ export const users = pgTable(
     email: varchar("email", { length: 255 }).notNull().unique(),
     passwordHash: text("password_hash"),
     avatarUrl: text("avatar_url"),
+    phone: varchar("phone", { length: 64 }),
+    location: varchar("location", { length: 255 }),
     role: varchar("role", { length: 32 }).$type<"user" | "admin">().notNull().default("user"),
     isVerified: boolean("is_verified").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -38,6 +41,8 @@ export const campaigns = pgTable(
     story: text("story").notNull(),
     category: varchar("category", { length: 64 }).notNull(),
     country: varchar("country", { length: 8 }).notNull().default("US"),
+    district: varchar("district", { length: 255 }),
+    receivingInstitution: varchar("receiving_institution", { length: 255 }),
     currency: varchar("currency", { length: 8 }).notNull().default("USD"),
     goalAmount: integer("goal_amount").notNull(), // Minor units (e.g., cents)
     raisedAmount: integer("raised_amount").notNull().default(0), // Minor units
@@ -77,6 +82,10 @@ export const donations = pgTable(
     tipAmount: integer("tip_amount").notNull().default(0), // Platform tip in cents
     message: text("message"),
     paymentProviderRef: varchar("payment_provider_ref", { length: 255 }).notNull().unique(), // Stripe PI / Provider ID
+    entryType: varchar("entry_type", { length: 16 }).$type<"online" | "offline">().notNull().default("online"),
+    paymentMethod: varchar("payment_method", { length: 64 }).notNull().default("Online"),
+    referenceCode: varchar("reference_code", { length: 255 }),
+    notes: text("notes"),
     paymentStatus: varchar("payment_status", { length: 32 })
       .$type<"pending" | "succeeded" | "failed">()
       .notNull()
@@ -103,6 +112,8 @@ export const campaignUpdates = pgTable(
       .references(() => campaigns.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
+    category: varchar("category", { length: 128 }).notNull().default("Project Update"),
+    authorName: varchar("author_name", { length: 255 }).notNull().default("Foundation Staff"),
     imageUrl: text("image_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -163,6 +174,65 @@ export const reports = pgTable(
     index("reports_campaign_id_idx").on(table.campaignId),
     index("reports_status_idx").on(table.status),
   ]
+);
+
+// ---------------------------------------------------------------------------
+// 7. Child sponsorship and field communications
+// ---------------------------------------------------------------------------
+export const childProfiles = pgTable(
+  "child_profiles",
+  {
+    id: varchar("id", { length: 128 }).primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    age: integer("age").notNull(),
+    gender: varchar("gender", { length: 16 }).$type<"Girl" | "Boy">().notNull(),
+    district: varchar("district", { length: 255 }).notNull(),
+    schoolAndGrade: varchar("school_and_grade", { length: 255 }).notNull(),
+    monthlySponsorshipUSD: integer("monthly_sponsorship_usd").notNull(),
+    bio: text("bio").notNull(),
+    dream: text("dream").notNull(),
+    photoUrl: text("photo_url").notNull(),
+    status: varchar("status", { length: 16 }).$type<"available" | "sponsored">().notNull().default("available"),
+    sponsorName: varchar("sponsor_name", { length: 255 }),
+    sponsorEmail: varchar("sponsor_email", { length: 255 }),
+    sponsoredSince: timestamp("sponsored_since", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("child_profiles_status_idx").on(table.status)]
+);
+
+export const childLetters = pgTable(
+  "child_letters",
+  {
+    id: varchar("id", { length: 128 }).primaryKey(),
+    childId: varchar("child_id", { length: 128 }).notNull().references(() => childProfiles.id, { onDelete: "cascade" }),
+    donorName: varchar("donor_name", { length: 255 }).notNull(),
+    donorEmail: varchar("donor_email", { length: 255 }).notNull(),
+    message: text("message").notNull(),
+    status: varchar("status", { length: 16 }).$type<"pending" | "approved" | "rejected">().notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  },
+  (table) => [index("child_letters_child_id_idx").on(table.childId), index("child_letters_status_idx").on(table.status)]
+);
+
+export const fieldUpdates = pgTable(
+  "field_updates",
+  {
+    id: varchar("id", { length: 128 }).primaryKey(),
+    title: varchar("title", { length: 255 }).notNull(),
+    documentType: varchar("document_type", { length: 64 }).notNull(),
+    targetType: varchar("target_type", { length: 16 }).$type<"child" | "project">().notNull(),
+    targetId: varchar("target_id", { length: 128 }).notNull(),
+    termOrPeriod: varchar("term_or_period", { length: 128 }).notNull(),
+    notes: text("notes").notNull().default(""),
+    attachmentUrl: text("attachment_url").notNull(),
+    fileName: varchar("file_name", { length: 255 }).notNull(),
+    uploadedBy: varchar("uploaded_by", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("field_updates_target_idx").on(table.targetType, table.targetId)]
 );
 
 // ---------------------------------------------------------------------------

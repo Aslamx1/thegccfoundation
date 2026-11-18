@@ -50,8 +50,11 @@ export interface LedgerTransaction {
   campaignId: string;
   campaignTitle: string;
   amountUGX: number;
+  currencyCode?: string;
+  amountMinor?: number;
   paymentMethod:
     | 'MTN MoMo'
+    | 'Online'
     | 'Airtel Money'
     | 'Visa / Mastercard'
     | 'Direct Bank Wire (EFT)'
@@ -76,6 +79,7 @@ export interface DonorDirectoryEntry {
   joinedDate: string;
   role: 'user' | 'volunteer' | 'admin';
   accountStatus: 'active' | 'deactivated';
+  contributionsByCurrency?: Array<{ currency: string; amountMinor: number }>;
 }
 
 export interface NewsMilestoneItem {
