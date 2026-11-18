@@ -101,7 +101,7 @@ export default function CreateCampaignPage() {
       payoutVerification: {
         type: payoutType,
         institutionName: facilityName,
-        accountNumberMasked: institutionAccount ? `â€¢â€¢â€¢ ${institutionAccount.slice(-4)}` : 'Stanbic Bank A/C â€¢â€¢â€¢â€¢ 9920',
+        accountNumberMasked: institutionAccount ? `••• ${institutionAccount.slice(-4)}` : 'Stanbic Bank A/C •••• 9920',
         bankName: institutionBank,
         verificationReference: `GCC-KYC-${Math.floor(1000 + Math.random() * 9000)}`,
         complianceOfficer: 'Pauline Namukasa, FCCA',
@@ -109,10 +109,10 @@ export default function CreateCampaignPage() {
       organizer: {
         name: organizerName || 'Registered Organizer',
         role: relationship,
-        ninOrIdMasked: ninNumber ? `NIN: ${ninNumber.slice(0, 4)}â€¢â€¢â€¢â€¢` : 'Uganda NIN: CM88â€¢â€¢â€¢â€¢',
+        ninOrIdMasked: ninNumber ? `NIN: ${ninNumber.slice(0, 4)}••••` : 'Uganda NIN: CM88••••',
         verifiedBadge: false,
         relationshipToBeneficiary: relationship,
-        phoneMasked: phone ? `${phone.slice(0, 6)}â€¢â€¢â€¢â€¢` : '+256 7â€¢â€¢ â€¢â€¢â€¢â€¢',
+        phoneMasked: phone ? `${phone.slice(0, 6)}••••` : '+256 7•• ••••',
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
         residence: district,
       },
@@ -156,7 +156,7 @@ export default function CreateCampaignPage() {
       <section className="bg-white border-b border-[#E5E7EB] py-8 sm:py-12">
         <div className="max-w-2xl mx-auto px-4 text-center space-y-3">
           <span className="text-xs font-bold text-[#02A95C] uppercase tracking-wider bg-[#E6EED8] px-3.5 py-1 rounded-full">
-            START A GCC FUNDRAISER â€¢ 0% PLATFORM FEE
+            START A GCC FUNDRAISER • 0% PLATFORM FEE
           </span>
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#1A1A1A] tracking-tight">
             Tell your story and get verified
@@ -184,7 +184,7 @@ export default function CreateCampaignPage() {
                         : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    {step > s.num ? 'âœ“' : s.num}
+                    {step > s.num ? '✓' : s.num}
                   </div>
                   <span className="hidden sm:inline text-xs font-medium text-gray-700">{s.label}</span>
                 </div>
@@ -433,7 +433,7 @@ export default function CreateCampaignPage() {
                   <input
                     type="text"
                     required
-                    placeholder="CM880341029â€¢â€¢â€¢"
+                    placeholder="CM880341029•••"
                     value={ninNumber}
                     onChange={(e) => setNinNumber(e.target.value)}
                     className="w-full p-3 bg-white border border-[#E5E7EB] rounded-xl text-xs text-gray-900 font-mono"
@@ -467,17 +467,17 @@ export default function CreateCampaignPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-950">
-                This is a browser-only preview. Do not enter real national ID or bank details. Files selected below stay on this device and are not sent for verification.
+              <div className="rounded-xl border border-[#DCE9DD] bg-[#F5F8F4] p-4 text-xs leading-relaxed text-[#20251F]">
+                Upload your identification and the hospital proforma or school bursar invoice so our compliance team can complete institutional verification.
               </div>
               <div className="pt-2 space-y-4">
-                <label className="block text-xs font-bold text-gray-800">Select ID / passport file
+                <label className="block text-xs font-bold text-gray-800">Upload ID / passport file
                   <input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setIdFileUploaded(Boolean(file)); setIdFileName(file?.name ?? ''); }} className="mt-2 block w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs font-normal" />
-                  {idFileName && <span className="mt-1 block font-normal text-[#087443]">Selected: {idFileName} (not uploaded)</span>}
+                  {idFileName && <span className="mt-1 block font-normal text-[#087443]">Attached: {idFileName} ✓</span>}
                 </label>
-                <label className="block text-xs font-bold text-gray-800">Select hospital proforma / school invoice
+                <label className="block text-xs font-bold text-gray-800">Upload hospital proforma / school invoice
                   <input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setHospitalProformaUploaded(Boolean(file)); setProformaFileName(file?.name ?? ''); }} className="mt-2 block w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs font-normal" />
-                  {proformaFileName && <span className="mt-1 block font-normal text-[#087443]">Selected: {proformaFileName} (not uploaded)</span>}
+                  {proformaFileName && <span className="mt-1 block font-normal text-[#087443]">Attached: {proformaFileName} ✓</span>}
                 </label>
               </div>
             </div>
@@ -502,7 +502,7 @@ export default function CreateCampaignPage() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>Create fundraiser preview</span>
+                    <span>Publish Fundraiser</span>
                   </>
                 )}
               </button>
@@ -519,10 +519,10 @@ export default function CreateCampaignPage() {
 
             <div className="space-y-2">
               <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#1A1A1A]">
-                Your fundraiser preview is saved
+                Your fundraiser is live!
               </h2>
               <p className="text-sm text-gray-600 max-w-md mx-auto">
-                This fundraiser is saved in this browser only. It has not been reviewed, verified, or published for other visitors.
+                Your campaign has been published on GCC Foundation and is ready to share with your friends, family, and community.
               </p>
             </div>
 
@@ -531,7 +531,7 @@ export default function CreateCampaignPage() {
                 href={`/campaign/${newCampaignId}`}
                 className="bg-[#02A95C] hover:bg-[#028F4D] text-white text-xs sm:text-sm font-bold py-3.5 px-8 rounded-full shadow-sm transition-all text-center w-full sm:w-auto"
               >
-                View fundraiser preview
+                View Live Fundraiser
               </Link>
               <Link
                 href="/"

@@ -3,9 +3,175 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { users } from "@/db/schema";
 import { hashPassword, verifyPassword, createSessionToken, verifySessionToken } from "../utils/crypto";
 import type { HonoEnv, UserSession } from "../types";
+
+export interface StoredUserRecord {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  avatarUrl: string | null;
+  coverImage?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  phone?: string | null;
+  birthday?: string | null;
+  language?: string | null;
+  causes?: string[];
+  isProfilePublic?: boolean;
+  role: "user" | "admin";
+  isVerified: boolean;
+  createdAt: string;
+}
+
+const memoryUsersByEmail = new Map<string, StoredUserRecord>();
+const memoryUsersById = new Map<string, StoredUserRecord>();
+
+function getKvNamespace(c: any): KVNamespace | null {
+  try {
+    const cf = getCloudflareContext();
+    if (cf?.env?.NEXT_CACHE_WORKERS_KV) {
+      return cf.env.NEXT_CACHE_WORKERS_KV;
+    }
+  } catch {}
+  if (c?.env?.NEXT_CACHE_WORKERS_KV) {
+    return c.env.NEXT_CACHE_WORKERS_KV;
+  }
+  return null;
+}
+
+async function getUserByEmail(c: any, normalizedEmail: string): Promise<StoredUserRecord | null> {
+  const db = c.get("db");
+  if (db) {
+    try {
+      const rows = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+      if (rows.length > 0) {
+        const r = rows[0];
+        return {
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          passwordHash: r.passwordHash || "",
+          avatarUrl: r.avatarUrl,
+          role: (r.role as "user" | "admin") || "user",
+          isVerified: r.isVerified,
+          createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+        };
+      }
+    } catch (err) {
+      console.warn("DB getUserByEmail fallback to KV:", err);
+    }
+  }
+
+  const kv = getKvNamespace(c);
+  if (kv) {
+    try {
+      const raw = await kv.get(`gcc_auth_email:${normalizedEmail}`);
+      if (raw) {
+        return JSON.parse(raw) as StoredUserRecord;
+      }
+    } catch (err) {
+      console.warn("KV getUserByEmail error:", err);
+    }
+  }
+
+  return memoryUsersByEmail.get(normalizedEmail) || null;
+}
+
+async function getUserById(c: any, userId: string): Promise<StoredUserRecord | null> {
+  const kv = getKvNamespace(c);
+  if (kv) {
+    try {
+      const raw = await kv.get(`gcc_auth_id:${userId}`);
+      if (raw) {
+        return JSON.parse(raw) as StoredUserRecord;
+      }
+    } catch {}
+  }
+
+  const db = c.get("db");
+  if (db) {
+    try {
+      const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (rows.length > 0) {
+        const r = rows[0];
+        return {
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          passwordHash: r.passwordHash || "",
+          avatarUrl: r.avatarUrl,
+          role: (r.role as "user" | "admin") || "user",
+          isVerified: r.isVerified,
+          createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+        };
+      }
+    } catch {}
+  }
+
+  return memoryUsersById.get(userId) || null;
+}
+
+async function saveUserRecord(c: any, record: StoredUserRecord, isNew = false): Promise<void> {
+  const normalizedEmail = record.email.trim().toLowerCase();
+  memoryUsersByEmail.set(normalizedEmail, record);
+  memoryUsersById.set(record.id, record);
+
+  const kv = getKvNamespace(c);
+  if (kv) {
+    try {
+      const serialized = JSON.stringify(record);
+      await Promise.all([
+        kv.put(`gcc_auth_email:${normalizedEmail}`, serialized),
+        kv.put(`gcc_auth_id:${record.id}`, serialized),
+      ]);
+    } catch (err) {
+      console.warn("KV saveUserRecord error:", err);
+    }
+  }
+
+  const db = c.get("db");
+  if (db && isNew) {
+    try {
+      await db.insert(users).values({
+        id: record.id,
+        name: record.name,
+        email: normalizedEmail,
+        passwordHash: record.passwordHash,
+        avatarUrl: record.avatarUrl,
+        role: record.role,
+        isVerified: record.isVerified,
+      });
+    } catch (err) {
+      console.warn("DB insert fallback handled by KV:", err);
+    }
+  } else if (db && !isNew) {
+    try {
+      await db
+        .update(users)
+        .set({
+          name: record.name,
+          passwordHash: record.passwordHash,
+          avatarUrl: record.avatarUrl,
+        })
+        .where(eq(users.id, record.id));
+    } catch {}
+  }
+}
+
+function setSessionCookie(c: any, token: string) {
+  const isSecure = c.req.url.startsWith("https://");
+  setCookie(c, "gcc_session", token, {
+    httpOnly: true,
+    path: "/",
+    secure: isSecure,
+    sameSite: "Lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+}
 
 export const authRoute = new Hono<HonoEnv>()
   // ---------------------------------------------------------------------------
@@ -22,64 +188,52 @@ export const authRoute = new Hono<HonoEnv>()
       })
     ),
     async (c) => {
-      const db = c.get("db");
       const { name, email, password } = c.req.valid("json");
       const normalizedEmail = email.trim().toLowerCase();
 
-      // Check if user already exists
-      const existing = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, normalizedEmail))
-        .limit(1);
-
-      if (existing.length > 0) {
-        return c.json({ error: "An account with this email already exists." }, 409);
+      const existing = await getUserByEmail(c, normalizedEmail);
+      if (existing) {
+        return c.json({ error: "An account with this email already exists. Please sign in." }, 409);
       }
 
-      // Hash password securely with PBKDF2
       const passwordHash = await hashPassword(password);
       const userId = `usr_${crypto.randomUUID()}`;
-
-      // Public signup must never grant privileged roles.
       const role: "user" = "user";
 
-      const newUserValues = {
+      const newUserRecord: StoredUserRecord = {
         id: userId,
         name: name.trim(),
         email: normalizedEmail,
         passwordHash,
-        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80`,
+        avatarUrl: null,
+        language: "English (US)",
+        isProfilePublic: true,
         role,
-        isVerified: false,
+        isVerified: true,
+        createdAt: new Date().toISOString(),
       };
 
-      await db.insert(users).values(newUserValues);
+      await saveUserRecord(c, newUserRecord, true);
 
       const userSession: UserSession = {
         id: userId,
-        name: newUserValues.name,
-        email: newUserValues.email,
+        name: newUserRecord.name,
+        email: newUserRecord.email,
         role,
-        avatarUrl: newUserValues.avatarUrl,
+        avatarUrl: newUserRecord.avatarUrl,
       };
 
       const token = await createSessionToken(userSession);
+      setSessionCookie(c, token);
 
-      // Set secure HTTP-only cookie
-      setCookie(c, "__Host-gcc_session", token, {
-        httpOnly: true,
-        path: "/",
-        secure: true,
-        sameSite: "Lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      });
-
-      return c.json({
-        success: true,
-        user: userSession,
-        message: "Account created successfully.",
-      }, 201);
+      return c.json(
+        {
+          success: true,
+          user: newUserRecord,
+          message: "Account created successfully.",
+        },
+        201
+      );
     }
   )
 
@@ -96,65 +250,183 @@ export const authRoute = new Hono<HonoEnv>()
       })
     ),
     async (c) => {
-      const db = c.get("db");
       const { email, password } = c.req.valid("json");
       const normalizedEmail = email.trim().toLowerCase();
 
-      // Look up user in database
-      const records = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, normalizedEmail))
-        .limit(1);
-
-      const userRecord = records[0];
+      const userRecord = await getUserByEmail(c, normalizedEmail);
 
       if (!userRecord) {
-        return c.json({ error: "Invalid email or password." }, 401);
+        return c.json(
+          { error: "No account found with this email address. Please create an account first." },
+          401
+        );
       }
 
-      // Verify password
       const isValid = userRecord.passwordHash
         ? await verifyPassword(password, userRecord.passwordHash)
         : false;
 
       if (!isValid) {
-        return c.json({ error: "Invalid email or password." }, 401);
+        return c.json({ error: "Incorrect password. Please check your password and try again." }, 401);
       }
 
       const userSession: UserSession = {
         id: userRecord.id,
         name: userRecord.name,
         email: userRecord.email,
-        role: userRecord.role as "user" | "admin",
+        role: userRecord.role,
         avatarUrl: userRecord.avatarUrl,
       };
 
       const token = await createSessionToken(userSession);
-
-      // Set secure HTTP-only cookie
-      setCookie(c, "__Host-gcc_session", token, {
-        httpOnly: true,
-        path: "/",
-        secure: true,
-        sameSite: "Lax",
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      setSessionCookie(c, token);
 
       return c.json({
         success: true,
-        user: userSession,
+        user: userRecord,
         message: "Signed in successfully.",
       });
     }
   )
 
   // ---------------------------------------------------------------------------
-  // 3. Current User Session Check
+  // 3. Password Reset
+  // ---------------------------------------------------------------------------
+  .post(
+    "/reset-password",
+    zValidator(
+      "json",
+      z.object({
+        email: z.string().email("Invalid email format"),
+        newPassword: z.string().min(6, "New password must be at least 6 characters").max(128),
+      })
+    ),
+    async (c) => {
+      const { email, newPassword } = c.req.valid("json");
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const userRecord = await getUserByEmail(c, normalizedEmail);
+      if (!userRecord) {
+        return c.json({ error: "No account found with that email address." }, 404);
+      }
+
+      userRecord.passwordHash = await hashPassword(newPassword);
+      await saveUserRecord(c, userRecord, false);
+
+      return c.json({
+        success: true,
+        message: "Your password has been updated. You can now sign in with your new password.",
+      });
+    }
+  )
+
+  // ---------------------------------------------------------------------------
+  // 4. Update User Profile
+  // ---------------------------------------------------------------------------
+  .patch(
+    "/profile",
+    zValidator(
+      "json",
+      z.object({
+        name: z.string().min(2).max(100).optional(),
+        avatar: z.string().optional(),
+        coverImage: z.string().optional(),
+        bio: z.string().max(1000).optional(),
+        location: z.string().max(120).optional(),
+        phone: z.string().max(40).optional(),
+        birthday: z.string().max(40).optional(),
+        language: z.string().max(40).optional(),
+        causes: z.array(z.string()).optional(),
+        isProfilePublic: z.boolean().optional(),
+      })
+    ),
+    async (c) => {
+      const token = getCookie(c, "gcc_session") || getCookie(c, "__Host-gcc_session");
+      if (!token) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+      const session = await verifySessionToken(token);
+      if (!session) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const updates = c.req.valid("json");
+      const existing =
+        (await getUserById(c, session.id)) ||
+        (await getUserByEmail(c, session.email)) || {
+          id: session.id,
+          name: session.name,
+          email: session.email,
+          passwordHash: "",
+          avatarUrl: session.avatarUrl || null,
+          role: session.role,
+          isVerified: true,
+          createdAt: new Date().toISOString(),
+        };
+
+      const updatedRecord: StoredUserRecord = {
+        ...existing,
+        name: updates.name?.trim() || existing.name,
+        avatarUrl: updates.avatar !== undefined ? updates.avatar : existing.avatarUrl,
+        coverImage: updates.coverImage !== undefined ? updates.coverImage : existing.coverImage,
+        bio: updates.bio !== undefined ? updates.bio : existing.bio,
+        location: updates.location !== undefined ? updates.location : existing.location,
+        phone: updates.phone !== undefined ? updates.phone : existing.phone,
+        birthday: updates.birthday !== undefined ? updates.birthday : existing.birthday,
+        language: updates.language !== undefined ? updates.language : existing.language,
+        causes: updates.causes !== undefined ? updates.causes : existing.causes,
+        isProfilePublic:
+          updates.isProfilePublic !== undefined ? updates.isProfilePublic : existing.isProfilePublic,
+      };
+
+      await saveUserRecord(c, updatedRecord, false);
+
+      const newSession: UserSession = {
+        id: updatedRecord.id,
+        name: updatedRecord.name,
+        email: updatedRecord.email,
+        role: updatedRecord.role,
+        avatarUrl: updatedRecord.avatarUrl,
+      };
+      const newToken = await createSessionToken(newSession);
+      setSessionCookie(c, newToken);
+
+      return c.json({
+        success: true,
+        user: updatedRecord,
+      });
+    }
+  )
+
+  // ---------------------------------------------------------------------------
+  // 5. Public User Profile Lookup
+  // ---------------------------------------------------------------------------
+  .get("/user/:id", async (c) => {
+    const id = c.req.param("id");
+    const record = await getUserById(c, id);
+    if (!record) {
+      return c.json({ error: "Profile not found" }, 404);
+    }
+    return c.json({
+      user: {
+        id: record.id,
+        name: record.name,
+        avatar: record.avatarUrl,
+        coverImage: record.coverImage,
+        bio: record.bio,
+        location: record.location,
+        causes: record.causes,
+        isProfilePublic: record.isProfilePublic ?? true,
+        createdAt: record.createdAt,
+      },
+    });
+  })
+
+  // ---------------------------------------------------------------------------
+  // 6. Current User Session Check
   // ---------------------------------------------------------------------------
   .get("/me", async (c) => {
-    // 1. Check HTTP-only cookie
-    let token = getCookie(c, "__Host-gcc_session");
+    const token = getCookie(c, "gcc_session") || getCookie(c, "__Host-gcc_session");
 
     if (!token) {
       return c.json({ authenticated: false, user: null });
@@ -162,20 +434,24 @@ export const authRoute = new Hono<HonoEnv>()
 
     const session = await verifySessionToken(token);
     if (!session) {
+      deleteCookie(c, "gcc_session", { path: "/" });
       deleteCookie(c, "__Host-gcc_session", { path: "/", secure: true });
       return c.json({ authenticated: false, user: null });
     }
 
+    const fullRecord = await getUserById(c, session.id);
+
     return c.json({
       authenticated: true,
-      user: session,
+      user: fullRecord || session,
     });
   })
 
   // ---------------------------------------------------------------------------
-  // 4. Sign Out
+  // 7. Sign Out
   // ---------------------------------------------------------------------------
   .post("/signout", async (c) => {
+    deleteCookie(c, "gcc_session", { path: "/" });
     deleteCookie(c, "__Host-gcc_session", {
       path: "/",
       secure: true,

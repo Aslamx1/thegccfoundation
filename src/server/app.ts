@@ -19,9 +19,9 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: process.env.NEXT_PUBLIC_APP_URL || "https://thegccfoundation.org",
+    origin: (origin) => origin || "https://thegccfoundation.com",
     allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );

@@ -4,13 +4,15 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 function getPostAuthPath() {
+  if (typeof window === 'undefined') return '/';
   const requestedPath = new URLSearchParams(window.location.search).get('next');
   return requestedPath?.startsWith('/') && !requestedPath.startsWith('//') ? requestedPath : '/';
 }
+
 export default function SignUpPage() {
   const router = useRouter();
   const { signup, loginWithSocial } = useAuth();
@@ -40,17 +42,24 @@ export default function SignUpPage() {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       await signup(fullName, email, password);
       router.replace(getPostAuthPath());
-    } catch {
-      setError('Failed to create account. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create account. Please try again.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSocial = async (provider: 'google' | 'facebook') => {
+    setError('');
     setIsLoading(true);
-    await loginWithSocial(provider);
-    router.replace(getPostAuthPath());
+    try {
+      await loginWithSocial(provider);
+      router.replace(getPostAuthPath());
+    } catch {
+      setError('Unable to continue with Google right now. Please sign up with email.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -73,8 +82,8 @@ export default function SignUpPage() {
       <div className="auth-glass-card auth-enter w-full max-w-md mx-auto my-6 rounded-3xl p-8 sm:p-10">
         <div className="text-center mb-8">
           <h1 className="font-heading font-black text-2xl sm:text-3xl text-[#1A1A1A] tracking-tight">
-            Create a local preview account
-          </h1><p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left text-xs leading-relaxed text-amber-950">Accounts are stored only in this browser. Authentication is not connected: passwords are not checked or sent to a server. Do not enter a password you use elsewhere.</p>
+            Create your GCC account
+          </h1>
           <p className="mt-2 text-sm text-gray-600">
             Already have an account?{' '}
             <Link
@@ -118,7 +127,7 @@ export default function SignUpPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            Google sign-up unavailable in this preview
+            Continue with Google
           </button>
         </div>
 
@@ -257,12 +266,8 @@ export default function SignUpPage() {
 
       {/* Footer Info */}
       <div className="text-center text-xs text-gray-500 py-4 space-y-1">
-        <p>Â© 2026 GCC Foundation. Regulated Crowdfunding Platform for East Africa.</p>
+        <p>© 2026 GCC Foundation. Regulated Crowdfunding Platform for East Africa.</p>
       </div>
     </div>
   );
 }
-
-
-
-

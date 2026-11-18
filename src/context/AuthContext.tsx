@@ -41,6 +41,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   signup: (name: string, email: string, password?: string) => Promise<boolean>;
+  resetPassword: (email: string, newPassword: string) => Promise<string>;
   loginWithSocial: (provider: "google" | "facebook") => Promise<void>;
   logout: () => void;
   updateProfile: (updates: ProfileUpdates) => void;
@@ -48,6 +49,34 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = "gcc_foundation_auth_user";
+const ACCOUNTS_KEY = "gcc_foundation_accounts";
+
+function normalizeServerUser(raw: any): User {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    avatar: raw.avatarUrl || raw.avatar || undefined,
+    coverImage: raw.coverImage || undefined,
+    bio: raw.bio || undefined,
+    location: raw.location || undefined,
+    phone: raw.phone || undefined,
+    birthday: raw.birthday || undefined,
+    language: raw.language || "English (US)",
+    causes: Array.isArray(raw.causes) ? raw.causes : [],
+    isProfilePublic: raw.isProfilePublic ?? true,
+    role: raw.role || "user",
+    createdAt: raw.createdAt || new Date().toISOString(),
+  };
+}
+
+function saveToAccountsCache(user: User) {
+  try {
+    const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "{}") as Record<string, User>;
+    accounts[user.id] = user;
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  } catch {}
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -60,25 +89,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.ok) {
           const data = (await res.json()) as any;
           if (data.authenticated && data.user) {
-            const serverUser: User = {
-              id: data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-              avatar: data.user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80",
-              role: data.user.role,
-              language: "English (US)",
-              createdAt: new Date().toISOString(),
-            };
+            const serverUser = normalizeServerUser(data.user);
             setUser(serverUser);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(serverUser));
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(serverUser));
+              saveToAccountsCache(serverUser);
+            } catch {}
             return;
           }
         }
       } catch (err) {
-        console.warn("Server session check failed, falling back to local cache:", err);
+        console.warn("Session check fallback to local cache:", err);
       }
 
-      // Fallback local cache
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
@@ -105,19 +128,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(data.error || "Invalid email or password.");
     }
 
-    const authenticatedUser: User = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      avatar: data.user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80",
-      role: data.user.role,
-      language: "English (US)",
-      createdAt: new Date().toISOString(),
-    };
-
+    const authenticatedUser = normalizeServerUser(data.user);
     setUser(authenticatedUser);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(authenticatedUser));
+      saveToAccountsCache(authenticatedUser);
     } catch {}
 
     return true;
@@ -138,38 +153,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(data.error || "Failed to create account.");
     }
 
-    const newUser: User = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      avatar: data.user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80",
-      role: data.user.role,
-      language: "English (US)",
-      createdAt: new Date().toISOString(),
-    };
-
+    const newUser = normalizeServerUser(data.user);
     setUser(newUser);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+      saveToAccountsCache(newUser);
     } catch {}
 
     return true;
   };
 
+  const resetPassword = async (email: string, newPassword: string): Promise<string> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: normalizedEmail, newPassword }),
+    });
+    const data = (await res.json()) as any;
+    if (!res.ok) {
+      throw new Error(data.error || "Could not reset password.");
+    }
+    return data.message || "Password updated successfully.";
+  };
+
   const loginWithSocial = async (provider: "google" | "facebook") => {
-    // Generate secure social member session
-    const email = `member_${createBrowserId().slice(0, 6)}@${provider}.com`;
-    const name = `${provider[0].toUpperCase()}${provider.slice(1)} Member`;
-    await signup(name, email, `SocialAuth_${crypto.randomUUID()}`);
+    const socialKey = `gcc_social_${provider}_credentials`;
+    let creds: { email: string; password: string; name: string } | null = null;
+    try {
+      const saved = localStorage.getItem(socialKey);
+      if (saved) creds = JSON.parse(saved);
+    } catch {}
+
+    if (!creds) {
+      const shortId = createBrowserId().slice(0, 6);
+      creds = {
+        email: `member.${shortId}@${provider}.com`,
+        password: `SocialAuth_${shortId}_2026`,
+        name: `${provider === "google" ? "Google" : "Facebook"} Member`,
+      };
+      try {
+        localStorage.setItem(socialKey, JSON.stringify(creds));
+      } catch {}
+    }
+
+    try {
+      await login(creds.email, creds.password);
+    } catch {
+      await signup(creds.name, creds.email, creds.password);
+    }
   };
 
   const updateProfile = (updates: ProfileUpdates) => {
     if (!user) return;
-    const updated = { ...user, ...updates, name: updates.name?.trim() || user.name };
+    const updated: User = {
+      ...user,
+      ...updates,
+      name: updates.name?.trim() || user.name,
+    };
     setUser(updated);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      saveToAccountsCache(updated);
     } catch {}
+
+    void fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(updates),
+    }).catch(() => {});
   };
 
   const logout = async () => {
@@ -189,6 +243,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         login,
         signup,
+        resetPassword,
         loginWithSocial,
         logout,
         updateProfile,

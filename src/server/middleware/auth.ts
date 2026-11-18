@@ -1,16 +1,14 @@
 import { MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
 import { verifySessionToken } from "../utils/crypto";
-import type { HonoEnv, UserSession } from "../types";
+import type { HonoEnv } from "../types";
 
 /**
  * Extracts and verifies authentication from the secure session cookie.
  */
 export const authMiddleware: MiddlewareHandler<HonoEnv> = async (c, next) => {
-  // 1. Try session cookie
-  let token = getCookie(c, "__Host-gcc_session");
+  const token = getCookie(c, "gcc_session") || getCookie(c, "__Host-gcc_session");
 
-  // Verify the HTTP-only session cookie. Never accept bearer demo tokens or caller-supplied identities.
   if (token) {
     const session = await verifySessionToken(token);
     if (session) {

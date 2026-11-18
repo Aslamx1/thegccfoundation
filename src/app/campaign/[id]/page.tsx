@@ -175,7 +175,7 @@ export default function CampaignDetailPage({ params }: CampaignPageProps) {
                     </span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {campaign.organizer.relationshipToBeneficiary} â€¢ {campaign.location.district}, Uganda
+                    {campaign.organizer.relationshipToBeneficiary} • {campaign.location.district}, Uganda
                   </div>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export default function CampaignDetailPage({ params }: CampaignPageProps) {
                       <h4 className="font-heading font-bold text-base text-[#1A1A1A]">{update.title}</h4>
                       <p className="text-sm text-gray-700 leading-relaxed font-body">{update.content}</p>
                       <div className="text-[11px] text-gray-500 pt-1">
-                        By {update.authorName} â€¢ Verified by {update.verifiedByOfficer}
+                        By {update.authorName} • Verified by {update.verifiedByOfficer}
                       </div>
                     </div>
                   ))}
@@ -363,11 +363,11 @@ export default function CampaignDetailPage({ params }: CampaignPageProps) {
                         <strong className="text-sm font-bold text-[#1A1A1A]">
                           {donor.isAnonymous ? 'Anonymous' : donor.name}
                         </strong>
-                        <span className="text-gray-400">â€¢</span>
+                        <span className="text-gray-400">•</span>
                         <span className="font-mono font-bold text-[#02A95C]">
                           {formatUGX(donor.amountUGX)}
                         </span>
-                        <span className="text-gray-400">â€¢</span>
+                        <span className="text-gray-400">•</span>
                         <span className="text-gray-400">{donor.timestamp}</span>
                       </div>
                       {donor.message && (

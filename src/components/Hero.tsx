@@ -30,7 +30,7 @@ export default function Hero() {
     },
     {
       category: 'Community',
-      label: 'Womenâ€™s Drip Irrigation',
+      label: 'Women’s Drip Irrigation',
       image: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=600&q=80',
       rotation: '-rotate-2',
       colPos: 'lg:top-1/2 lg:-right-6 lg:-translate-y-1/2',
@@ -126,7 +126,7 @@ export default function Hero() {
             {/* Trust Assurance Sub-line */}
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 pt-2">
               <ShieldCheck className="w-4 h-4 text-[#02A95C]" />
-              <span>Direct-to-Institution Payouts â€¢ 0% Platform Fee to Charities</span>
+              <span>Direct-to-Institution Payouts • 0% Platform Fee to Charities</span>
             </div>
 
           </div>
