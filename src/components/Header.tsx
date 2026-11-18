@@ -219,7 +219,6 @@ export default function Header() {
                   <Link href="/messages/primary" onClick={() => setProfileMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-[#F6F8F5]">Messages</Link>
                   <Link href="/account/settings" onClick={() => setProfileMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-[#F6F8F5]">Account settings</Link>
                   <Link href="/create/fundraiser/category" onClick={() => setProfileMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-[#F6F8F5]">Start a fundraiser</Link>
-                  {user.role === 'admin' && <Link href="/admin" onClick={() => setProfileMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-[#087443] hover:bg-[#F6F8F5]">Admin dashboard</Link>}
                   <button type="button" onClick={() => { logout(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-[#F6F8F5]"><LogOut className="h-4 w-4" />Sign out</button>
                 </div>
               )}
