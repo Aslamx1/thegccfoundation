@@ -8,9 +8,9 @@ import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 function getPostAuthPath() {
-  if (typeof window === 'undefined') return '/';
+  if (typeof window === 'undefined') return '/account/impact';
   const requestedPath = new URLSearchParams(window.location.search).get('next');
-  return requestedPath?.startsWith('/') && !requestedPath.startsWith('//') ? requestedPath : '/';
+  return requestedPath?.startsWith('/') && !requestedPath.startsWith('//') ? requestedPath : '/account/impact';
 }
 
 export default function SignUpPage() {

@@ -7,10 +7,16 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Eye, EyeOff, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-function getPostAuthPath() {
-  if (typeof window === 'undefined') return '/';
+function getPostAuthPath(email?: string) {
+  if (typeof window === 'undefined') return '/account/impact';
   const requestedPath = new URLSearchParams(window.location.search).get('next');
-  return requestedPath?.startsWith('/') && !requestedPath.startsWith('//') ? requestedPath : '/';
+  if (requestedPath?.startsWith('/') && !requestedPath.startsWith('//')) {
+    return requestedPath;
+  }
+  if (email && /^(admin|staff|compliance|director)@/i.test(email.trim())) {
+    return '/admin';
+  }
+  return '/account/impact';
 }
 
 export default function SignInPage() {
@@ -33,7 +39,7 @@ export default function SignInPage() {
 
     try {
       await login(email.trim(), password);
-      router.replace(getPostAuthPath());
+      router.replace(getPostAuthPath(email));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'We couldn’t sign you in. Check your details and try again.';
       setError(msg);
