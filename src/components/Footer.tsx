@@ -18,9 +18,9 @@ const footerGroups = [
     title: 'Fundraise',
     links: [
       { label: 'Start a fundraiser', href: '/create/fundraiser/category' },
-      { label: 'How fundraising works', href: '/how-it-works' },
-      { label: 'Fundraising categories', href: '/#discover' },
-      { label: 'Create a community fundraiser', href: '/create/fundraiser/category' },
+      { label: 'How fundraising works', href: '/how-it-works#how-to-start' },
+      { label: 'Fundraising categories', href: '/how-it-works#categories' },
+      { label: 'Create a community fundraiser', href: '/how-it-works#team-fundraising' },
     ],
   },
   {
@@ -36,7 +36,7 @@ const footerGroups = [
     title: 'More resources',
     links: [
       { label: 'Browse fundraisers', href: '/#discover' },
-      { label: 'Fundraising tips', href: '/how-it-works' },
+      { label: 'Fundraising tips', href: '/how-it-works#tips' },
       { label: 'Campaign updates and reporting', href: '/transparency' },
       { label: 'Start a fundraiser', href: '/create/fundraiser/category' },
     ],
