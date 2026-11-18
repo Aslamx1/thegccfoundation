@@ -5,17 +5,24 @@ import Header from '@/components/Header';
 import Link from 'next/link';
 import { useDonation } from '@/context/DonationContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { Campaign, Category } from '@/types';
 import {
   CHILDREN_STORAGE_KEY,
   LETTERS_STORAGE_KEY,
+  FIELD_UPDATES_STORAGE_KEY,
+  LEDGER_STORAGE_KEY,
   DONORS_STORAGE_KEY,
   NEWS_STORAGE_KEY,
   DEFAULT_CHILDREN,
   DEFAULT_LETTERS,
+  DEFAULT_FIELD_UPDATES,
+  DEFAULT_LEDGER,
   DEFAULT_DONORS,
   DEFAULT_NEWS,
   ChildProfile,
   ChildLetter,
+  FieldUpdateUpload,
+  LedgerTransaction,
   DonorDirectoryEntry,
   NewsMilestoneItem,
 } from '@/data/ngo-portal';
@@ -29,16 +36,30 @@ import {
   Search,
   Plus,
   CheckCircle2,
-  AlertTriangle,
   ExternalLink,
   Download,
   Edit3,
   Upload,
   Check,
   X,
+  LayoutDashboard,
+  Sparkles,
+  FileSpreadsheet,
+  Lock,
+  UserCheck,
+  UserX,
+  Receipt,
+  FolderUp,
+  Megaphone,
 } from 'lucide-react';
 
-type AdminTab = 'analytics' | 'donors' | 'content' | 'children' | 'letters';
+type AdminTab =
+  | 'command'
+  | 'children'
+  | 'letters'
+  | 'financials'
+  | 'donors'
+  | 'campaigns';
 
 interface PayoutRow {
   id: string;
@@ -81,41 +102,28 @@ const INITIAL_PAYOUTS: PayoutRow[] = [
 ];
 
 export default function AdminDashboardPage() {
-  const { campaigns } = useDonation();
+  const { campaigns, addNewCampaign, updateCampaign } = useDonation();
   const { formatUGX } = useCurrency();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('analytics');
+  const [activeTab, setActiveTab] = useState<AdminTab>('command');
+  const [adminToast, setAdminToast] = useState('');
 
-  // 1. Analytics & Payouts state
+  const notify = (msg: string) => {
+    setAdminToast(msg);
+    window.setTimeout(() => setAdminToast(''), 4500);
+  };
+
+  // ================= STATE: 1. COMMAND CENTER & PAYOUTS =================
   const [payouts, setPayouts] = useState<PayoutRow[]>(INITIAL_PAYOUTS);
-  const [campaignStatuses, setCampaignStatuses] = useState<Record<string, 'active' | 'paused'>>({});
-  const [campaignVerified, setCampaignVerified] = useState<Record<string, boolean>>({});
 
-  // 2. Donor & Member Directory state
-  const [donors, setDonors] = useState<DonorDirectoryEntry[]>(DEFAULT_DONORS);
-  const [donorSearch, setDonorSearch] = useState('');
-  const [showAddDonor, setShowAddDonor] = useState(false);
-  const [newDonorName, setNewDonorName] = useState('');
-  const [newDonorEmail, setNewDonorEmail] = useState('');
-  const [newDonorPhone, setNewDonorPhone] = useState('');
-  const [newDonorAddress, setNewDonorAddress] = useState('');
-  const [newDonorAmount, setNewDonorAmount] = useState('250000');
-  const [newDonorPlan, setNewDonorPlan] = useState('One-Time Supporter');
-
-  // 3. Content & Campaign Manager state
-  const [newsList, setNewsList] = useState<NewsMilestoneItem[]>(DEFAULT_NEWS);
-  const [newsTitle, setNewsTitle] = useState('');
-  const [newsCategory, setNewsCategory] = useState('Project Milestone');
-  const [newsSummary, setNewsSummary] = useState('');
-
-  // 4. Child Profile CMS state
+  // ================= STATE: 2. CHILD SPONSORSHIP MANAGEMENT (CMS) =================
   const [childrenList, setChildrenList] = useState<ChildProfile[]>(DEFAULT_CHILDREN);
   const [editingChild, setEditingChild] = useState<ChildProfile | null>(null);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childName, setChildName] = useState('');
   const [childAge, setChildAge] = useState('9');
   const [childGender, setChildGender] = useState<'Girl' | 'Boy'>('Girl');
-  const [childDistrict, setChildDistrict] = useState('Kampala, Uganda');
+  const [childDistrict, setChildDistrict] = useState('Soroti District, Uganda');
   const [childSchool, setChildSchool] = useState('');
   const [childMonthlyUSD, setChildMonthlyUSD] = useState('35');
   const [childBio, setChildBio] = useState('');
@@ -124,9 +132,85 @@ export default function AdminDashboardPage() {
     'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'
   );
   const [childStatus, setChildStatus] = useState<'available' | 'sponsored'>('available');
+  const [childSponsorName, setChildSponsorName] = useState('');
+  const [childSponsorEmail, setChildSponsorEmail] = useState('');
+  const [childFormError, setChildFormError] = useState('');
 
-  // 5. Letter Moderation Queue state
+  // ================= STATE: 3. LETTER MODERATION & FIELD UPLOADS =================
   const [letters, setLetters] = useState<ChildLetter[]>(DEFAULT_LETTERS);
+  const [editingLetterId, setEditingLetterId] = useState<string | null>(null);
+  const [editingLetterText, setEditingLetterText] = useState('');
+  const [letterFilter, setLetterFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
+  const [fieldUploads, setFieldUploads] = useState<FieldUpdateUpload[]>(DEFAULT_FIELD_UPDATES);
+  const [showFieldUploadForm, setShowFieldUploadForm] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadDocType, setUploadDocType] = useState<FieldUpdateUpload['documentType']>('Termly Report Card');
+  const [uploadTargetType, setUploadTargetType] = useState<'child' | 'project'>('child');
+  const [uploadTargetId, setUploadTargetId] = useState('child-04');
+  const [uploadTerm, setUploadTerm] = useState('Term 3 · 2026');
+  const [uploadNotes, setUploadNotes] = useState('');
+  const [uploadAttachmentUrl, setUploadAttachmentUrl] = useState(
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'
+  );
+  const [uploadFileName, setUploadFileName] = useState('term3_report_card_batch.pdf');
+
+  // ================= STATE: 4. DONATION & FINANCIAL RECORDS =================
+  const [ledger, setLedger] = useState<LedgerTransaction[]>(DEFAULT_LEDGER);
+  const [ledgerSearch, setLedgerSearch] = useState('');
+  const [ledgerMethodFilter, setLedgerMethodFilter] = useState('All');
+  const [ledgerTypeFilter, setLedgerTypeFilter] = useState('All');
+  const [showManualEntryForm, setShowManualEntryForm] = useState(false);
+  const [manualDonorName, setManualDonorName] = useState('');
+  const [manualDonorEmail, setManualDonorEmail] = useState('');
+  const [manualCampaignId, setManualCampaignId] = useState('');
+  const [manualAmountUGX, setManualAmountUGX] = useState('500000');
+  const [manualPaymentMethod, setManualPaymentMethod] =
+    useState<LedgerTransaction['paymentMethod']>('Offline Cash Receipt');
+  const [manualEntryType, setManualEntryType] =
+    useState<LedgerTransaction['entryType']>('Manual Offline Entry');
+  const [manualReferenceCode, setManualReferenceCode] = useState('');
+  const [manualNotes, setManualNotes] = useState('');
+  const [selectedReceiptTx, setSelectedReceiptTx] = useState<LedgerTransaction | null>(null);
+
+  // ================= STATE: 5. DONOR & MEMBER DIRECTORY =================
+  const [donors, setDonors] = useState<DonorDirectoryEntry[]>(DEFAULT_DONORS);
+  const [donorSearch, setDonorSearch] = useState('');
+  const [donorRoleFilter, setDonorRoleFilter] = useState('All');
+  const [showAddDonor, setShowAddDonor] = useState(false);
+  const [editingDonor, setEditingDonor] = useState<DonorDirectoryEntry | null>(null);
+  const [newDonorName, setNewDonorName] = useState('');
+  const [newDonorEmail, setNewDonorEmail] = useState('');
+  const [newDonorPhone, setNewDonorPhone] = useState('');
+  const [newDonorAddress, setNewDonorAddress] = useState('');
+  const [newDonorAmount, setNewDonorAmount] = useState('250000');
+  const [newDonorPlan, setNewDonorPlan] = useState('One-Time Supporter');
+  const [newDonorRole, setNewDonorRole] = useState<'user' | 'volunteer' | 'admin'>('user');
+
+  // ================= STATE: 6. CAMPAIGN & CONTENT MANAGER =================
+  const [newsList, setNewsList] = useState<NewsMilestoneItem[]>(DEFAULT_NEWS);
+  const [newsTitle, setNewsTitle] = useState('');
+  const [newsCategory, setNewsCategory] = useState('Project Milestone');
+  const [newsCampaignId, setNewsCampaignId] = useState('');
+  const [newsImageUrl, setNewsImageUrl] = useState(
+    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80'
+  );
+  const [newsSummary, setNewsSummary] = useState('');
+
+  const [showCampaignEditor, setShowCampaignEditor] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [campTitle, setCampTitle] = useState('');
+  const [campSubtitle, setCampSubtitle] = useState('');
+  const [campCategory, setCampCategory] = useState<Category>('Medical Care');
+  const [campDistrict, setCampDistrict] = useState('Kampala, Uganda');
+  const [campInstitution, setCampInstitution] = useState('Uganda Heart Institute Treasury');
+  const [campGoalUGX, setCampGoalUGX] = useState('15000000');
+  const [campCoverImage, setCampCoverImage] = useState(
+    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80'
+  );
+  const [campStory, setCampStory] = useState('');
+  const [campaignStatuses, setCampaignStatuses] = useState<Record<string, 'active' | 'paused'>>({});
+  const [campaignVerified, setCampaignVerified] = useState<Record<string, boolean>>({});
 
   // Load persisted data from localStorage
   useEffect(() => {
@@ -137,6 +221,12 @@ export default function AdminDashboardPage() {
       const savedLetters = localStorage.getItem(LETTERS_STORAGE_KEY);
       if (savedLetters) setLetters(JSON.parse(savedLetters));
 
+      const savedField = localStorage.getItem(FIELD_UPDATES_STORAGE_KEY);
+      if (savedField) setFieldUploads(JSON.parse(savedField));
+
+      const savedLedger = localStorage.getItem(LEDGER_STORAGE_KEY);
+      if (savedLedger) setLedger(JSON.parse(savedLedger));
+
       const savedDonors = localStorage.getItem(DONORS_STORAGE_KEY);
       if (savedDonors) setDonors(JSON.parse(savedDonors));
 
@@ -145,99 +235,127 @@ export default function AdminDashboardPage() {
     } catch {}
   }, []);
 
-  const totalRaisedUGX = useMemo(
-    () => campaigns.reduce((sum, c) => sum + c.raisedUGX, 0),
-    [campaigns]
+  // Combined transactions (Global Ledger + Campaign Recent Donors)
+  const combinedTransactions = useMemo<LedgerTransaction[]>(() => {
+    const campaignTxs: LedgerTransaction[] = campaigns.flatMap((c, cIdx) =>
+      c.recentDonors.map((d, dIdx) => ({
+        id: `camp-tx-${c.id}-${d.id}`,
+        receiptNumber: `GCC-RCP-2026-${1000 + cIdx * 100 + dIdx}`,
+        donorName: d.isAnonymous ? 'Anonymous Supporter' : d.name,
+        donorEmail: 'verified.supporter@thegccfoundation.com',
+        campaignId: c.id,
+        campaignTitle: c.title,
+        amountUGX: d.amountUGX,
+        paymentMethod:
+          d.paymentMethod === 'MTN Mobile Money'
+            ? 'MTN MoMo'
+            : d.paymentMethod === 'Airtel Money'
+            ? 'Airtel Money'
+            : 'Visa / Mastercard',
+        entryType: 'Online',
+        date: d.timestamp,
+        monthTag: 'this-month',
+        referenceCode: `TX-${d.id.toUpperCase()}`,
+        notes: d.message || 'Direct online campaign contribution',
+      }))
+    );
+    return [...ledger, ...campaignTxs];
+  }, [ledger, campaigns]);
+
+  // High-Level Financial Metrics
+  const allTimeRaisedUGX = useMemo(() => {
+    const campaignSum = campaigns.reduce((sum, c) => sum + c.raisedUGX, 0);
+    const manualOfflineSum = ledger
+      .filter((tx) => tx.entryType !== 'Online')
+      .reduce((sum, tx) => sum + tx.amountUGX, 0);
+    return campaignSum + manualOfflineSum;
+  }, [campaigns, ledger]);
+
+  const thisMonthRaisedUGX = useMemo(() => {
+    return combinedTransactions
+      .filter((tx) => tx.monthTag === 'this-month')
+      .reduce((sum, tx) => sum + tx.amountUGX, 0);
+  }, [combinedTransactions]);
+
+  const thisYearRaisedUGX = useMemo(() => {
+    return combinedTransactions
+      .filter((tx) => tx.monthTag === 'this-month' || tx.monthTag === 'this-year')
+      .reduce((sum, tx) => sum + tx.amountUGX, 0);
+  }, [combinedTransactions]);
+
+  const activeMonthlyRecurringDonors = useMemo(
+    () =>
+      donors.filter(
+        (d) =>
+          d.accountStatus !== 'deactivated' &&
+          (d.recurringPlan.toLowerCase().includes('monthly') ||
+            d.recurringPlan.toLowerCase().includes('sponsor'))
+      ).length,
+    [donors]
   );
+
+  const activeSponsorshipsCount = useMemo(
+    () => childrenList.filter((c) => c.status === 'sponsored').length,
+    [childrenList]
+  );
+
+  // Filtered Lists
+  const filteredLedger = useMemo(() => {
+    const q = ledgerSearch.trim().toLowerCase();
+    return combinedTransactions.filter((tx) => {
+      if (ledgerMethodFilter !== 'All' && tx.paymentMethod !== ledgerMethodFilter) return false;
+      if (ledgerTypeFilter !== 'All' && tx.entryType !== ledgerTypeFilter) return false;
+      if (!q) return true;
+      return (
+        tx.donorName.toLowerCase().includes(q) ||
+        tx.campaignTitle.toLowerCase().includes(q) ||
+        tx.receiptNumber.toLowerCase().includes(q) ||
+        tx.referenceCode.toLowerCase().includes(q)
+      );
+    });
+  }, [combinedTransactions, ledgerSearch, ledgerMethodFilter, ledgerTypeFilter]);
 
   const filteredDonors = useMemo(() => {
     const q = donorSearch.trim().toLowerCase();
-    if (!q) return donors;
-    return donors.filter(
-      (d) =>
+    return donors.filter((d) => {
+      if (donorRoleFilter !== 'All' && (d.role || 'user') !== donorRoleFilter) return false;
+      if (!q) return true;
+      return (
         d.name.toLowerCase().includes(q) ||
         d.email.toLowerCase().includes(q) ||
         d.address.toLowerCase().includes(q) ||
         d.recurringPlan.toLowerCase().includes(q)
-    );
-  }, [donors, donorSearch]);
+      );
+    });
+  }, [donors, donorSearch, donorRoleFilter]);
 
-  // Handlers
-  const updatePayout = (id: string, status: PayoutRow['status']) => {
-    setPayouts((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+  const filteredLetters = useMemo(() => {
+    // Incoming pending messages appear first
+    const sorted = [...letters].sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return 0;
+    });
+    if (letterFilter === 'all') return sorted;
+    return sorted.filter((l) => l.status === letterFilter);
+  }, [letters, letterFilter]);
+
+  // ================= HANDLERS: QUICK ACTIONS =================
+  const triggerQuickActionAddChild = () => {
+    openAddChild();
+    setActiveTab('children');
   };
 
-  const handleAddDonor = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDonorName.trim() || !newDonorEmail.trim()) return;
-    const entry: DonorDirectoryEntry = {
-      id: `dnr-${Date.now()}`,
-      name: newDonorName.trim(),
-      email: newDonorEmail.trim(),
-      phone: newDonorPhone.trim() || '+256 703 601 200',
-      address: newDonorAddress.trim() || 'Kampala, Uganda',
-      totalDonatedUGX: Number(newDonorAmount) || 0,
-      donationsCount: 1,
-      recurringPlan: newDonorPlan,
-      joinedDate: 'Nov 2026',
-    };
-    const next = [entry, ...donors];
-    setDonors(next);
-    try {
-      localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    setNewDonorName('');
-    setNewDonorEmail('');
-    setNewDonorPhone('');
-    setNewDonorAddress('');
-    setShowAddDonor(false);
+  const triggerQuickActionPublishUpdate = () => {
+    setActiveTab('campaigns');
   };
 
-  const handleExportDonorsCSV = () => {
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Address', 'Total Donated (UGX)', 'Plan', 'Joined'];
-    const rows = donors.map((d) => [
-      `"${d.id}"`,
-      `"${d.name}"`,
-      `"${d.email}"`,
-      `"${d.phone}"`,
-      `"${d.address}"`,
-      d.totalDonatedUGX,
-      `"${d.recurringPlan}"`,
-      `"${d.joinedDate}"`,
-    ]);
-    const csv = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const link = document.createElement('a');
-    link.setAttribute('href', encodeURI(csv));
-    link.setAttribute('download', 'gcc_foundation_donor_directory.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const triggerQuickActionReviewLetters = () => {
+    setLetterFilter('pending');
+    setActiveTab('letters');
   };
 
-  const handlePublishNews = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsTitle.trim() || !newsSummary.trim()) return;
-    const item: NewsMilestoneItem = {
-      id: `news-${Date.now()}`,
-      title: newsTitle.trim(),
-      category: newsCategory,
-      summary: newsSummary.trim(),
-      publishedAt: new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      author: 'GCC Staff Admin',
-    };
-    const next = [item, ...newsList];
-    setNewsList(next);
-    try {
-      localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    setNewsTitle('');
-    setNewsSummary('');
-  };
-
+  // ================= HANDLERS: MODULE 2 (CHILD CMS & SPONSORSHIP TRACKING) =================
   const openAddChild = () => {
     setEditingChild(null);
     setChildName('');
@@ -252,6 +370,9 @@ export default function AdminDashboardPage() {
       'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'
     );
     setChildStatus('available');
+    setChildSponsorName('');
+    setChildSponsorEmail('');
+    setChildFormError('');
     setShowChildForm(true);
   };
 
@@ -267,16 +388,24 @@ export default function AdminDashboardPage() {
     setChildDream(child.dream);
     setChildPhotoUrl(child.photoUrl);
     setChildStatus(child.status);
+    setChildSponsorName(child.sponsorName || '');
+    setChildSponsorEmail(child.sponsorEmail || '');
+    setChildFormError('');
     setShowChildForm(true);
   };
 
-  const handleChildPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void,
+    nameSetter?: (val: string) => void
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (nameSetter) nameSetter(file.name);
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setChildPhotoUrl(reader.result);
+        setter(reader.result);
       }
     };
     reader.readAsDataURL(file);
@@ -284,7 +413,28 @@ export default function AdminDashboardPage() {
 
   const handleSaveChild = (e: React.FormEvent) => {
     e.preventDefault();
+    setChildFormError('');
     if (!childName.trim()) return;
+
+    // Sponsorship Tracking guard: prevent double-sponsorship
+    if (
+      editingChild &&
+      editingChild.status === 'sponsored' &&
+      editingChild.sponsorName &&
+      childStatus === 'sponsored' &&
+      childSponsorName.trim() &&
+      childSponsorName.trim() !== editingChild.sponsorName
+    ) {
+      // Allow intentional reassignment by admin, or warn if blank
+    }
+
+    if (childStatus === 'sponsored' && !childSponsorName.trim()) {
+      setChildFormError(
+        'Please specify the linked Sponsor Donor Name when marking a child as Sponsored so sponsorship tracking stays accurate.'
+      );
+      return;
+    }
+
     const record: ChildProfile = {
       id: editingChild ? editingChild.id : `child-${Date.now()}`,
       name: childName.trim(),
@@ -297,6 +447,13 @@ export default function AdminDashboardPage() {
       dream: childDream.trim() || 'Wants to complete education and serve the community',
       photoUrl: childPhotoUrl.trim(),
       status: childStatus,
+      sponsorName: childStatus === 'sponsored' ? childSponsorName.trim() : undefined,
+      sponsorEmail: childStatus === 'sponsored' ? childSponsorEmail.trim() : undefined,
+      sponsoredSince:
+        childStatus === 'sponsored'
+          ? editingChild?.sponsoredSince ||
+            new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+          : undefined,
     };
 
     const next = editingChild
@@ -309,18 +466,77 @@ export default function AdminDashboardPage() {
     } catch {}
     setShowChildForm(false);
     setEditingChild(null);
+    notify(
+      editingChild
+        ? `Updated child profile for ${record.name}.`
+        : `Added ${record.name} to the Child Sponsorship Directory.`
+    );
   };
 
-  const toggleChildStatus = (id: string) => {
+  const assignSponsorToChild = (child: ChildProfile, donor: DonorDirectoryEntry) => {
+    if (child.status === 'sponsored' && child.sponsorName) {
+      notify(
+        `Double-sponsorship prevented: ${child.name} is already sponsored by ${child.sponsorName}.`
+      );
+      return;
+    }
     const next = childrenList.map((c) =>
-      c.id === id
-        ? { ...c, status: (c.status === 'available' ? 'sponsored' : 'available') as 'available' | 'sponsored' }
+      c.id === child.id
+        ? {
+            ...c,
+            status: 'sponsored' as const,
+            sponsorName: donor.name,
+            sponsorEmail: donor.email,
+            sponsoredSince: new Date().toLocaleDateString('en-GB', {
+              month: 'short',
+              year: 'numeric',
+            }),
+          }
         : c
     );
     setChildrenList(next);
     try {
       localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(next));
     } catch {}
+    notify(`Linked sponsor ${donor.name} to ${child.name}.`);
+  };
+
+  const unlinkChildSponsor = (childId: string) => {
+    const next = childrenList.map((c) =>
+      c.id === childId
+        ? {
+            ...c,
+            status: 'available' as const,
+            sponsorName: undefined,
+            sponsorEmail: undefined,
+            sponsoredSince: undefined,
+          }
+        : c
+    );
+    setChildrenList(next);
+    try {
+      localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    notify('Child sponsorship unlinked and status returned to Available.');
+  };
+
+  // ================= HANDLERS: MODULE 3 (LETTERS & FIELD UPLOADS) =================
+  const startEditingLetter = (letter: ChildLetter) => {
+    setEditingLetterId(letter.id);
+    setEditingLetterText(letter.message);
+  };
+
+  const saveEditedLetter = (id: string) => {
+    if (!editingLetterText.trim()) return;
+    const next = letters.map((l) =>
+      l.id === id ? { ...l, message: editingLetterText.trim(), editedByAdmin: true } : l
+    );
+    setLetters(next);
+    try {
+      localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    setEditingLetterId(null);
+    notify('Message edited for child safety & privacy compliance.');
   };
 
   const moderateLetter = (id: string, status: ChildLetter['status']) => {
@@ -329,6 +545,422 @@ export default function AdminDashboardPage() {
     try {
       localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
     } catch {}
+    notify(
+      status === 'approved'
+        ? 'Letter approved and queued for field delivery.'
+        : 'Letter rejected and held from field delivery.'
+    );
+  };
+
+  const handleFieldUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadTitle.trim() || !uploadNotes.trim()) return;
+
+    const targetName =
+      uploadTargetType === 'child'
+        ? childrenList.find((c) => c.id === uploadTargetId)?.name || 'Sponsored Child'
+        : campaigns.find((c) => c.id === uploadTargetId)?.title || 'Community Project';
+
+    const newUpload: FieldUpdateUpload = {
+      id: `fld-${Date.now()}`,
+      title: uploadTitle.trim(),
+      documentType: uploadDocType,
+      targetType: uploadTargetType,
+      targetId: uploadTargetId,
+      targetName,
+      termOrPeriod: uploadTerm.trim() || 'Term 3 · 2026',
+      notes: uploadNotes.trim(),
+      attachmentUrl: uploadAttachmentUrl.trim(),
+      fileName: uploadFileName.trim() || 'field_update_attachment.pdf',
+      uploadedAt: new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      uploadedBy: 'NGO Field Officer',
+    };
+
+    const next = [newUpload, ...fieldUploads];
+    setFieldUploads(next);
+    try {
+      localStorage.setItem(FIELD_UPDATES_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    setUploadTitle('');
+    setUploadNotes('');
+    setShowFieldUploadForm(false);
+    notify(`Uploaded ${newUpload.documentType} for ${targetName} and broadcast to donor feeds.`);
+  };
+
+  // ================= HANDLERS: MODULE 4 (DONATION & FINANCIAL RECORDS) =================
+  const handleManualLedgerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = Number(manualAmountUGX);
+    if (!manualDonorName.trim() || !amount || amount <= 0) return;
+
+    const targetCamp = campaigns.find((c) => c.id === manualCampaignId) || campaigns[0];
+    const receiptNum = `GCC-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newTx: LedgerTransaction = {
+      id: `tx-${Date.now()}`,
+      receiptNumber: receiptNum,
+      donorName: manualDonorName.trim(),
+      donorEmail: manualDonorEmail.trim() || 'offline.receipt@thegccfoundation.com',
+      campaignId: targetCamp?.id || 'general-fund',
+      campaignTitle: targetCamp?.title || 'General Institutional Fund',
+      amountUGX: amount,
+      paymentMethod: manualPaymentMethod,
+      entryType: manualEntryType,
+      date: new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      monthTag: 'this-month',
+      referenceCode: manualReferenceCode.trim() || `MAN-${Date.now().toString().slice(-6)}`,
+      notes: manualNotes.trim() || 'Logged by Admin Finance Desk',
+    };
+
+    const nextLedger = [newTx, ...ledger];
+    setLedger(nextLedger);
+    try {
+      localStorage.setItem(LEDGER_STORAGE_KEY, JSON.stringify(nextLedger));
+    } catch {}
+
+    // Also update the target campaign's raisedUGX and donorCount so it counts toward campaign totals
+    if (targetCamp) {
+      updateCampaign({
+        ...targetCamp,
+        raisedUGX: targetCamp.raisedUGX + amount,
+        donorCount: targetCamp.donorCount + 1,
+      });
+    }
+
+    setManualDonorName('');
+    setManualDonorEmail('');
+    setManualAmountUGX('500000');
+    setManualReferenceCode('');
+    setManualNotes('');
+    setShowManualEntryForm(false);
+    setSelectedReceiptTx(newTx);
+    notify(`Logged ${formatUGX(amount)} (${manualPaymentMethod}) and generated receipt ${receiptNum}.`);
+  };
+
+  const exportTransactions = (format: 'csv' | 'excel') => {
+    const headers = [
+      'Receipt Number',
+      'Date',
+      'Supporter Name',
+      'Supporter Email',
+      'Campaign',
+      'Amount (UGX)',
+      'Payment Method',
+      'Entry Type',
+      'Reference Code',
+      'Notes',
+    ];
+    const rows = filteredLedger.map((tx) => [
+      `"${tx.receiptNumber}"`,
+      `"${tx.date}"`,
+      `"${tx.donorName}"`,
+      `"${tx.donorEmail}"`,
+      `"${tx.campaignTitle}"`,
+      tx.amountUGX,
+      `"${tx.paymentMethod}"`,
+      `"${tx.entryType}"`,
+      `"${tx.referenceCode}"`,
+      `"${(tx.notes || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const separator = format === 'excel' ? '\t' : ',';
+    const mime =
+      format === 'excel'
+        ? 'data:application/vnd.ms-excel;charset=utf-8,'
+        : 'data:text/csv;charset=utf-8,';
+    const ext = format === 'excel' ? 'xls' : 'csv';
+
+    const content =
+      mime + [headers.join(separator), ...rows.map((r) => r.join(separator))].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(content));
+    link.setAttribute('download', `gcc_foundation_financial_ledger_2026.${ext}`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify(`Exported ${filteredLedger.length} financial records as ${ext.toUpperCase()}.`);
+  };
+
+  // ================= HANDLERS: MODULE 5 (DONOR & MEMBER DIRECTORY) =================
+  const openEditDonorModal = (donor: DonorDirectoryEntry) => {
+    setEditingDonor(donor);
+    setNewDonorName(donor.name);
+    setNewDonorEmail(donor.email);
+    setNewDonorPhone(donor.phone);
+    setNewDonorAddress(donor.address);
+    setNewDonorAmount(String(donor.totalDonatedUGX));
+    setNewDonorPlan(donor.recurringPlan);
+    setNewDonorRole(donor.role || 'user');
+    setShowAddDonor(true);
+  };
+
+  const handleSaveDonor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDonorName.trim() || !newDonorEmail.trim()) return;
+
+    if (editingDonor) {
+      const updated: DonorDirectoryEntry = {
+        ...editingDonor,
+        name: newDonorName.trim(),
+        email: newDonorEmail.trim(),
+        phone: newDonorPhone.trim() || editingDonor.phone,
+        address: newDonorAddress.trim() || editingDonor.address,
+        totalDonatedUGX: Number(newDonorAmount) || 0,
+        recurringPlan: newDonorPlan,
+        role: newDonorRole,
+      };
+      const next = donors.map((d) => (d.id === editingDonor.id ? updated : d));
+      setDonors(next);
+      try {
+        localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      notify(`Updated member profile for ${updated.name}.`);
+    } else {
+      const entry: DonorDirectoryEntry = {
+        id: `dnr-${Date.now()}`,
+        name: newDonorName.trim(),
+        email: newDonorEmail.trim(),
+        phone: newDonorPhone.trim() || '+256 703 601 200',
+        address: newDonorAddress.trim() || 'Kampala, Uganda',
+        totalDonatedUGX: Number(newDonorAmount) || 0,
+        donationsCount: 1,
+        recurringPlan: newDonorPlan,
+        joinedDate: 'Nov 2026',
+        role: newDonorRole,
+        accountStatus: 'active',
+      };
+      const next = [entry, ...donors];
+      setDonors(next);
+      try {
+        localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      notify(`Added supporter ${entry.name} to the directory.`);
+    }
+
+    setEditingDonor(null);
+    setNewDonorName('');
+    setNewDonorEmail('');
+    setNewDonorPhone('');
+    setNewDonorAddress('');
+    setShowAddDonor(false);
+  };
+
+  const changeDonorRole = (id: string, role: 'user' | 'volunteer' | 'admin') => {
+    const next = donors.map((d) => (d.id === id ? { ...d, role } : d));
+    setDonors(next);
+    try {
+      localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    const target = donors.find((d) => d.id === id);
+    notify(`Updated role for ${target?.name || 'member'} to ${role.toUpperCase()}.`);
+  };
+
+  const toggleDonorAccountStatus = (id: string) => {
+    const next = donors.map((d) =>
+      d.id === id
+        ? {
+            ...d,
+            accountStatus: (d.accountStatus === 'deactivated' ? 'active' : 'deactivated') as
+              | 'active'
+              | 'deactivated',
+          }
+        : d
+    );
+    setDonors(next);
+    try {
+      localStorage.setItem(DONORS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    const target = next.find((d) => d.id === id);
+    notify(
+      `Account for ${target?.name} is now ${target?.accountStatus?.toUpperCase()}.`
+    );
+  };
+
+  // ================= HANDLERS: MODULE 6 (CAMPAIGN & CONTENT MANAGER) =================
+  const openCreateCampaignEditor = () => {
+    setEditingCampaign(null);
+    setCampTitle('');
+    setCampSubtitle('');
+    setCampCategory('Medical Care');
+    setCampDistrict('Kampala, Uganda');
+    setCampInstitution('Uganda Heart Institute Accounts Treasury');
+    setCampGoalUGX('15000000');
+    setCampCoverImage(
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80'
+    );
+    setCampStory('');
+    setShowCampaignEditor(true);
+  };
+
+  const openEditCampaignEditor = (camp: Campaign) => {
+    setEditingCampaign(camp);
+    setCampTitle(camp.title);
+    setCampSubtitle(camp.subtitle);
+    setCampCategory(camp.category);
+    setCampDistrict(`${camp.location.district}, ${camp.location.country}`);
+    setCampInstitution(camp.payoutVerification.institutionName);
+    setCampGoalUGX(String(camp.goalUGX));
+    setCampCoverImage(camp.coverImage);
+    setCampStory(camp.fullStoryHtml.join('\n\n'));
+    setShowCampaignEditor(true);
+  };
+
+  const handleSaveCampaign = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!campTitle.trim()) return;
+
+    if (editingCampaign) {
+      const updated: Campaign = {
+        ...editingCampaign,
+        title: campTitle.trim(),
+        subtitle: campSubtitle.trim() || editingCampaign.subtitle,
+        category: campCategory,
+        goalUGX: Number(campGoalUGX) || editingCampaign.goalUGX,
+        coverImage: campCoverImage.trim() || editingCampaign.coverImage,
+        location: {
+          ...editingCampaign.location,
+          district: campDistrict.split(',')[0]?.trim() || editingCampaign.location.district,
+        },
+        payoutVerification: {
+          ...editingCampaign.payoutVerification,
+          institutionName: campInstitution.trim() || editingCampaign.payoutVerification.institutionName,
+        },
+        fullStoryHtml: campStory
+          .split(/\n\n+/)
+          .map((p) => p.trim())
+          .filter(Boolean),
+      };
+      updateCampaign(updated);
+      notify(`Updated campaign "${updated.title}".`);
+    } else {
+      const slug = campTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      const newCampaign: Campaign = {
+        id: `camp-admin-${Date.now()}`,
+        slug,
+        title: campTitle.trim(),
+        subtitle:
+          campSubtitle.trim() ||
+          'Verified institutional fundraiser with 100% direct bank settlement.',
+        category: campCategory,
+        location: {
+          district: campDistrict.split(',')[0]?.trim() || 'Kampala',
+          subCounty: 'Central Division',
+          country: 'Uganda',
+          facilityName: campInstitution.trim(),
+        },
+        goalUGX: Number(campGoalUGX) || 15000000,
+        raisedUGX: 0,
+        donorCount: 0,
+        daysRemaining: 45,
+        createdAt: new Date().toISOString().split('T')[0],
+        urgent: true,
+        featured: true,
+        coverImage:
+          campCoverImage.trim() ||
+          'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80',
+        galleryImages: [],
+        payoutVerification: {
+          type: 'Direct-to-Hospital',
+          institutionName: campInstitution.trim() || 'Verified Partner Institution',
+          accountNumberMasked: 'Stanbic Bank A/C •••• 4920',
+          bankName: 'Stanbic Bank Uganda',
+          verificationReference: `GCC-VER-${Date.now().toString().slice(-5)}`,
+          complianceOfficer: 'Pauline Namukasa, FCCA',
+        },
+        organizer: {
+          name: 'GCC Foundation Field Desk',
+          role: 'Institutional Program Officer',
+          ninOrIdMasked: 'CM900182••••••',
+          verifiedBadge: true,
+          relationshipToBeneficiary: 'Direct Institutional Partner',
+          phoneMasked: '+256 703 ••• 200',
+          avatarUrl: '/images/gcc-logo.png',
+          residence: campDistrict.trim(),
+        },
+        beneficiary: {
+          name: campTitle.trim(),
+          storySummary: campSubtitle.trim() || campTitle.trim(),
+        },
+        fullStoryHtml: campStory
+          .split(/\n\n+/)
+          .map((p) => p.trim())
+          .filter(Boolean),
+        itemizedBudget: [],
+        fieldUpdates: [],
+        recentDonors: [],
+        volunteerPledges: [],
+      };
+      addNewCampaign(newCampaign);
+      notify(`Published new campaign "${newCampaign.title}" to the public site.`);
+    }
+
+    setShowCampaignEditor(false);
+    setEditingCampaign(null);
+  };
+
+  const handlePublishNews = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsTitle.trim() || !newsSummary.trim()) return;
+    const linkedCamp = campaigns.find((c) => c.id === newsCampaignId);
+    const item: NewsMilestoneItem = {
+      id: `news-${Date.now()}`,
+      title: newsTitle.trim(),
+      category: newsCategory,
+      summary: newsSummary.trim(),
+      publishedAt: new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      author: 'GCC Staff Admin',
+      campaignId: linkedCamp?.id,
+      campaignTitle: linkedCamp?.title,
+      imageUrl: newsImageUrl.trim() || undefined,
+    };
+    const next = [item, ...newsList];
+    setNewsList(next);
+    try {
+      localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+
+    // Also attach to the campaign's fieldUpdates if a campaign is selected
+    if (linkedCamp) {
+      updateCampaign({
+        ...linkedCamp,
+        fieldUpdates: [
+          {
+            id: `fu-${Date.now()}`,
+            date: item.publishedAt,
+            title: item.title,
+            authorName: 'GCC Field Operations',
+            authorRole: 'Verified Program Officer',
+            content: item.summary,
+            imageUrl: item.imageUrl,
+            verifiedByOfficer: 'Pauline Namukasa, FCCA',
+          },
+          ...linkedCamp.fieldUpdates,
+        ],
+      });
+    }
+
+    setNewsTitle('');
+    setNewsSummary('');
+    notify('Milestone update published and broadcast to supporters’ Your Impact feeds!');
+  };
+
+  const updatePayout = (id: string, status: PayoutRow['status']) => {
+    setPayouts((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+    notify(`Payout voucher ${id} marked as ${status}.`);
   };
 
   return (
@@ -345,107 +977,74 @@ export default function AdminDashboardPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-heading font-black text-lg sm:text-xl text-white">
-                  GCC Foundation Administrative Dashboard
+                  GCC Foundation Administrative Command Center
                 </h1>
                 <span className="bg-[#02A95C] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
                   NGO Staff Console
                 </span>
               </div>
               <p className="text-xs text-gray-300 mt-0.5">
-                Donation & Financial Analytics · Donor Directory · Content & Campaign Manager · Child Profile CMS · Letter Moderation Queue
+                Command Center · Child Sponsorship CMS · Letter Moderation · Global Financial Ledger · Donor Directory · Campaign & Content Manager
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/account/impact"
-              className="rounded-full border border-white/25 hover:bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors"
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={triggerQuickActionAddChild}
+              className="rounded-full border border-white/25 hover:bg-white/10 px-3.5 py-2 text-xs font-bold text-white transition-colors"
             >
-              Switch to Member View
-            </Link>
-            <Link
-              href="/create/fundraiser/category"
+              + Child Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                openCreateCampaignEditor();
+                setActiveTab('campaigns');
+              }}
               className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>New Campaign</span>
-            </Link>
+              <span>Create Campaign</span>
+            </button>
           </div>
         </div>
       </section>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full space-y-8">
-        {/* Top KPI Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-subtle space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Total Funds Raised
-            </span>
-            <span className="font-heading font-black text-xl sm:text-2xl text-[#1A1A1A] block tabular-nums">
-              {formatUGX(totalRaisedUGX)}
-            </span>
-            <span className="text-[11px] font-semibold text-[#02A95C]">
-              100% Direct Institutional Escrow
-            </span>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+        {adminToast && (
+          <div
+            role="status"
+            className="rounded-2xl bg-emerald-950 text-white border border-emerald-700 px-5 py-3.5 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-lg"
+          >
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-4 w-4 text-[#02A95C] shrink-0" />
+              <span>{adminToast}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdminToast('')}
+              className="text-gray-300 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
+        )}
 
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-subtle space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Supporters & Donors
-            </span>
-            <span className="font-heading font-black text-xl sm:text-2xl text-[#02A95C] block">
-              {donors.length}
-            </span>
-            <span className="text-[11px] text-gray-500">Active in Donor Directory</span>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-subtle space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Active Campaigns
-            </span>
-            <span className="font-heading font-black text-xl sm:text-2xl text-gray-900 block">
-              {campaigns.length}
-            </span>
-            <span className="text-[11px] text-gray-500">{newsList.length} Milestones Published</span>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-subtle space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Child Profiles (CMS)
-            </span>
-            <span className="font-heading font-black text-xl sm:text-2xl text-blue-600 block">
-              {childrenList.length}
-            </span>
-            <span className="text-[11px] text-gray-500">
-              {childrenList.filter((c) => c.status === 'available').length} Available ·{' '}
-              {childrenList.filter((c) => c.status === 'sponsored').length} Sponsored
-            </span>
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-subtle space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              Letter Moderation
-            </span>
-            <span className="font-heading font-black text-xl sm:text-2xl text-amber-600 block">
-              {letters.filter((l) => l.status === 'pending').length}
-            </span>
-            <span className="text-[11px] text-gray-500">Awaiting Safety Review</span>
-          </div>
-        </div>
-
-        {/* 5 NGO Staff Navigation Tabs */}
+        {/* 6 Admin Section Navigation Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto border-b border-gray-200 pb-3 scrollbar-none">
           {[
-            { id: 'analytics', label: '1. Donation & Financial Analytics', icon: DollarSign },
-            { id: 'donors', label: '2. Donor & Member Directory', icon: Users },
-            { id: 'content', label: '3. Content & Campaign Manager', icon: FileText },
-            { id: 'children', label: '4. Child Profile CMS', icon: HeartHandshake },
+            { id: 'command', label: '1. Admin Command Center', icon: LayoutDashboard },
+            { id: 'children', label: `2. Child Sponsorship CMS (${childrenList.length})`, icon: HeartHandshake },
             {
               id: 'letters',
-              label: `5. Letter Moderation Queue (${letters.filter((l) => l.status === 'pending').length})`,
+              label: `3. Letter & Message Queue (${letters.filter((l) => l.status === 'pending').length})`,
               icon: MailCheck,
             },
+            { id: 'financials', label: '4. Donation & Financial Records', icon: DollarSign },
+            { id: 'donors', label: `5. Donor & Member Directory (${donors.length})`, icon: Users },
+            { id: 'campaigns', label: '6. Campaign & Content Manager', icon: FileText },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -467,10 +1066,197 @@ export default function AdminDashboardPage() {
           })}
         </div>
 
-        {/* ================= MODULE 1: DONATION & FINANCIAL ANALYTICS ================= */}
-        {activeTab === 'analytics' && (
+        {/* =====================================================================
+            1. THE ADMIN COMMAND CENTER (OVERVIEW / ANALYTICS)
+           ===================================================================== */}
+        {activeTab === 'command' && (
           <div className="space-y-8">
-            {/* Institutional Payout Queue */}
+            {/* High-Level Financial Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-subtle space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Raised This Month
+                </span>
+                <span className="font-heading font-black text-xl sm:text-2xl text-[#02A95C] block tabular-nums">
+                  {formatUGX(thisMonthRaisedUGX)}
+                </span>
+                <span className="text-[11px] text-gray-500">Current calendar month</span>
+              </div>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-subtle space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Raised This Year (2026)
+                </span>
+                <span className="font-heading font-black text-xl sm:text-2xl text-gray-900 block tabular-nums">
+                  {formatUGX(thisYearRaisedUGX)}
+                </span>
+                <span className="text-[11px] text-gray-500">Fiscal year-to-date</span>
+              </div>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-subtle space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Total Raised (All-Time)
+                </span>
+                <span className="font-heading font-black text-xl sm:text-2xl text-[#1A1A1A] block tabular-nums">
+                  {formatUGX(allTimeRaisedUGX)}
+                </span>
+                <span className="text-[11px] font-semibold text-[#02A95C]">
+                  100% Direct Institutional Escrow
+                </span>
+              </div>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-subtle space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Monthly Recurring Donors
+                </span>
+                <span className="font-heading font-black text-xl sm:text-2xl text-emerald-700 block">
+                  {activeMonthlyRecurringDonors}
+                </span>
+                <span className="text-[11px] text-gray-500">
+                  Active monthly pledges
+                </span>
+              </div>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-subtle space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Active Sponsorships
+                </span>
+                <span className="font-heading font-black text-xl sm:text-2xl text-blue-600 block">
+                  {activeSponsorshipsCount} / {childrenList.length}
+                </span>
+                <span className="text-[11px] text-gray-500">
+                  {childrenList.filter((c) => c.status === 'available').length} children awaiting sponsor
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Action Shortcuts */}
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h2 className="font-heading font-extrabold text-lg text-gray-900">
+                    Quick Action Shortcuts
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Jump straight to high-priority staff workflows across child sponsorship, project updates, and moderation.
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-[#087443]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Instant Staff Workflows</span>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button
+                  type="button"
+                  onClick={triggerQuickActionAddChild}
+                  className="group text-left rounded-2xl border border-[#DCE9DD] bg-[#F5F8F4] hover:bg-[#EAF5ED] p-5 transition-all space-y-2"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-[#02A95C] text-white flex items-center justify-center">
+                    <HeartHandshake className="h-5 w-5" />
+                  </div>
+                  <strong className="block font-heading text-base font-extrabold text-gray-900">
+                    Add New Child Profile
+                  </strong>
+                  <span className="block text-xs text-gray-600 leading-relaxed">
+                    Open the Child Sponsorship Wizard to upload a verified portrait, bio, dream, and monthly cost.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={triggerQuickActionPublishUpdate}
+                  className="group text-left rounded-2xl border border-[#DCE9DD] bg-[#F5F8F4] hover:bg-[#EAF5ED] p-5 transition-all space-y-2"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-[#02A95C] text-white flex items-center justify-center">
+                    <Megaphone className="h-5 w-5" />
+                  </div>
+                  <strong className="block font-heading text-base font-extrabold text-gray-900">
+                    Publish a Project Update
+                  </strong>
+                  <span className="block text-xs text-gray-600 leading-relaxed">
+                    Broadcast verified field milestones, photos, and news directly to donors’ Your Impact feeds.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={triggerQuickActionReviewLetters}
+                  className="group text-left rounded-2xl border border-[#DCE9DD] bg-[#F5F8F4] hover:bg-[#EAF5ED] p-5 transition-all space-y-2"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-amber-600 text-white flex items-center justify-center">
+                    <MailCheck className="h-5 w-5" />
+                  </div>
+                  <strong className="block font-heading text-base font-extrabold text-gray-900">
+                    Review Pending Letters ({letters.filter((l) => l.status === 'pending').length})
+                  </strong>
+                  <span className="block text-xs text-gray-600 leading-relaxed">
+                    Inspect, edit for safety/privacy, and approve incoming donor messages to sponsored children.
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Transactions Feed */}
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-heading font-extrabold text-lg text-gray-900">
+                    Recent Transactions Feed
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Live feed showing who gave what, when, and to which campaign across online and offline channels.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('financials')}
+                  className="text-xs font-bold text-[#087443] hover:underline"
+                >
+                  Open Full Global Giving Ledger →
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
+                    <tr>
+                      <th className="py-3.5 px-4">Receipt & Date</th>
+                      <th className="py-3.5 px-4">Donor</th>
+                      <th className="py-3.5 px-4">Campaign Supported</th>
+                      <th className="py-3.5 px-4">Channel</th>
+                      <th className="py-3.5 px-4 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {combinedTransactions.slice(0, 8).map((tx) => (
+                      <tr key={tx.id} className="hover:bg-gray-50">
+                        <td className="py-3.5 px-4 font-mono text-xs">
+                          <strong className="text-gray-900 block">{tx.receiptNumber}</strong>
+                          <span className="text-gray-400">{tx.date}</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <strong className="font-bold text-gray-900 block">{tx.donorName}</strong>
+                          <span className="text-xs text-gray-500">{tx.donorEmail}</span>
+                        </td>
+                        <td className="py-3.5 px-4 text-gray-700 font-medium">{tx.campaignTitle}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
+                            {tx.paymentMethod}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">
+                          {formatUGX(tx.amountUGX)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Institutional EFT Payouts */}
             <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -554,389 +1340,21 @@ export default function AdminDashboardPage() {
                 </table>
               </div>
             </div>
-
-            {/* Recent Donation Transactions Across Campaigns */}
-            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-4">
-              <h2 className="font-heading font-extrabold text-lg text-gray-900">
-                Recent Donor Transactions
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
-                    <tr>
-                      <th className="py-3.5 px-4">Supporter</th>
-                      <th className="py-3.5 px-4">Fundraiser Supported</th>
-                      <th className="py-3.5 px-4">Method</th>
-                      <th className="py-3.5 px-4 text-right">Amount</th>
-                      <th className="py-3.5 px-4 text-right">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {campaigns.flatMap((c) =>
-                      c.recentDonors.map((d) => (
-                        <tr key={`${c.id}-${d.id}`} className="hover:bg-gray-50">
-                          <td className="py-3.5 px-4 font-bold text-gray-900">
-                            {d.isAnonymous ? 'Anonymous Supporter' : d.name}
-                          </td>
-                          <td className="py-3.5 px-4 text-gray-600">{c.title}</td>
-                          <td className="py-3.5 px-4">
-                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
-                              {d.paymentMethod}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">
-                            {formatUGX(d.amountUGX)}
-                          </td>
-                          <td className="py-3.5 px-4 text-right text-xs text-gray-400">
-                            {d.timestamp}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ================= MODULE 2: DONOR & MEMBER DIRECTORY ================= */}
-        {activeTab === 'donors' && (
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="font-heading font-extrabold text-xl text-gray-900">
-                  Donor & Member Directory
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Searchable database of supporters, tax receipt addresses, recurring plans, and lifetime giving histories.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowAddDonor((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>{showAddDonor ? 'Close Form' : 'Add Supporter Record'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleExportDonorsCSV}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 hover:bg-gray-50 px-4 py-2 text-xs font-bold text-gray-700"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Export CSV</span>
-                </button>
-              </div>
-            </div>
-
-            {showAddDonor && (
-              <form
-                onSubmit={handleAddDonor}
-                className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-5 grid grid-cols-1 sm:grid-cols-3 gap-4"
-              >
-                <input
-                  type="text"
-                  required
-                  placeholder="Full Name"
-                  value={newDonorName}
-                  onChange={(e) => setNewDonorName(e.target.value)}
-                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                />
-                <input
-                  type="email"
-                  required
-                  placeholder="Email Address"
-                  value={newDonorEmail}
-                  onChange={(e) => setNewDonorEmail(e.target.value)}
-                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                />
-                <input
-                  type="text"
-                  placeholder="Phone (+256...)"
-                  value={newDonorPhone}
-                  onChange={(e) => setNewDonorPhone(e.target.value)}
-                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                />
-                <input
-                  type="text"
-                  placeholder="Billing / Tax Address"
-                  value={newDonorAddress}
-                  onChange={(e) => setNewDonorAddress(e.target.value)}
-                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                />
-                <input
-                  type="number"
-                  placeholder="Lifetime Donated (UGX)"
-                  value={newDonorAmount}
-                  onChange={(e) => setNewDonorAmount(e.target.value)}
-                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                />
-                <div className="flex gap-2">
-                  <select
-                    value={newDonorPlan}
-                    onChange={(e) => setNewDonorPlan(e.target.value)}
-                    className="h-10 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                  >
-                    <option>One-Time Supporter</option>
-                    <option>Monthly ($35 / mo)</option>
-                    <option>Child Sponsor ($35 / mo)</option>
-                    <option>Major Institutional Donor</option>
-                  </select>
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-[#02A95C] px-4 text-xs font-bold text-white"
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Search Input */}
-            <div className="relative max-w-md">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3.5 top-3" />
-              <input
-                type="search"
-                value={donorSearch}
-                onChange={(e) => setDonorSearch(e.target.value)}
-                placeholder="Search supporters by name, email, city, or plan..."
-                className="h-10 w-full rounded-xl border border-gray-200 pl-10 pr-4 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
-              />
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
-                  <tr>
-                    <th className="py-3.5 px-4">Supporter</th>
-                    <th className="py-3.5 px-4">Contact & Tax Address</th>
-                    <th className="py-3.5 px-4">Giving Plan</th>
-                    <th className="py-3.5 px-4 text-right">Lifetime Giving</th>
-                    <th className="py-3.5 px-4 text-right">Joined</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredDonors.map((d) => (
-                    <tr key={d.id} className="hover:bg-gray-50">
-                      <td className="py-4 px-4">
-                        <strong className="font-bold text-gray-900 block">{d.name}</strong>
-                        <span className="text-xs text-gray-500">{d.email}</span>
-                      </td>
-                      <td className="py-4 px-4 text-xs text-gray-600">
-                        <span className="block font-semibold text-gray-800">{d.phone}</span>
-                        <span>{d.address}</span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="rounded-full bg-emerald-50 text-[#02A95C] px-2.5 py-1 text-xs font-bold">
-                          {d.recurringPlan}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-right font-mono font-bold text-gray-900">
-                        {formatUGX(d.totalDonatedUGX)}{' '}
-                        <span className="text-xs text-gray-400 font-normal block">
-                          ({d.donationsCount} gifts)
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-right text-xs text-gray-500">{d.joinedDate}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODULE 3: CONTENT & CAMPAIGN MANAGER ================= */}
-        {activeTab === 'content' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left: Publish News & Project Milestones */}
-            <div className="lg:col-span-5 bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-5">
-              <div>
-                <h2 className="font-heading font-extrabold text-lg text-gray-900">
-                  Publish News Update or Project Milestone
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Post verified field updates, surgical completions, and borehole milestones.
-                </p>
-              </div>
-
-              <form onSubmit={handlePublishNews} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Headline / Milestone Title
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newsTitle}
-                    onChange={(e) => setNewsTitle(e.target.value)}
-                    placeholder="e.g. Nsambya Neonatal ICU Incubator #2 Installed"
-                    className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Category</label>
-                  <select
-                    value={newsCategory}
-                    onChange={(e) => setNewsCategory(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs sm:text-sm"
-                  >
-                    <option>Project Milestone</option>
-                    <option>Medical Verification</option>
-                    <option>Clean Water Update</option>
-                    <option>Education Bursar Settlement</option>
-                    <option>Emergency Relief Dispatch</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Update Summary & EFT Reference
-                  </label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={newsSummary}
-                    onChange={(e) => setNewsSummary(e.target.value)}
-                    placeholder="Describe the field milestone, hospital receipt reference, or community impact..."
-                    className="w-full rounded-xl border border-gray-200 p-3 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full rounded-full bg-[#02A95C] hover:bg-[#028F4D] py-3 text-xs sm:text-sm font-bold text-white transition-colors"
-                >
-                  Publish Milestone Update
-                </button>
-              </form>
-
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Published Updates ({newsList.length})
-                </h3>
-                {newsList.map((n) => (
-                  <div
-                    key={n.id}
-                    className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-3.5 space-y-1"
-                  >
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-[#02A95C]">{n.category}</span>
-                      <span className="text-gray-400">{n.publishedAt}</span>
-                    </div>
-                    <h4 className="font-bold text-xs sm:text-sm text-gray-900">{n.title}</h4>
-                    <p className="text-xs text-gray-600 leading-relaxed">{n.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Active Campaign Manager */}
-            <div className="lg:col-span-7 bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-heading font-extrabold text-lg text-gray-900">
-                    Active Fundraising Campaigns ({campaigns.length})
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Manage verification badges, campaign visibility, and institutional payout status.
-                  </p>
-                </div>
-                <Link
-                  href="/create/fundraiser/category"
-                  className="rounded-full bg-[#02A95C] px-4 py-2 text-xs font-bold text-white hover:bg-[#028F4D]"
-                >
-                  + Launch Campaign
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {campaigns.map((c) => {
-                  const status = campaignStatuses[c.id] || 'active';
-                  const verified = campaignVerified[c.id] ?? true;
-                  return (
-                    <div
-                      key={c.id}
-                      className="rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-[#02A95C] bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                            {c.category}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                              status === 'active'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {status}
-                          </span>
-                          {verified && (
-                            <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
-                              Verified Badge
-                            </span>
-                          )}
-                        </div>
-                        <Link
-                          href={`/campaign/${c.id}`}
-                          className="font-heading font-bold text-sm text-gray-900 hover:text-[#02A95C] flex items-center gap-1"
-                        >
-                          <span>{c.title}</span>
-                          <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
-                        </Link>
-                        <p className="text-xs text-gray-500 font-mono">
-                          {formatUGX(c.raisedUGX)} raised of {formatUGX(c.goalUGX)} ·{' '}
-                          {c.payoutVerification.institutionName}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCampaignVerified((prev) => ({ ...prev, [c.id]: !verified }))
-                          }
-                          className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
-                        >
-                          {verified ? 'Revoke Badge' : 'Verify Badge'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCampaignStatuses((prev) => ({
-                              ...prev,
-                              [c.id]: status === 'active' ? 'paused' : 'active',
-                            }))
-                          }
-                          className="rounded-full bg-gray-100 hover:bg-gray-200 px-3 py-1.5 text-xs font-bold text-gray-800"
-                        >
-                          {status === 'active' ? 'Pause' : 'Activate'}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODULE 4: CHILD PROFILE CMS ================= */}
+        {/* =====================================================================
+            2. CHILD SPONSORSHIP MANAGEMENT (CMS)
+           ===================================================================== */}
         {activeTab === 'children' && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="font-heading font-extrabold text-xl text-gray-900">
-                  Child Profile CMS (Sponsorship Directory Manager)
+                  Child Sponsorship Management (CMS)
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Add or edit sponsored child profiles, upload photos, and manage sponsorship status (‘available’ or ‘sponsored’). Changes sync immediately with the Member Dashboard.
+                  Child Profile Directory, Add/Edit Child Wizard, and Sponsorship Tracking with double-sponsorship protection.
                 </p>
               </div>
               <button
@@ -945,10 +1363,11 @@ export default function AdminDashboardPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-5 py-2.5 text-xs font-bold text-white shrink-0"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add Child Profile</span>
+                <span>Add New Child Profile</span>
               </button>
             </div>
 
+            {/* Add / Edit Child Wizard */}
             {showChildForm && (
               <form
                 onSubmit={handleSaveChild}
@@ -956,7 +1375,7 @@ export default function AdminDashboardPage() {
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-heading font-bold text-base text-gray-900">
-                    {editingChild ? `Edit Profile: ${editingChild.name}` : 'Add New Child Profile'}
+                    {editingChild ? `Edit Child Wizard: ${editingChild.name}` : 'Add New Child Wizard'}
                   </h3>
                   <button
                     type="button"
@@ -966,6 +1385,12 @@ export default function AdminDashboardPage() {
                     Cancel
                   </button>
                 </div>
+
+                {childFormError && (
+                  <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-700">
+                    {childFormError}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
@@ -1026,37 +1451,49 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Monthly Sponsorship Cost (USD)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="10"
+                      value={childMonthlyUSD}
+                      onChange={(e) => setChildMonthlyUSD(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Child’s Dream / Goal
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={childDream}
+                      onChange={(e) => setChildDream(e.target.value)}
+                      placeholder="Wants to become a pediatric heart surgeon"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
                       Sponsorship Status
                     </label>
                     <select
                       value={childStatus}
-                      onChange={(e) =>
-                        setChildStatus(e.target.value as 'available' | 'sponsored')
-                      }
+                      onChange={(e) => setChildStatus(e.target.value as 'available' | 'sponsored')}
                       className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-bold"
                     >
                       <option value="available">Available</option>
                       <option value="sponsored">Sponsored</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Child’s Dream / Aspiration
-                    </label>
-                    <input
-                      type="text"
-                      value={childDream}
-                      onChange={(e) => setChildDream(e.target.value)}
-                      placeholder="Wants to become a pediatric doctor"
-                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Photo (Upload File or Paste URL)
+                      Verified Portrait (Upload or URL)
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -1071,7 +1508,7 @@ export default function AdminDashboardPage() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={handleChildPhotoUpload}
+                          onChange={(e) => handleImageFileUpload(e, setChildPhotoUrl)}
                           className="hidden"
                         />
                       </label>
@@ -1079,9 +1516,64 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
+                {childStatus === 'sponsored' && (
+                  <div className="rounded-xl bg-blue-50/70 border border-blue-200 p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                    <div>
+                      <label className="block text-xs font-bold text-blue-950 mb-1">
+                        Linked Sponsor Donor Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={childSponsorName}
+                        onChange={(e) => setChildSponsorName(e.target.value)}
+                        placeholder="e.g. Sarah Jenkins"
+                        className="h-10 w-full rounded-xl border border-blue-200 bg-white px-3 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-blue-950 mb-1">
+                        Linked Sponsor Email
+                      </label>
+                      <input
+                        type="email"
+                        value={childSponsorEmail}
+                        onChange={(e) => setChildSponsorEmail(e.target.value)}
+                        placeholder="sarah.jenkins@example.org"
+                        className="h-10 w-full rounded-xl border border-blue-200 bg-white px-3 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-blue-950 mb-1">
+                        Quick-Fill from Supporter Directory
+                      </label>
+                      <select
+                        onChange={(e) => {
+                          const found = donors.find((d) => d.id === e.target.value);
+                          if (found) {
+                            setChildSponsorName(found.name);
+                            setChildSponsorEmail(found.email);
+                          }
+                        }}
+                        defaultValue=""
+                        className="h-10 w-full rounded-xl border border-blue-200 bg-white px-3 text-xs"
+                      >
+                        <option value="" disabled>
+                          Select existing donor...
+                        </option>
+                        {donors.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name} ({d.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Background Story & Sponsorship Needs
+                    Biographical Details & Sponsorship Needs
                   </label>
                   <textarea
                     rows={3}
@@ -1102,137 +1594,1388 @@ export default function AdminDashboardPage() {
               </form>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {childrenList.map((child) => (
-                <div
-                  key={child.id}
-                  className="rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row gap-4 items-start justify-between"
-                >
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={child.photoUrl}
-                      alt={child.name}
-                      className="h-20 w-20 rounded-2xl object-cover shrink-0 bg-gray-100"
-                    />
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-heading font-bold text-base text-gray-900">
-                          {child.name} ({child.age} yrs)
-                        </h3>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            child.status === 'available'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
+            {/* Child Profile Directory Management Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
+                  <tr>
+                    <th className="py-3.5 px-4">Child Profile</th>
+                    <th className="py-3.5 px-4">Location & School</th>
+                    <th className="py-3.5 px-4">Dream / Goals</th>
+                    <th className="py-3.5 px-4">Monthly Cost</th>
+                    <th className="py-3.5 px-4">Status & Sponsorship Tracking</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {childrenList.map((child) => (
+                    <tr key={child.id} className="hover:bg-gray-50 align-top">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={child.photoUrl}
+                            alt={child.name}
+                            className="h-14 w-14 rounded-2xl object-cover shrink-0 bg-gray-100"
+                          />
+                          <div>
+                            <strong className="font-heading font-bold text-sm text-gray-900 block">
+                              {child.name}
+                            </strong>
+                            <span className="text-xs text-gray-500">
+                              {child.age} yrs · {child.gender}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-xs text-gray-600">
+                        <strong className="text-gray-900 block">{child.district}</strong>
+                        <span>{child.schoolAndGrade}</span>
+                      </td>
+                      <td className="py-4 px-4 text-xs text-gray-600 max-w-xs">
+                        <span className="font-semibold text-[#087443] block">{child.dream}</span>
+                        <span className="line-clamp-2 text-gray-500 mt-0.5">{child.bio}</span>
+                      </td>
+                      <td className="py-4 px-4 font-mono font-bold text-gray-900">
+                        ${child.monthlySponsorshipUSD}/mo
+                      </td>
+                      <td className="py-4 px-4">
+                        {child.status === 'sponsored' ? (
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 px-2.5 py-0.5 text-[10px] font-bold uppercase">
+                              <Lock className="h-3 w-3" />
+                              <span>Sponsored (Locked)</span>
+                            </span>
+                            <p className="text-xs font-bold text-gray-900">
+                              Sponsor: {child.sponsorName || 'Assigned Donor'}
+                            </p>
+                            {child.sponsorEmail && (
+                              <p className="text-[11px] text-gray-500">{child.sponsorEmail}</p>
+                            )}
+                            {child.sponsoredSince && (
+                              <p className="text-[10px] text-gray-400">
+                                Since {child.sponsoredSince}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <span className="inline-block rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-bold uppercase">
+                              Available
+                            </span>
+                            <div>
+                              <select
+                                defaultValue=""
+                                onChange={(e) => {
+                                  const donor = donors.find((d) => d.id === e.target.value);
+                                  if (donor) assignSponsorToChild(child, donor);
+                                }}
+                                className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-[11px] text-gray-700"
+                              >
+                                <option value="" disabled>
+                                  + Link Sponsor Donor...
+                                </option>
+                                {donors.map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-right space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openEditChild(child)}
+                          className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100"
                         >
-                          {child.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {child.district} · {child.schoolAndGrade}
-                      </p>
-                      <p className="text-xs text-gray-600 line-clamp-2">{child.bio}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex sm:flex-col gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openEditChild(child)}
-                      className="inline-flex items-center justify-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleChildStatus(child.id)}
-                      className="rounded-full bg-[#FAF9F6] border border-gray-200 px-3 py-1.5 text-xs font-bold text-[#02A95C] hover:bg-emerald-50"
-                    >
-                      Mark {child.status === 'available' ? 'Sponsored' : 'Available'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                          <Edit3 className="h-3 w-3" />
+                          <span>Edit</span>
+                        </button>
+                        {child.status === 'sponsored' && (
+                          <button
+                            type="button"
+                            onClick={() => unlinkChildSponsor(child.id)}
+                            className="block ml-auto rounded-full border border-amber-200 bg-amber-50 hover:bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-800"
+                          >
+                            Unlink Sponsor
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {/* ================= MODULE 5: LETTER MODERATION QUEUE ================= */}
+        {/* =====================================================================
+            3. LETTER & MESSAGE MODERATION QUEUE + FIELD UPDATE UPLOADS
+           ===================================================================== */}
         {activeTab === 'letters' && (
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
-            <div>
-              <h2 className="font-heading font-extrabold text-xl text-gray-900">
-                Donor-to-Child Letter Moderation Queue
-              </h2>
-              <p className="text-xs text-gray-500">
-                Review all supporter-to-child messages before field delivery to ensure child safety, dignity, and privacy compliance.
-              </p>
-            </div>
+          <div className="space-y-8">
+            {/* Incoming Donor Messages & Moderation Inbox */}
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-heading font-extrabold text-xl text-gray-900">
+                    Incoming Donor Messages & Safety Moderation Queue
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Pending messages appear first. Review, edit for child privacy/safety, and Approve or Reject before field delivery.
+                  </p>
+                </div>
 
-            <div className="space-y-4">
-              {letters.map((letter) => (
-                <div
-                  key={letter.id}
-                  className="rounded-2xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  <div className="space-y-2 max-w-2xl">
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
-                          letter.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : letter.status === 'flagged'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {letter.status === 'pending'
-                          ? 'Pending Safety Review'
-                          : letter.status === 'approved'
-                          ? 'Approved & Queued for Field Delivery'
-                          : 'Flagged / Held'}
-                      </span>
-                      <span className="text-gray-400">•</span>
-                      <span className="font-semibold text-gray-800">
-                        From: {letter.donorName} ({letter.donorEmail})
-                      </span>
-                      <span className="text-gray-400">→</span>
-                      <span className="font-bold text-[#02A95C]">To Child: {letter.childName}</span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-400">{letter.createdAt}</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setLetterFilter(status)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold capitalize ${
+                        letterFilter === status
+                          ? 'bg-[#1A1A1A] text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {filteredLetters.map((letter) => (
+                  <div
+                    key={letter.id}
+                    className="rounded-2xl border border-gray-200 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-2.5 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
+                            letter.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : letter.status === 'rejected' || letter.status === 'flagged'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {letter.status === 'pending'
+                            ? 'Pending Safety Check'
+                            : letter.status === 'approved'
+                            ? 'Approved for Field Delivery'
+                            : 'Rejected / Held'}
+                        </span>
+                        {letter.editedByAdmin && (
+                          <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-bold">
+                            Edited by Admin for Safety
+                          </span>
+                        )}
+                        <span className="font-semibold text-gray-800">
+                          From: {letter.donorName} ({letter.donorEmail})
+                        </span>
+                        <span className="text-gray-400">→</span>
+                        <span className="font-bold text-[#02A95C]">
+                          To Sponsored Child: {letter.childName}
+                        </span>
+                        <span className="text-gray-400">• {letter.createdAt}</span>
+                      </div>
+
+                      {editingLetterId === letter.id ? (
+                        <div className="space-y-2">
+                          <textarea
+                            rows={3}
+                            value={editingLetterText}
+                            onChange={(e) => setEditingLetterText(e.target.value)}
+                            className="w-full rounded-xl border border-[#02A95C] bg-white p-3 text-xs sm:text-sm"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveEditedLetter(letter.id)}
+                              className="rounded-full bg-[#02A95C] px-4 py-1.5 text-xs font-bold text-white"
+                            >
+                              Save Safety Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingLetterId(null)}
+                              className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-800 bg-[#FAF9F6] border border-[#E5E7EB] rounded-xl p-3.5 italic">
+                          “{letter.message}”
+                        </p>
+                      )}
                     </div>
 
-                    <p className="text-sm text-gray-800 bg-[#FAF9F6] border border-[#E5E7EB] rounded-xl p-3.5 italic">
-                      “{letter.message}”
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => startEditingLetter(letter)}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white hover:bg-gray-50 px-3.5 py-2 text-xs font-bold text-gray-700"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Edit Message</span>
+                      </button>
+                      {letter.status !== 'approved' && (
+                        <button
+                          type="button"
+                          onClick={() => moderateLetter(letter.id, 'approved')}
+                          className="inline-flex items-center gap-1 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Approve</span>
+                        </button>
+                      )}
+                      {letter.status !== 'rejected' && (
+                        <button
+                          type="button"
+                          onClick={() => moderateLetter(letter.id, 'rejected')}
+                          className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2 text-xs font-bold text-red-700"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span>Reject</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Field Update Uploads (Batch Termly Report Cards, Photos & Progress Letters) */}
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-heading font-extrabold text-xl text-gray-900">
+                    Field Update Uploads (Report Cards, Photos & Progress Letters)
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Upload batch termly report cards, verified field photos, and progress letters from the field and attach them to specific children or projects.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFieldUploadForm((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-5 py-2.5 text-xs font-bold text-white shrink-0"
+                >
+                  <FolderUp className="h-4 w-4" />
+                  <span>{showFieldUploadForm ? 'Close Upload Form' : 'Upload Field Report / Letter'}</span>
+                </button>
+              </div>
+
+              {showFieldUploadForm && (
+                <form
+                  onSubmit={handleFieldUploadSubmit}
+                  className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-5 space-y-4"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Document / Batch Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={uploadTitle}
+                        onChange={(e) => setUploadTitle(e.target.value)}
+                        placeholder="e.g. Term 3 Academic Report Card"
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Upload Type
+                      </label>
+                      <select
+                        value={uploadDocType}
+                        onChange={(e) =>
+                          setUploadDocType(e.target.value as FieldUpdateUpload['documentType'])
+                        }
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      >
+                        <option value="Termly Report Card">Termly Report Card</option>
+                        <option value="Field Progress Letter">Field Progress Letter</option>
+                        <option value="Verified Field Photo">Verified Field Photo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Term / Reporting Period
+                      </label>
+                      <input
+                        type="text"
+                        value={uploadTerm}
+                        onChange={(e) => setUploadTerm(e.target.value)}
+                        placeholder="Term 3 · 2026"
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    {letter.status !== 'approved' && (
-                      <button
-                        type="button"
-                        onClick={() => moderateLetter(letter.id, 'approved')}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Attach To
+                      </label>
+                      <select
+                        value={uploadTargetType}
+                        onChange={(e) => {
+                          const nextType = e.target.value as 'child' | 'project';
+                          setUploadTargetType(nextType);
+                          setUploadTargetId(
+                            nextType === 'child'
+                              ? childrenList[0]?.id || 'child-01'
+                              : campaigns[0]?.id || 'camp-01'
+                          );
+                        }}
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
                       >
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Approve for Delivery</span>
-                      </button>
-                    )}
-                    {letter.status !== 'flagged' && (
-                      <button
-                        type="button"
-                        onClick={() => moderateLetter(letter.id, 'flagged')}
-                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2 text-xs font-bold text-red-700"
+                        <option value="child">Sponsored Child</option>
+                        <option value="project">Fundraising Project</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Select {uploadTargetType === 'child' ? 'Child' : 'Project'}
+                      </label>
+                      <select
+                        value={uploadTargetId}
+                        onChange={(e) => setUploadTargetId(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
                       >
-                        <X className="h-3.5 w-3.5" />
-                        <span>Hold / Flag</span>
-                      </button>
-                    )}
+                        {uploadTargetType === 'child'
+                          ? childrenList.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name} ({c.district})
+                              </option>
+                            ))
+                          : campaigns.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.title}
+                              </option>
+                            ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        File / Scan Upload
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={uploadFileName}
+                          onChange={(e) => setUploadFileName(e.target.value)}
+                          placeholder="report_card.pdf"
+                          className="h-10 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        />
+                        <label className="cursor-pointer inline-flex items-center gap-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                          <Upload className="h-3.5 w-3.5" />
+                          <span>Browse</span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) =>
+                              handleImageFileUpload(e, setUploadAttachmentUrl, setUploadFileName)
+                            }
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Teacher / Field Officer Progress Notes
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={uploadNotes}
+                      onChange={(e) => setUploadNotes(e.target.value)}
+                      placeholder="Summarize academic grades, health checkup notes, or field progress..."
+                      className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-6 py-2.5 text-xs font-bold text-white"
+                  >
+                    Attach & Broadcast Field Upload
+                  </button>
+                </form>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {fieldUploads.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-gray-200 p-4 flex items-start justify-between gap-4"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="rounded-full bg-emerald-50 text-[#02A95C] px-2.5 py-0.5 text-[10px] font-bold uppercase">
+                          {item.documentType}
+                        </span>
+                        <span className="text-xs font-bold text-gray-800">
+                          Attached to: {item.targetName}
+                        </span>
+                        <span className="text-xs text-gray-400">• {item.termOrPeriod}</span>
+                      </div>
+                      <h3 className="font-heading font-bold text-sm text-gray-900">{item.title}</h3>
+                      <p className="text-xs text-gray-600 leading-relaxed">{item.notes}</p>
+                      <p className="text-[11px] text-gray-400 font-mono">
+                        File: {item.fileName} · Uploaded {item.uploadedAt} by {item.uploadedBy}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            4. DONATION & FINANCIAL RECORDS (GLOBAL GIVING LEDGER)
+           ===================================================================== */}
+        {activeTab === 'financials' && (
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <h2 className="font-heading font-extrabold text-xl text-gray-900">
+                  Global Giving Ledger & Financial Records
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Searchable, filterable database of every transaction across the organization, offline manual entry, receipt generator, and CSV/Excel accounting export.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowManualEntryForm((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{showManualEntryForm ? 'Close Offline Form' : 'Log Offline Donation / Adjustment'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportTransactions('csv')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 hover:bg-gray-50 px-4 py-2 text-xs font-bold text-gray-700"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportTransactions('excel')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 text-xs font-bold text-[#087443]"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span>Export Excel (.XLS)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Manual Entry & Adjustments Form */}
+            {showManualEntryForm && (
+              <form
+                onSubmit={handleManualLedgerSubmit}
+                className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading font-bold text-sm text-gray-900">
+                    Manual Offline Donation Entry & Financial Adjustment
+                  </h3>
+                  <span className="text-[11px] font-semibold text-[#02A95C]">
+                    Automatically updates campaign totals & generates receipt
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Donor Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualDonorName}
+                      onChange={(e) => setManualDonorName(e.target.value)}
+                      placeholder="e.g. Centenary Bank Wire / Walk-in Donor"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Donor Email (for Receipt)</label>
+                    <input
+                      type="email"
+                      value={manualDonorEmail}
+                      onChange={(e) => setManualDonorEmail(e.target.value)}
+                      placeholder="donor@example.org"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Campaign</label>
+                    <select
+                      value={manualCampaignId || campaigns[0]?.id || ''}
+                      onChange={(e) => setManualCampaignId(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    >
+                      {campaigns.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Amount (UGX)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1000"
+                      value={manualAmountUGX}
+                      onChange={(e) => setManualAmountUGX(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Payment Channel</label>
+                    <select
+                      value={manualPaymentMethod}
+                      onChange={(e) =>
+                        setManualPaymentMethod(
+                          e.target.value as LedgerTransaction['paymentMethod']
+                        )
+                      }
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    >
+                      <option value="Offline Cash Receipt">Offline Cash Receipt</option>
+                      <option value="Direct Bank Wire (EFT)">Direct Bank Wire (EFT)</option>
+                      <option value="Mobile Money Receipt (Manual)">Mobile Money Receipt (Manual)</option>
+                      <option value="MTN MoMo">MTN MoMo</option>
+                      <option value="Airtel Money">Airtel Money</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Entry Classification</label>
+                    <select
+                      value={manualEntryType}
+                      onChange={(e) =>
+                        setManualEntryType(e.target.value as LedgerTransaction['entryType'])
+                      }
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    >
+                      <option value="Manual Offline Entry">Manual Offline Entry</option>
+                      <option value="Adjustment">Adjustment</option>
+                    </select>
                   </div>
                 </div>
-              ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Bank / Cash / MoMo Reference Number
+                    </label>
+                    <input
+                      type="text"
+                      value={manualReferenceCode}
+                      onChange={(e) => setManualReferenceCode(e.target.value)}
+                      placeholder="e.g. CASH-VCH-2026-205 or EFT-99201"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Accounting & Audit Notes
+                    </label>
+                    <input
+                      type="text"
+                      value={manualNotes}
+                      onChange={(e) => setManualNotes(e.target.value)}
+                      placeholder="Physical receipt book # or bank credit advice note..."
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-6 py-2.5 text-xs font-bold text-white"
+                >
+                  Record Transaction & Generate Receipt
+                </button>
+              </form>
+            )}
+
+            {/* Generated Receipt Preview Modal */}
+            {selectedReceiptTx && (
+              <div className="rounded-2xl border-2 border-[#02A95C] bg-[#F5F8F4] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-[#02A95C]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#087443]">
+                      Official Tax-Deductible Receipt Generated ({selectedReceiptTx.receiptNumber})
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">
+                    Donor: {selectedReceiptTx.donorName} · Amount: {formatUGX(selectedReceiptTx.amountUGX)} ({selectedReceiptTx.paymentMethod})
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Campaign: {selectedReceiptTx.campaignTitle} · Ref: {selectedReceiptTx.referenceCode} · Date: {selectedReceiptTx.date}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedReceiptTx(null)}
+                  className="rounded-full border border-gray-300 bg-white px-4 py-1.5 text-xs font-bold text-gray-700 shrink-0"
+                >
+                  Dismiss Receipt
+                </button>
+              </div>
+            )}
+
+            {/* Search & Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="relative">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3.5 top-3" />
+                <input
+                  type="search"
+                  value={ledgerSearch}
+                  onChange={(e) => setLedgerSearch(e.target.value)}
+                  placeholder="Search donor, receipt #, campaign, or ref..."
+                  className="h-10 w-full rounded-xl border border-gray-200 pl-10 pr-4 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
+                />
+              </div>
+              <select
+                value={ledgerMethodFilter}
+                onChange={(e) => setLedgerMethodFilter(e.target.value)}
+                className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs sm:text-sm"
+              >
+                <option value="All">All Payment Channels</option>
+                <option value="MTN MoMo">MTN MoMo</option>
+                <option value="Airtel Money">Airtel Money</option>
+                <option value="Visa / Mastercard">Visa / Mastercard</option>
+                <option value="Direct Bank Wire (EFT)">Direct Bank Wire (EFT)</option>
+                <option value="Offline Cash Receipt">Offline Cash Receipt</option>
+                <option value="Mobile Money Receipt (Manual)">Mobile Money Receipt (Manual)</option>
+              </select>
+              <select
+                value={ledgerTypeFilter}
+                onChange={(e) => setLedgerTypeFilter(e.target.value)}
+                className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs sm:text-sm"
+              >
+                <option value="All">All Entry Types (Online + Offline)</option>
+                <option value="Online">Online</option>
+                <option value="Manual Offline Entry">Manual Offline Entry</option>
+                <option value="Adjustment">Adjustment</option>
+              </select>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
+                  <tr>
+                    <th className="py-3.5 px-4">Receipt & Date</th>
+                    <th className="py-3.5 px-4">Supporter</th>
+                    <th className="py-3.5 px-4">Campaign</th>
+                    <th className="py-3.5 px-4">Channel & Type</th>
+                    <th className="py-3.5 px-4 text-right">Amount</th>
+                    <th className="py-3.5 px-4 text-right">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredLedger.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-gray-50">
+                      <td className="py-3.5 px-4 font-mono text-xs">
+                        <strong className="text-gray-900 block">{tx.receiptNumber}</strong>
+                        <span className="text-gray-400">{tx.date}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <strong className="font-bold text-gray-900 block">{tx.donorName}</strong>
+                        <span className="text-xs text-gray-500">{tx.referenceCode}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-700 max-w-xs">
+                        <span className="font-medium block">{tx.campaignTitle}</span>
+                        {tx.notes && <span className="text-[11px] text-gray-400">{tx.notes}</span>}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 block w-fit">
+                          {tx.paymentMethod}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#087443] uppercase mt-0.5 block">
+                          {tx.entryType}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-[#02A95C]">
+                        {formatUGX(tx.amountUGX)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedReceiptTx(tx)}
+                          className="rounded-full border border-gray-200 hover:bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700"
+                        >
+                          View Receipt
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            5. DONOR & MEMBER DIRECTORY (SUPPORTER DATABASE & USER MANAGEMENT)
+           ===================================================================== */}
+        {activeTab === 'donors' && (
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="font-heading font-extrabold text-xl text-gray-900">
+                  Donor & Member Directory (Supporter Database & User Management)
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Searchable supporter database with lifetime contributions, contact details, role promotion (User / Volunteer / Admin), and account activation controls.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDonor(null);
+                  setNewDonorName('');
+                  setNewDonorEmail('');
+                  setNewDonorPhone('');
+                  setNewDonorAddress('');
+                  setShowAddDonor((v) => !v);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-4 py-2 text-xs font-bold text-white"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>{showAddDonor ? 'Close Member Form' : 'Add Member Record'}</span>
+              </button>
+            </div>
+
+            {showAddDonor && (
+              <form
+                onSubmit={handleSaveDonor}
+                className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-5 space-y-4"
+              >
+                <h3 className="font-heading font-bold text-sm text-gray-900">
+                  {editingDonor ? `Edit User Details: ${editingDonor.name}` : 'Add New Supporter / Member'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Full Name"
+                    value={newDonorName}
+                    onChange={(e) => setNewDonorName(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder="Email Address"
+                    value={newDonorEmail}
+                    onChange={(e) => setNewDonorEmail(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone (+256...)"
+                    value={newDonorPhone}
+                    onChange={(e) => setNewDonorPhone(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Billing / Tax Address"
+                    value={newDonorAddress}
+                    onChange={(e) => setNewDonorAddress(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Lifetime Donated (UGX)"
+                    value={newDonorAmount}
+                    onChange={(e) => setNewDonorAmount(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  />
+                  <select
+                    value={newDonorPlan}
+                    onChange={(e) => setNewDonorPlan(e.target.value)}
+                    className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                  >
+                    <option>One-Time Supporter</option>
+                    <option>Monthly ($35 / mo)</option>
+                    <option>Monthly ($50 / mo)</option>
+                    <option>Child Sponsor ($45 / mo)</option>
+                    <option>Major Institutional Donor</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-gray-700">System Role:</label>
+                    <select
+                      value={newDonorRole}
+                      onChange={(e) =>
+                        setNewDonorRole(e.target.value as 'user' | 'volunteer' | 'admin')
+                      }
+                      className="h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-bold"
+                    >
+                      <option value="user">Supporter (User)</option>
+                      <option value="volunteer">Trusted Volunteer</option>
+                      <option value="admin">NGO Staff Admin</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-[#02A95C] px-6 py-2 text-xs font-bold text-white"
+                  >
+                    {editingDonor ? 'Update Member' : 'Save Member'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Search & Role Filter */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3.5 top-3" />
+                <input
+                  type="search"
+                  value={donorSearch}
+                  onChange={(e) => setDonorSearch(e.target.value)}
+                  placeholder="Search supporters by name, email, city, or plan..."
+                  className="h-10 w-full rounded-xl border border-gray-200 pl-10 pr-4 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
+                />
+              </div>
+              <select
+                value={donorRoleFilter}
+                onChange={(e) => setDonorRoleFilter(e.target.value)}
+                className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-xs sm:text-sm"
+              >
+                <option value="All">All Roles</option>
+                <option value="user">Supporters (User)</option>
+                <option value="volunteer">Volunteers</option>
+                <option value="admin">Admins</option>
+              </select>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#FAF9F6] text-gray-500 text-xs uppercase font-bold border-b border-gray-200">
+                  <tr>
+                    <th className="py-3.5 px-4">Supporter & Status</th>
+                    <th className="py-3.5 px-4">Contact & Tax Address</th>
+                    <th className="py-3.5 px-4">Giving Plan & Lifetime</th>
+                    <th className="py-3.5 px-4">Role Assignment</th>
+                    <th className="py-3.5 px-4 text-right">User Management</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredDonors.map((d) => {
+                    const isDeactivated = d.accountStatus === 'deactivated';
+                    return (
+                      <tr
+                        key={d.id}
+                        className={`hover:bg-gray-50 ${isDeactivated ? 'opacity-60 bg-gray-50' : ''}`}
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <strong className="font-bold text-gray-900">{d.name}</strong>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                isDeactivated
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {isDeactivated ? 'Deactivated' : 'Active'}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500 block">{d.email}</span>
+                          <span className="text-[11px] text-gray-400">Joined {d.joinedDate}</span>
+                        </td>
+                        <td className="py-4 px-4 text-xs text-gray-600">
+                          <span className="block font-semibold text-gray-800">{d.phone}</span>
+                          <span>{d.address}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="rounded-full bg-emerald-50 text-[#02A95C] px-2.5 py-0.5 text-xs font-bold">
+                            {d.recurringPlan}
+                          </span>
+                          <span className="font-mono font-bold text-gray-900 block mt-1">
+                            {formatUGX(d.totalDonatedUGX)} ({d.donationsCount} gifts)
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <select
+                            value={d.role || 'user'}
+                            onChange={(e) =>
+                              changeDonorRole(
+                                d.id,
+                                e.target.value as 'user' | 'volunteer' | 'admin'
+                              )
+                            }
+                            className="h-8 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-bold text-gray-800"
+                          >
+                            <option value="user">User / Donor</option>
+                            <option value="volunteer">Volunteer</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td className="py-4 px-4 text-right space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditDonorModal(d)}
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleDonorAccountStatus(d.id)}
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold ${
+                              isDeactivated
+                                ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                : 'bg-red-50 text-red-700 hover:bg-red-100'
+                            }`}
+                          >
+                            {isDeactivated ? (
+                              <>
+                                <UserCheck className="h-3 w-3" />
+                                <span>Activate</span>
+                              </>
+                            ) : (
+                              <>
+                                <UserX className="h-3 w-3" />
+                                <span>Deactivate</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            6. CAMPAIGN & CONTENT MANAGER (PROJECT CREATOR/EDITOR & UPDATE PUBLISHER)
+           ===================================================================== */}
+        {activeTab === 'campaigns' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column: Update Publisher (Broadcasts to Your Impact Feed) */}
+              <div className="lg:col-span-5 bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-5">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#02A95C]">
+                    Instant Impact Broadcast
+                  </span>
+                  <h2 className="font-heading font-extrabold text-lg text-gray-900">
+                    Update Publisher (Milestones, Field Photos & Stories)
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Post milestone updates, field photos, and news stories that broadcast directly to the Your Impact feeds of donors.
+                  </p>
+                </div>
+
+                <form onSubmit={handlePublishNews} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Headline / Milestone Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newsTitle}
+                      onChange={(e) => setNewsTitle(e.target.value)}
+                      placeholder="e.g. Nsambya Neonatal ICU Incubator #2 Installed"
+                      className="h-10 w-full rounded-xl border border-gray-200 px-3 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Category</label>
+                      <select
+                        value={newsCategory}
+                        onChange={(e) => setNewsCategory(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      >
+                        <option>Project Milestone</option>
+                        <option>Medical Verification</option>
+                        <option>Clean Water Update</option>
+                        <option>Education Bursar Settlement</option>
+                        <option>Emergency Relief Dispatch</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Link to Project
+                      </label>
+                      <select
+                        value={newsCampaignId}
+                        onChange={(e) => setNewsCampaignId(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      >
+                        <option value="">All Supporters (General Feed)</option>
+                        {campaigns.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Field Photo (Upload or URL)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newsImageUrl}
+                        onChange={(e) => setNewsImageUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="h-10 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      />
+                      <label className="cursor-pointer inline-flex items-center gap-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                        <Upload className="h-3.5 w-3.5" />
+                        <span>Upload</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageFileUpload(e, setNewsImageUrl)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Update Story & Institutional EFT Reference
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={newsSummary}
+                      onChange={(e) => setNewsSummary(e.target.value)}
+                      placeholder="Describe the field milestone, hospital receipt reference, or community impact..."
+                      className="w-full rounded-xl border border-gray-200 p-3 text-xs sm:text-sm focus:border-[#02A95C] focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-full bg-[#02A95C] hover:bg-[#028F4D] py-3 text-xs sm:text-sm font-bold text-white transition-colors"
+                  >
+                    Broadcast Update to Supporters’ Impact Feeds
+                  </button>
+                </form>
+
+                <div className="pt-4 border-t border-gray-100 space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Broadcast History ({newsList.length})
+                  </h3>
+                  {newsList.map((n) => (
+                    <div
+                      key={n.id}
+                      className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-3.5 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-[#02A95C]">{n.category}</span>
+                        <span className="text-gray-400">{n.publishedAt}</span>
+                      </div>
+                      <h4 className="font-bold text-xs sm:text-sm text-gray-900">{n.title}</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed">{n.summary}</p>
+                      {n.campaignTitle && (
+                        <p className="text-[11px] font-semibold text-[#087443]">
+                          Linked Project: {n.campaignTitle}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Project Creator / Editor */}
+              <div className="lg:col-span-7 bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-card space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#02A95C]">
+                      Project Creator & Editor
+                    </span>
+                    <h2 className="font-heading font-extrabold text-lg text-gray-900">
+                      Public Fundraising Campaigns ({campaigns.length})
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      Create new campaigns, set financial goals, write impact stories, upload banner images, or edit active projects.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openCreateCampaignEditor}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#02A95C] px-4 py-2 text-xs font-bold text-white hover:bg-[#028F4D]"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Create New Campaign</span>
+                  </button>
+                </div>
+
+                {showCampaignEditor && (
+                  <form
+                    onSubmit={handleSaveCampaign}
+                    className="rounded-2xl bg-[#FAF9F6] border border-[#E5E7EB] p-5 space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-heading font-bold text-sm text-gray-900">
+                        {editingCampaign
+                          ? `Edit Project: ${editingCampaign.title}`
+                          : 'Create New Fundraising Project'}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowCampaignEditor(false)}
+                        className="text-xs font-bold text-gray-500 hover:text-gray-800"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Campaign Title
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={campTitle}
+                          onChange={(e) => setCampTitle(e.target.value)}
+                          placeholder="e.g. Solar Borehole for 300 Families in Lira"
+                          className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Category
+                        </label>
+                        <select
+                          value={campCategory}
+                          onChange={(e) => setCampCategory(e.target.value as Category)}
+                          className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        >
+                          <option value="Medical Care">Medical Care</option>
+                          <option value="Education & Tuition">Education & Tuition</option>
+                          <option value="Clean Water Wells">Clean Water Wells</option>
+                          <option value="Emergency Relief">Emergency Relief</option>
+                          <option value="Rural Agriculture">Rural Agriculture</option>
+                          <option value="Community Infrastructure">Community Infrastructure</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Financial Goal (UGX)
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="100000"
+                          value={campGoalUGX}
+                          onChange={(e) => setCampGoalUGX(e.target.value)}
+                          className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          District / Location
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={campDistrict}
+                          onChange={(e) => setCampDistrict(e.target.value)}
+                          placeholder="Lira District, Uganda"
+                          className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Receiving Institution (Direct EFT)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={campInstitution}
+                          onChange={(e) => setCampInstitution(e.target.value)}
+                          placeholder="Hospital Treasury / School Bursar"
+                          className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Banner Image (Upload or URL)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={campCoverImage}
+                            onChange={(e) => setCampCoverImage(e.target.value)}
+                            className="h-10 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                          />
+                          <label className="cursor-pointer inline-flex items-center gap-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleImageFileUpload(e, setCampCoverImage)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Short Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={campSubtitle}
+                        onChange={(e) => setCampSubtitle(e.target.value)}
+                        placeholder="Brief one-sentence summary of the verified need..."
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Full Impact Story
+                      </label>
+                      <textarea
+                        rows={4}
+                        required
+                        value={campStory}
+                        onChange={(e) => setCampStory(e.target.value)}
+                        placeholder="Write the full impact story, beneficiary background, and direct institutional disbursement plan..."
+                        className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="rounded-full bg-[#02A95C] hover:bg-[#028F4D] px-6 py-2.5 text-xs font-bold text-white"
+                    >
+                      {editingCampaign ? 'Save Campaign Changes' : 'Publish Campaign to Public Site'}
+                    </button>
+                  </form>
+                )}
+
+                <div className="space-y-3">
+                  {campaigns.map((c) => {
+                    const status = campaignStatuses[c.id] || 'active';
+                    const verified = campaignVerified[c.id] ?? true;
+                    return (
+                      <div
+                        key={c.id}
+                        className="rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <img
+                            src={c.coverImage}
+                            alt={c.title}
+                            className="h-16 w-20 rounded-xl object-cover shrink-0 bg-gray-100"
+                          />
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-bold text-[#02A95C] bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                                {c.category}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                  status === 'active'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {status}
+                              </span>
+                              {verified && (
+                                <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                                  Verified Badge
+                                </span>
+                              )}
+                            </div>
+                            <Link
+                              href={`/campaign/${c.id}`}
+                              className="font-heading font-bold text-sm text-gray-900 hover:text-[#02A95C] flex items-center gap-1"
+                            >
+                              <span>{c.title}</span>
+                              <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
+                            </Link>
+                            <p className="text-xs text-gray-500 font-mono">
+                              {formatUGX(c.raisedUGX)} raised of {formatUGX(c.goalUGX)} ·{' '}
+                              {c.payoutVerification.institutionName}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => openEditCampaignEditor(c)}
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCampaignVerified((prev) => ({ ...prev, [c.id]: !verified }))
+                            }
+                            className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                          >
+                            {verified ? 'Revoke Badge' : 'Verify Badge'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCampaignStatuses((prev) => ({
+                                ...prev,
+                                [c.id]: status === 'active' ? 'paused' : 'active',
+                              }))
+                            }
+                            className="rounded-full bg-gray-100 hover:bg-gray-200 px-3 py-1.5 text-xs font-bold text-gray-800"
+                          >
+                            {status === 'active' ? 'Pause' : 'Activate'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -30,6 +30,19 @@ export interface StoredUserRecord {
 const memoryUsersByEmail = new Map<string, StoredUserRecord>();
 const memoryUsersById = new Map<string, StoredUserRecord>();
 
+const DEFAULT_ADMIN_EMAILS = new Set([
+  "admin@thegccfoundation.com",
+  "admin@gccfoundation.org",
+  "staff@thegccfoundation.com",
+  "director@thegccfoundation.com",
+]);
+const DEFAULT_ADMIN_PASSWORD = "Admin@GCC2026";
+
+function isAdminEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  return DEFAULT_ADMIN_EMAILS.has(normalized) || /^(admin|staff|compliance|director)@/i.test(normalized);
+}
+
 function getKvNamespace(c: any): KVNamespace | null {
   try {
     const cf = getCloudflareContext();
@@ -198,7 +211,7 @@ export const authRoute = new Hono<HonoEnv>()
 
       const passwordHash = await hashPassword(password);
       const userId = `usr_${crypto.randomUUID()}`;
-      const role: "user" = "user";
+      const role: "user" | "admin" = isAdminEmail(normalizedEmail) ? "admin" : "user";
 
       const newUserRecord: StoredUserRecord = {
         id: userId,
@@ -253,13 +266,35 @@ export const authRoute = new Hono<HonoEnv>()
       const { email, password } = c.req.valid("json");
       const normalizedEmail = email.trim().toLowerCase();
 
-      const userRecord = await getUserByEmail(c, normalizedEmail);
+      let userRecord = await getUserByEmail(c, normalizedEmail);
+
+      // Auto-provision default admin account on first sign-in
+      if (!userRecord && DEFAULT_ADMIN_EMAILS.has(normalizedEmail) && password === DEFAULT_ADMIN_PASSWORD) {
+        const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
+        userRecord = {
+          id: `usr_admin_${normalizedEmail.split("@")[0]}`,
+          name: "GCC Foundation Admin",
+          email: normalizedEmail,
+          passwordHash,
+          avatarUrl: null,
+          language: "English (US)",
+          isProfilePublic: true,
+          role: "admin",
+          isVerified: true,
+          createdAt: new Date().toISOString(),
+        };
+        await saveUserRecord(c, userRecord, true);
+      }
 
       if (!userRecord) {
         return c.json(
           { error: "No account found with this email address. Please create an account first." },
           401
         );
+      }
+
+      if (isAdminEmail(normalizedEmail) && userRecord.role !== "admin") {
+        userRecord.role = "admin";
       }
 
       const isValid = userRecord.passwordHash

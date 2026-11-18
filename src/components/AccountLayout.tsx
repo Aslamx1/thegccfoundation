@@ -11,7 +11,6 @@ import {
   Settings,
   Bell,
   PlusCircle,
-  ShieldCheck,
 } from 'lucide-react';
 
 const items = [
@@ -56,14 +55,6 @@ export default function AccountLayout({
                 {description}
               </p>
             </div>
-
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border border-[#DCE9DD] bg-[#F5F8F4] px-4 py-2 text-xs font-bold text-[#087443] hover:bg-[#EAF5ED] transition-colors"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span>NGO Staff Admin Dashboard</span>
-            </Link>
           </div>
 
           {!user ? (
@@ -112,16 +103,6 @@ export default function AccountLayout({
                     </Link>
                   );
                 })}
-
-                <div className="hidden md:block pt-3 mt-3 border-t border-[#edf0ec]">
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-bold text-[#3D5E16] bg-[#F4F7EE] hover:bg-[#E6EED8] transition-colors"
-                  >
-                    <ShieldCheck className="h-4 w-4 text-[#02a95c] shrink-0" />
-                    <span>Administrative Dashboard</span>
-                  </Link>
-                </div>
               </nav>
 
               <section className="min-w-0 rounded-3xl border border-[#e4e8e3] bg-white p-6 shadow-[0_8px_36px_rgba(24,43,30,0.05)] sm:p-8">

@@ -8,10 +8,16 @@ import { useDonation } from '@/context/DonationContext';
 import {
   CHILDREN_STORAGE_KEY,
   LETTERS_STORAGE_KEY,
+  NEWS_STORAGE_KEY,
+  FIELD_UPDATES_STORAGE_KEY,
   DEFAULT_CHILDREN,
   DEFAULT_LETTERS,
+  DEFAULT_NEWS,
+  DEFAULT_FIELD_UPDATES,
   ChildProfile,
   ChildLetter,
+  NewsMilestoneItem,
+  FieldUpdateUpload,
 } from '@/data/ngo-portal';
 import {
   Sparkles,
@@ -44,6 +50,8 @@ function ImpactContent() {
   const { campaigns, openDonationModal } = useDonation();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [childrenList, setChildrenList] = useState<ChildProfile[]>(DEFAULT_CHILDREN);
+  const [newsFeed, setNewsFeed] = useState<NewsMilestoneItem[]>(DEFAULT_NEWS);
+  const [fieldUploads, setFieldUploads] = useState<FieldUpdateUpload[]>(DEFAULT_FIELD_UPDATES);
   const [selectedChildForLetter, setSelectedChildForLetter] = useState<ChildProfile | null>(null);
   const [letterText, setLetterText] = useState('');
   const [letterToast, setLetterToast] = useState('');
@@ -66,6 +74,20 @@ function ImpactContent() {
         const parsed = JSON.parse(savedChildren);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setChildrenList(parsed as ChildProfile[]);
+        }
+      }
+      const savedNews = localStorage.getItem(NEWS_STORAGE_KEY);
+      if (savedNews) {
+        const parsedNews = JSON.parse(savedNews);
+        if (Array.isArray(parsedNews) && parsedNews.length > 0) {
+          setNewsFeed(parsedNews as NewsMilestoneItem[]);
+        }
+      }
+      const savedField = localStorage.getItem(FIELD_UPDATES_STORAGE_KEY);
+      if (savedField) {
+        const parsedField = JSON.parse(savedField);
+        if (Array.isArray(parsedField) && parsedField.length > 0) {
+          setFieldUploads(parsedField as FieldUpdateUpload[]);
         }
       }
     } catch {}
@@ -366,6 +388,69 @@ function ImpactContent() {
           <p className="text-xs sm:text-sm text-[#526057] leading-relaxed">
             “Dear {firstName}, thank you for joining the GCC Foundation community! This inbox is where you will receive direct hospital & school disbursement notifications, thank-you notes from families, and moderated letters from sponsored children.”
           </p>
+        </div>
+      </section>
+
+      {/* Live Project Milestones & Field Reports Feed (Broadcast from Admin Update Publisher) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-[#20251f]">
+              Live Project Milestones & Field Updates
+            </h3>
+            <p className="text-xs text-[#626b64]">
+              Verified milestones, field photos, and termly report cards broadcast from the field.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {newsFeed.slice(0, 4).map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-[#e4e8e3] bg-white p-4 shadow-subtle space-y-2 flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="h-32 w-full rounded-xl object-cover bg-gray-100"
+                  />
+                )}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-bold text-[#02A95C]">
+                    {item.category}
+                  </span>
+                  <span className="text-gray-400">{item.publishedAt}</span>
+                </div>
+                <h4 className="font-heading font-bold text-sm text-[#20251f]">{item.title}</h4>
+                <p className="text-xs text-[#526057] leading-relaxed">{item.summary}</p>
+              </div>
+              {item.campaignTitle && (
+                <p className="text-[11px] font-semibold text-[#087443] pt-1 border-t border-gray-100">
+                  Project: {item.campaignTitle}
+                </p>
+              )}
+            </div>
+          ))}
+          {fieldUploads.slice(0, 2).map((upload) => (
+            <div
+              key={upload.id}
+              className="rounded-2xl border border-[#DCE9DD] bg-[#F5F8F4] p-4 space-y-2"
+            >
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-[#087443]">
+                  {upload.documentType}
+                </span>
+                <span className="text-gray-500">{upload.termOrPeriod}</span>
+              </div>
+              <h4 className="font-heading font-bold text-sm text-[#20251f]">{upload.title}</h4>
+              <p className="text-xs text-[#526057] leading-relaxed">{upload.notes}</p>
+              <p className="text-[11px] font-semibold text-[#02A95C]">
+                Attached to: {upload.targetName} · {upload.fileName}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 

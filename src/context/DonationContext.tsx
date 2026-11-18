@@ -22,8 +22,9 @@ interface DonationContextType {
     pledge: Omit<VolunteerPledge, 'id' | 'datePledged' | 'status'>
   ) => Promise<{ success: boolean }>;
 
-  // Add new campaign dynamically from wizard
+  // Add or update campaign dynamically from wizard or admin CMS
   addNewCampaign: (campaign: Campaign) => void;
+  updateCampaign: (campaign: Campaign) => void;
 
   // Search Modal
   isSearchModalOpen: boolean;
@@ -96,6 +97,12 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
     setCampaigns((prev) => [{ ...newCamp, ownerUserId: user?.id }, ...prev]);
   };
 
+  const updateCampaign = (updatedCamp: Campaign) => {
+    setCampaigns((prev) =>
+      prev.map((c) => (c.id === updatedCamp.id ? updatedCamp : c))
+    );
+  };
+
   const submitVolunteerPledge = async (
     campaignId: string,
     pledge: Omit<VolunteerPledge, 'id' | 'datePledged' | 'status'>
@@ -136,6 +143,7 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         closePledgeModal,
         submitVolunteerPledge,
         addNewCampaign,
+        updateCampaign,
         isSearchModalOpen,
         openSearchModal,
         closeSearchModal,
