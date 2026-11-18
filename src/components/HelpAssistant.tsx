@@ -9,7 +9,7 @@ type ChatMessage = { id: string; from: 'bot' | 'visitor'; text: string; links?: 
 type ApiHistory = { role: 'user' | 'assistant'; content: string };
 const welcome: ChatMessage = { id: 'welcome', from: 'bot', text: 'Hi, I am HopeBot, your GCC Foundation assistant. Ask me anything. I can help with fundraisers, donations, accounts, or general questions.' };
 const quickQuestions = ['Help me start a fundraiser', 'How do I donate?', 'Account and sign-in', 'Report a fundraiser', 'Fees and payouts'];
-const supportPhone = '+256 (0) 772 491 802';
+const supportPhone = '+256 (0) 703 601 200';
 
 function HopeBotMark({ small = false }: { small?: boolean }) {
   return <span className={`hopebot-mark ${small ? 'hopebot-mark-small' : ''}`} aria-hidden="true">
@@ -34,8 +34,8 @@ function isHandoffQuestion(question: string) {
 function getGuidedReply(question: string): Omit<ChatMessage, 'id'> {
   const text = question.toLowerCase();
   const escalation = isHandoffQuestion(question);
-  if (escalation) return { from: 'bot', handoff: true, text: `I am sorry you are dealing with this. A payout delay over five business days, an account or verification hold, a failed or duplicate payment, or a complex technical issue needs our support team to review the details. Please call GCC Foundation support at ${supportPhone}. Never send your password, full card number, bank login, mobile money PIN, or full ID number in chat.`, links: [{ label: 'Call GCC Support', href: 'tel:+256772491802' }] };
-  if (/report|fraud|scam|suspicious|fake/.test(text)) return { from: 'bot', handoff: true, text: `Open the campaign page and use the Report this fundraiser button to alert our Trust & Safety team immediately, or call GCC Foundation compliance directly at ${supportPhone}.`, links: [{ label: 'Browse fundraisers', href: '/#discover' }, { label: 'Call GCC Support', href: 'tel:+256772491802' }] };
+  if (escalation) return { from: 'bot', handoff: true, text: `I am sorry you are dealing with this. A payout delay over five business days, an account or verification hold, a failed or duplicate payment, or a complex technical issue needs our support team to review the details. Please call GCC Foundation support at ${supportPhone}. Never send your password, full card number, bank login, mobile money PIN, or full ID number in chat.`, links: [{ label: 'Call GCC Support', href: 'tel:+256703601200' }] };
+  if (/report|fraud|scam|suspicious|fake/.test(text)) return { from: 'bot', handoff: true, text: `Open the campaign page and use the Report this fundraiser button to alert our Trust & Safety team immediately, or call GCC Foundation compliance directly at ${supportPhone}.`, links: [{ label: 'Browse fundraisers', href: '/#discover' }, { label: 'Call GCC Support', href: 'tel:+256703601200' }] };
   if (/fee|fees|2\.9|processing|platform charge|tip/.test(text)) return { from: 'bot', text: 'GCC Foundation charges a 0% platform fee for causes so that 100% of cause funds go directly to verified hospital and school accounts. Standard payment processor charges apply at checkout.', links: [{ label: 'Browse fundraisers', href: '/#discover' }] };
   if (/tax|deduct/.test(text)) return { from: 'bot', text: 'GCC Foundation is a registered non-profit organization (Uganda NGO Bureau Reg #INDR15982736NB). Donation receipts are issued via email upon completion of your gift through Donorbox.' };
   if (/donat|support a campaign|give money|monthly|recurring/.test(text)) return { from: 'bot', text: 'To make a donation, open any verified fundraiser and click Donate Now. You can choose a one-time or recurring gift in our secure Donorbox checkout form.', links: [{ label: 'Explore fundraisers', href: '/#discover' }] };
@@ -46,7 +46,7 @@ function getGuidedReply(question: string): Omit<ChatMessage, 'id'> {
   if (/verify|verification|withdraw|bank|payout|transfer/.test(text)) return { from: 'bot', text: 'All medical and tuition funds on GCC Foundation are wired directly to verified hospital and school bank accounts once invoices and National ID (NIN) verification are approved by our compliance team.', links: [{ label: 'How vetting works', href: '/how-it-works' }, { label: 'Public ledger', href: '/transparency' }] };
   if (/safe|secure|security|card|pin|private/.test(text)) return { from: 'bot', text: 'Never share a password, full payment card number, mobile money PIN, or bank login in chat. All donations are processed through encrypted Donorbox checkout and protected by our 100% Giving Guarantee.', links: [{ label: 'How vetting works', href: '/how-it-works' }] };
   if (/hello|hi\b|hey\b|help/.test(text)) return { from: 'bot', text: 'Of course! I can help with starting or sharing a fundraiser, making a donation, account settings, fees, verification, or general questions. What would you like to do next?' };
-  return { from: 'bot', text: 'I can help you with starting or sharing a fundraiser, making a donation, managing your account, or learning about our 4-tier verification protocol. Choose a topic below or call our support team at +256 (0) 772 491 802.', links: [{ label: 'Explore fundraisers', href: '/#discover' }, { label: 'Start a fundraiser', href: '/create/fundraiser/category' }] };
+  return { from: 'bot', text: 'I can help you with starting or sharing a fundraiser, making a donation, managing your account, or learning about our 4-tier verification protocol. Choose a topic below or call our support team at +256 (0) 703 601 200.', links: [{ label: 'Explore fundraisers', href: '/#discover' }, { label: 'Start a fundraiser', href: '/create/fundraiser/category' }] };
 }
 
 export default function HelpAssistant() {
@@ -82,7 +82,7 @@ export default function HelpAssistant() {
       answer = data.answer;
       if (handoff) {
         answer += `\n\nFor human review, call GCC Foundation support at ${supportPhone}. Do not share passwords, payment credentials, or full ID numbers here.`;
-        links = [{ label: 'Call GCC Support', href: 'tel:+256772491802' }];
+        links = [{ label: 'Call GCC Support', href: 'tel:+256703601200' }];
       }
     } catch {
       const fallback = getGuidedReply(question);

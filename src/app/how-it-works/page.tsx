@@ -180,11 +180,11 @@ export default function HowItWorksPage() {
               <span>compliance@gccfoundation.org</span>
             </a>
             <a
-              href="tel:+256772491802"
+              href="tel:+256703601200"
               className="inline-flex items-center gap-1.5 bg-[#FAF9F6] border border-[#E5E7EB] hover:border-gray-400 text-gray-900 font-bold px-4 py-2.5 rounded-lg transition-colors"
             >
               <PhoneCall className="w-4 h-4 text-[#3D5E16]" />
-              <span>Hotline: +256 (0) 772 491 802</span>
+              <span>Hotline: +256 (0) 703 601 200</span>
             </a>
           </div>
         </div>

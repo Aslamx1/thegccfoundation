@@ -31,11 +31,11 @@ export default function TopTrustBar() {
         {/* Right: Phone Helpline & Currency Switcher */}
         <div className="flex items-center gap-4 flex-wrap justify-center">
           <a
-            href="tel:+256772491802"
+            href="tel:+256703601200"
             className="flex items-center gap-1.5 text-gray-200 hover:text-white transition-colors"
           >
             <PhoneCall className="w-3 h-3 text-[#AFC68A]" />
-            <span>Nakasero Support: <strong className="text-white">+256 (0) 772 491 802</strong></span>
+            <span>Nakasero Support: <strong className="text-white">+256 (0) 703 601 200</strong></span>
           </a>
 
           {/* Currency Switcher */}

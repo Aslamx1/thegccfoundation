@@ -13,7 +13,7 @@ const resources = [
   { id: 'newsroom', title: 'Newsroom & field updates', description: 'Follow real-time surgical milestones, borehole completions, and verified institutional disbursements.', action: 'Browse field updates', href: '/transparency' },
   { id: 'careers', title: 'Careers & field fellowship', description: 'Join our regional verification and community impact teams across East Africa.', action: 'Contact our team', href: '/our-team' },
   { id: 'foundation', title: 'GCC Foundation', description: 'Direct institutional giving with transparent public receipt ledgers across East Africa.', action: 'Explore causes', href: '/' },
-  { id: 'partnerships', title: 'Institutional partnerships', description: 'Partner with GCC Foundation as an accredited hospital, school, or community NGO.', action: 'Contact GCC Support', href: 'tel:+256772491802' },
+  { id: 'partnerships', title: 'Institutional partnerships', description: 'Partner with GCC Foundation as an accredited hospital, school, or community NGO.', action: 'Contact GCC Support', href: 'tel:+256703601200' },
 ];
 
 export default function AboutResourcesPage() {
