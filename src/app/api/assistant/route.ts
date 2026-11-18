@@ -7,7 +7,7 @@ export const maxDuration = 30;
 type HistoryItem = { role: 'user' | 'assistant'; content: string };
 
 const recentRequests = new Map<string, number[]>();
-const systemInstructions = `You are HopeBot, the warm, capable assistant for GCC Foundation, a verified crowdfunding platform focused on East African community support. Answer the user's actual question in a natural, useful way, including general questions beyond the platform. Think through complex requests and give clear steps, examples, and sensible next actions. Be empathetic with emergencies, illness, loss, and hardship. Keep answers concise unless the user asks for detail.
+const systemInstructions = `You are the GCC Bot, the warm, capable assistant for GCC Foundation, a verified crowdfunding platform focused on East African community support. Answer the user's actual question in a natural, useful way, including general questions beyond the platform. Think through complex requests and give clear steps, examples, and sensible next actions. Be empathetic with emergencies, illness, loss, and hardship. Keep answers concise unless the user asks for detail.
 
 GCC site facts: fundraiser setup starts at /create/fundraiser/category; it guides the organizer through location and campaign details. Donations are processed securely through Donorbox (clicking Donate Now opens the Donorbox donation form), with a 0% GCC platform fee for causes and 100% direct payouts to verified hospital and school accounts. Users can sign in at /sign-in, create an account at /sign-up, and manage their profile and settings at /account/settings.
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
-    console.error('HopeBot Workers AI request error:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('GCC Bot Workers AI request error:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json({ error: 'The assistant is temporarily unavailable. Please try again.' }, { status: 502 });
   }
 }

@@ -8,7 +8,7 @@ const resources = [
   { id: 'safety', title: 'Trust and safety', description: 'Review our anti-fraud safeguards, bedside verification standards, and public financial audit ledger.', action: 'View transparency ledger', href: '/transparency' },
   { id: 'countries', title: 'Supported countries', description: 'Start a verified fundraiser across Uganda, Kenya, Tanzania, Rwanda, and partner communities worldwide.', action: 'Start a fundraiser', href: '/create/fundraiser/category' },
   { id: 'pricing', title: 'Pricing & 0% charity fee', description: 'GCC Foundation charges a 0% platform fee for causes so 100% of your gift reaches verified hospital and school accounts.', action: 'See pricing details', href: '#pricing-details' },
-  { id: 'help', title: 'Help Center', description: 'Get instant answers from HopeBot or connect with our Kampala compliance and donor support desk.', action: 'Ask HopeBot', actionType: 'assistant' as const },
+  { id: 'help', title: 'Help Center', description: 'Get instant answers from the GCC Bot or connect with our Kampala compliance and donor support desk.', action: 'Ask GCC Bot', actionType: 'assistant' as const },
   { id: 'about-gcc', title: 'About GCC', description: 'Meet the medical auditors, field officers, and governance leaders behind GCC Foundation.', action: 'Meet the team', href: '/our-team' },
   { id: 'newsroom', title: 'Newsroom & field updates', description: 'Follow real-time surgical milestones, borehole completions, and verified institutional disbursements.', action: 'Browse field updates', href: '/transparency' },
   { id: 'careers', title: 'Careers & field fellowship', description: 'Join our regional verification and community impact teams across East Africa.', action: 'Contact our team', href: '/our-team' },
