@@ -12,70 +12,33 @@ import {
   CheckCircle2,
   ArrowRight,
   TrendingUp,
-  Percent
+  Percent,
+  Receipt,
+  Inbox
 } from 'lucide-react';
+
+interface DisbursementRecord {
+  id: string;
+  date: string;
+  recipient: string;
+  purpose: string;
+  bankRef: string;
+  amountUGX: number;
+  auditedBy: string;
+  status: string;
+}
 
 export default function TransparencyPage() {
   const { formatUGX } = useCurrency();
 
-  const mockDisbursements = [
-    {
-      id: 'DISB-2026-091',
-      date: '04 Nov 2026',
-      recipient: 'Uganda Heart Institute Accounts Treasury',
-      purpose: 'Cardiopulmonary Bypass Kit & ICU Bed (Brenda Namubiru)',
-      bankRef: 'EFT-STB-UG-884129',
-      amountUGX: 4450000,
-      auditedBy: 'Pauline Namukasa, FCCA',
-      status: 'Bank Settled',
-    },
-    {
-      id: 'DISB-2026-088',
-      date: '02 Nov 2026',
-      recipient: 'Teso Hydro-Drill Engineering Services Ltd',
-      purpose: '110m Rotary Drilling & Casing Tranche 2 (Soroti Water)',
-      bankRef: 'EFT-CENT-UG-109284',
-      amountUGX: 16500000,
-      auditedBy: 'Eng. Francis Opio, PE',
-      status: 'Bank Settled',
-    },
-    {
-      id: 'DISB-2026-084',
-      date: '29 Oct 2026',
-      recipient: 'St. Peter’s Secondary School Bursar Account',
-      purpose: 'Term III Tuition Relief for 38 Displaced Girls (Tororo)',
-      bankRef: 'EFT-DFCU-UG-774190',
-      amountUGX: 7980000,
-      auditedBy: 'Florence Nabwire',
-      status: 'Bank Settled',
-    },
-    {
-      id: 'DISB-2026-080',
-      date: '24 Oct 2026',
-      recipient: 'Surgipharm Uganda Ltd / Nsambya Hospital',
-      purpose: 'Neonatal Intensive Care Unit Incubator #1 Delivery',
-      bankRef: 'EFT-CENT-UG-991823',
-      amountUGX: 13500000,
-      auditedBy: 'Pauline Namukasa, FCCA',
-      status: 'Bank Settled',
-    },
-    {
-      id: 'DISB-2026-075',
-      date: '20 Oct 2026',
-      recipient: 'Bugisu Grain Millers & Mbale Hardware Depot',
-      purpose: 'Bududa Mudslide Emergency Posho & 38 Heavy Tarpaulins',
-      bankRef: 'EFT-ABSA-UG-339182',
-      amountUGX: 11800000,
-      auditedBy: 'Dr. Moses Wepukhulu',
-      status: 'Bank Settled',
-    },
-  ];
+  // Initialized to empty array since platform has not started receiving donations yet
+  const disbursements: DisbursementRecord[] = [];
 
   return (
     <div className="flex-1 flex flex-col bg-[#FAF9F6]">
       <Header />
 
-      {/* Header */}
+      {/* Header Banner */}
       <section className="bg-white border-b border-[#E5E7EB] py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <span className="text-xs font-bold text-[#3D5E16] uppercase tracking-wider bg-[#F4F7EE] border border-[#CDDCB3] px-3 py-1 rounded-full">
@@ -85,7 +48,7 @@ export default function TransparencyPage() {
             The GCC Foundation Public Ledger
           </h1>
           <p className="text-gray-800 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            We believe trust is earned through radical transparency. Inspect every bank wire, EFT transaction reference, and independent auditor report.
+            We believe trust is earned through radical transparency. Inspect every bank wire, EFT transaction reference, and independent auditor report as contributions and disbursements occur.
           </p>
         </div>
       </section>
@@ -100,7 +63,7 @@ export default function TransparencyPage() {
             <span className="font-heading font-black text-2xl text-[#3D5E16] tabular-nums block">
               {formatUGX(GCC_INSTITUTIONAL_STATS.totalDisbursedUGX)}
             </span>
-            <span className="text-[11px] text-gray-700 block">Wired to 142 health facilities & schools</span>
+            <span className="text-[11px] text-gray-500 block">0 disbursements recorded to date</span>
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-subtle space-y-2">
@@ -108,23 +71,23 @@ export default function TransparencyPage() {
             <span className="font-heading font-black text-2xl text-gray-900 block">
               0.0%
             </span>
-            <span className="text-[11px] text-gray-700 block">100% of cause funds go to the field</span>
+            <span className="text-[11px] text-gray-500 block">100% of all community gifts go directly to causes</span>
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-subtle space-y-2">
             <span className="text-xs font-bold text-gray-700 block">Direct-to-Institution Rate</span>
-            <span className="font-heading font-black text-2xl text-[#D97706] block">
-              94.6%
+            <span className="font-heading font-black text-2xl text-[#087443] block">
+              100%
             </span>
-            <span className="text-[11px] text-gray-700 block">5.4% vetted community cooperatives</span>
+            <span className="text-[11px] text-gray-500 block">Disbursed directly to verified hospital &amp; school accounts</span>
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-subtle space-y-2">
-            <span className="text-xs font-bold text-gray-700 block">Audited by KPMG East Africa</span>
+            <span className="text-xs font-bold text-gray-700 block">Statutory Compliance</span>
             <span className="font-heading font-black text-2xl text-gray-900 block">
-              Unqualified
+              Compliant
             </span>
-            <span className="text-[11px] text-emerald-700 font-bold block">Clean Audit Opinion 2025/2026</span>
+            <span className="text-[11px] text-emerald-700 font-bold block">Registered under Uganda NGO Bureau</span>
           </div>
         </div>
 
@@ -133,86 +96,99 @@ export default function TransparencyPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-heading font-extrabold text-xl text-gray-900">
-                Recent Institutional Bank Disbursements
+                Institutional Bank Disbursements
               </h2>
-              <p className="text-xs text-gray-800">
+              <p className="text-xs text-gray-600 mt-0.5">
                 Live EFT transfers released to verified hospital treasuries, school bursars, and certified engineering contractors.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-              <span className="text-xs font-bold text-emerald-800 font-mono">Real-Time Ledger</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span className="text-xs font-bold text-slate-700 font-mono">Ledger Ready (Awaiting First Disbursement)</span>
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#FAF9F6] text-gray-700 font-bold border-b border-[#E5E7EB]">
-                <tr>
-                  <th className="py-3.5 px-4">Date & Voucher ID</th>
-                  <th className="py-3.5 px-4">Recipient Institution</th>
-                  <th className="py-3.5 px-4">Purpose</th>
-                  <th className="py-3.5 px-4">Bank EFT Reference</th>
-                  <th className="py-3.5 px-4 text-right">Amount (UGX)</th>
-                  <th className="py-3.5 px-4 text-center">Audit Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 font-mono">
-                {mockDisbursements.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-gray-900 block">{row.date}</span>
-                      <span className="text-[10px] text-gray-600">{row.id}</span>
-                    </td>
-                    <td className="py-3.5 px-4 font-body font-bold text-gray-900">
-                      {row.recipient}
-                    </td>
-                    <td className="py-3.5 px-4 font-body text-gray-800 max-w-xs">
-                      {row.purpose}
-                    </td>
-                    <td className="py-3.5 px-4 text-gray-700 font-semibold text-[11px]">
-                      {row.bankRef}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-black text-gray-900 tabular-nums text-sm">
-                      {formatUGX(row.amountUGX)}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                        <CheckCircle2 className="w-3 h-3" />
-                        {row.status}
-                      </span>
-                    </td>
+          {disbursements.length === 0 ? (
+            /* Clean Zero-State Container */
+            <div className="text-center py-16 px-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto shadow-2xs text-slate-400">
+                <Receipt className="w-7 h-7 text-[#02A95C]" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1.5">
+                <h3 className="font-bold text-base text-slate-900">
+                  No Bank Disbursements Recorded Yet
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  The website has not started receiving donations yet. As soon as campaigns receive gifts and funds are wired to verified hospital accounts, school treasuries, or community contractors, every bank EFT reference voucher will automatically be published here in real time.
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Audited Transparency Framework Active</span>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF9F6] text-gray-700 font-bold border-b border-[#E5E7EB]">
+                  <tr>
+                    <th className="py-3.5 px-4">Date &amp; Voucher ID</th>
+                    <th className="py-3.5 px-4">Recipient Institution</th>
+                    <th className="py-3.5 px-4">Purpose</th>
+                    <th className="py-3.5 px-4">Bank EFT Reference</th>
+                    <th className="py-3.5 px-4 text-right">Amount (UGX)</th>
+                    <th className="py-3.5 px-4 text-center">Audit Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-mono">
+                  {disbursements.map((row) => (
+                    <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-gray-900 block">{row.date}</span>
+                        <span className="text-[10px] text-gray-600">{row.id}</span>
+                      </td>
+                      <td className="py-3.5 px-4 font-body font-bold text-gray-900">
+                        {row.recipient}
+                      </td>
+                      <td className="py-3.5 px-4 font-body text-gray-800 max-w-xs">
+                        {row.purpose}
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-700 font-semibold text-[11px]">
+                        {row.bankRef}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-black text-gray-900 tabular-nums text-sm">
+                        {formatUGX(row.amountUGX)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Audited Financial Statements Downloads */}
         <div className="bg-[#FAF9F6] border border-[#E5E7EB] rounded-2xl p-6 sm:p-8 space-y-6">
           <div>
             <h3 className="font-heading font-extrabold text-lg text-gray-900">
-              Download Independent Audit Reports
+              Statutory Governance &amp; Registration Documents
             </h3>
-            <p className="text-xs text-gray-800">
-              In accordance with Section 39 of the Uganda NGO Act, GCC Foundation publishes full statutory financial statements prepared in accordance with IFRS.
+            <p className="text-xs text-gray-600 mt-0.5">
+              In accordance with Section 39 of the Uganda NGO Act, GCC Foundation publishes statutory registration and governance records.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center justify-between shadow-subtle hover:border-gray-400 transition-colors cursor-pointer">
               <div className="space-y-1">
-                <strong className="text-xs font-bold text-gray-900 block">KPMG Annual Audit 2025/2026</strong>
-                <span className="text-[11px] text-gray-600 block">PDF · 3.4 MB · Unqualified</span>
-              </div>
-              <Download className="w-4 h-4 text-[#3D5E16]" />
-            </div>
-
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center justify-between shadow-subtle hover:border-gray-400 transition-colors cursor-pointer">
-              <div className="space-y-1">
                 <strong className="text-xs font-bold text-gray-900 block">Uganda NGO Bureau Filing</strong>
-                <span className="text-[11px] text-gray-600 block">PDF · 1.8 MB · Reg #INDR15982736NB</span>
+                <span className="text-[11px] text-gray-500 block">PDF · Reg #INDR15982736NB</span>
               </div>
               <Download className="w-4 h-4 text-[#3D5E16]" />
             </div>
@@ -220,7 +196,15 @@ export default function TransparencyPage() {
             <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center justify-between shadow-subtle hover:border-gray-400 transition-colors cursor-pointer">
               <div className="space-y-1">
                 <strong className="text-xs font-bold text-gray-900 block">Tax Exemption Certificate (URA)</strong>
-                <span className="text-[11px] text-gray-600 block">PDF · 820 KB · Valid 2026/2027</span>
+                <span className="text-[11px] text-gray-500 block">PDF · Valid 2026/2027</span>
+              </div>
+              <Download className="w-4 h-4 text-[#3D5E16]" />
+            </div>
+
+            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center justify-between shadow-subtle hover:border-gray-400 transition-colors cursor-pointer">
+              <div className="space-y-1">
+                <strong className="text-xs font-bold text-gray-900 block">Charter &amp; Constitution</strong>
+                <span className="text-[11px] text-gray-500 block">PDF · Verified NGO Bylaws</span>
               </div>
               <Download className="w-4 h-4 text-[#3D5E16]" />
             </div>

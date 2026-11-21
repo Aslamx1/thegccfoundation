@@ -962,10 +962,10 @@ export const TEAM_MEMBERS: TeamMember[] = [
 ];
 
 export const GCC_INSTITUTIONAL_STATS = {
-  totalDisbursedUGX: 1482900000, // ~ $395,440 USD
-  verifiedCampaignsCount: 142,
-  averagePayoutTimeHours: 18,
-  directInstitutionPayoutRate: '94.6%',
-  antiFraudAuditsCompleted: 310,
+  totalDisbursedUGX: 0,
+  verifiedCampaignsCount: 0,
+  averagePayoutTimeHours: 0,
+  directInstitutionPayoutRate: '100%',
+  antiFraudAuditsCompleted: 0,
   zeroFeePolicy: '0% platform fee on charity disbursements',
 };
