@@ -286,7 +286,7 @@ export default function DonationsLedgerPage() {
             <div className="text-xl font-bold text-slate-900 mt-0.5">
               {donations.length > 0
                 ? Math.round((donations.filter((d) => d.receipt_status === 'sent').length / donations.length) * 100)
-                : 100}
+                : 0}
               % verified
             </div>
           </div>

@@ -163,7 +163,9 @@ export default function AdminDashboardOverview() {
               </div>
               <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100 flex justify-between">
                 <span>Direct retention:</span>
-                <span className="font-semibold text-emerald-600">96.8%</span>
+                <span className="font-semibold text-emerald-600">
+                  {kpis && kpis.activeSponsorships > 0 ? '100%' : '0%'}
+                </span>
               </div>
             </div>
 

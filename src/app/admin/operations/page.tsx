@@ -285,60 +285,70 @@ export default function AdminOperationsPage() {
       {/* ---------------------------------------------------------------------- */}
       {activeTab === 'volunteers' && (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-100">
-                <tr>
-                  <th className="py-3 px-4">Volunteer</th>
-                  <th className="py-3 px-4">Activity Description</th>
-                  <th className="py-3 px-4">Date Completed</th>
-                  <th className="py-3 px-4 text-right">Hours Logged</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Verification</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {volunteerLogs.map((vol) => (
-                  <tr key={vol.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{vol.volunteer_name}</div>
-                      <div className="text-[11px] text-slate-400">{vol.volunteer_email}</div>
-                    </td>
-                    <td className="py-3.5 px-4 max-w-[240px]">
-                      <span className="text-slate-700">{vol.activity_name}</span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">{vol.date_completed}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                      {vol.hours_spent} hrs
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <StatusBadge status={vol.status} />
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      {vol.status === 'pending' ? (
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleApproveVolunteerLog(vol.id, 'approved')}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleApproveVolunteerLog(vol.id, 'rejected')}
-                            className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-[11px] italic">Verified</span>
-                      )}
-                    </td>
+          {volunteerLogs.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                icon={Clock}
+                title="No volunteer logs recorded"
+                description="Community service and outreach volunteer hours will appear here for staff verification and approval."
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-100">
+                  <tr>
+                    <th className="py-3 px-4">Volunteer</th>
+                    <th className="py-3 px-4">Activity Description</th>
+                    <th className="py-3 px-4">Date Completed</th>
+                    <th className="py-3 px-4 text-right">Hours Logged</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Verification</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {volunteerLogs.map((vol) => (
+                    <tr key={vol.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">{vol.volunteer_name}</div>
+                        <div className="text-[11px] text-slate-400">{vol.volunteer_email}</div>
+                      </td>
+                      <td className="py-3.5 px-4 max-w-[240px]">
+                        <span className="text-slate-700">{vol.activity_name}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600">{vol.date_completed}</td>
+                      <td className="py-3.5 px-4 text-right font-bold text-slate-900">
+                        {vol.hours_spent} hrs
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <StatusBadge status={vol.status} />
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        {vol.status === 'pending' ? (
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleApproveVolunteerLog(vol.id, 'approved')}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleApproveVolunteerLog(vol.id, 'rejected')}
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px] italic">Verified</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
