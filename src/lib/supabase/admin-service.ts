@@ -19,80 +19,7 @@ import {
 // ==============================================================================
 // INITIAL / FALLBACK NGO DATA
 // ==============================================================================
-const INITIAL_CHILDREN: SponsoredChild[] = [
-  {
-    id: 'ch-1',
-    first_name: 'Amina',
-    last_name: 'Namyalo',
-    age: 9,
-    gender: 'Girl',
-    location: 'Katwe Slum, Kampala',
-    region: 'Central Uganda',
-    school_and_grade: 'St. Peter Primary School, Primary 3',
-    bio: 'Amina lives with her grandmother who weaves mats. She is curious, loves reading, and helps fetch water every morning with a bright smile.',
-    aspirations: 'Wants to become a pediatrician to heal children in her village.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    created_at: '2026-01-10T08:00:00Z',
-    active_sponsorship: null,
-  },
-  {
-    id: 'ch-2',
-    first_name: 'Daniel',
-    last_name: 'Okello',
-    age: 12,
-    gender: 'Boy',
-    location: 'Gulu Municipality',
-    region: 'Northern Uganda',
-    school_and_grade: 'Hope Memorial Academy, Primary 6',
-    bio: 'Daniel is passionate about mathematics and science. His family was displaced during rural droughts and relocated to Gulu town.',
-    aspirations: 'Aspirations to become an electrical engineer and build solar mini-grids.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    created_at: '2026-03-12T10:30:00Z',
-    active_sponsorship: null,
-  },
-  {
-    id: 'ch-3',
-    first_name: 'Grace',
-    last_name: 'Kiconco',
-    age: 7,
-    gender: 'Girl',
-    location: 'Kabale Highlands',
-    region: 'Western Uganda',
-    school_and_grade: 'Grace Hill Infant School, Primary 1',
-    bio: 'Grace is an active girl who loves singing and storytelling. She walks 3 kilometers to reach the nearest community school.',
-    aspirations: 'Dreams of becoming a school principal to give every child free books.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    created_at: '2026-05-18T14:15:00Z',
-    active_sponsorship: null,
-  },
-  {
-    id: 'ch-4',
-    first_name: 'Brian',
-    last_name: 'Mwesigwa',
-    age: 14,
-    gender: 'Boy',
-    location: 'Jinja Town',
-    region: 'Eastern Uganda',
-    school_and_grade: 'Victoria Nile Secondary, Senior 1',
-    bio: 'Top of his class in physics and vocational arts. Brian repairs broken radios in the market to help pay for notebooks.',
-    aspirations: 'Wants to study computer science and software development.',
-    monthly_amount: 40.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    created_at: '2026-02-20T09:00:00Z',
-    active_sponsorship: null,
-  },
-];
+const INITIAL_CHILDREN: SponsoredChild[] = [];
 
 const INITIAL_LETTERS: SponsorshipMessage[] = [];
 
@@ -208,7 +135,7 @@ const INITIAL_SETTINGS: OrgSettings = {
 };
 
 // Local storage key helpers for seamless client fallback
-const STORAGE_PREFIX = 'gcc_admin_store_v2_';
+const STORAGE_PREFIX = 'gcc_admin_store_v3_';
 
 if (typeof window !== 'undefined') {
   try {
@@ -226,6 +153,7 @@ if (typeof window !== 'undefined') {
     ];
     legacyKeys.forEach((k) => {
       localStorage.removeItem('gcc_admin_store_' + k);
+      localStorage.removeItem('gcc_admin_store_v2_' + k);
     });
   } catch {}
 }
