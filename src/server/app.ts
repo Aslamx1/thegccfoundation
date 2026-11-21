@@ -8,20 +8,36 @@ import { donationsRoute } from "./routes/donations";
 import { uploadsRoute } from "./routes/uploads";
 import { adminRoute } from "./routes/admin";
 import { authRoute } from "./routes/auth";
+import { propertiesRoute } from "./routes/properties";
 import type { HonoEnv } from "./types";
 
 const app = new Hono<HonoEnv>().basePath("/api");
 
 // ---------------------------------------------------------------------------
-// Global Middleware Chain
+// 1. Global Middleware Chain (CORS & Logger)
 // ---------------------------------------------------------------------------
 app.use("*", logger());
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  process.env.NEXT_PUBLIC_APP_URL || "https://thegccfoundation.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://thegccfoundation.com",
+];
+
 app.use(
   "*",
   cors({
-    origin: (origin) => origin || "https://thegccfoundation.com",
+    origin: (origin) => {
+      if (!origin) return allowedOrigins[0];
+      if (allowedOrigins.some((allowed) => allowed === origin || allowed.includes(origin))) {
+        return origin;
+      }
+      return origin; // Fallback to incoming origin with credentials
+    },
     allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     credentials: true,
   })
 );
@@ -31,42 +47,51 @@ app.use("*", dbMiddleware);
 app.use("*", authMiddleware);
 
 // ---------------------------------------------------------------------------
-// Health check
+// 2. Health check Route
 // ---------------------------------------------------------------------------
 app.get("/health", (c) => {
   return c.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    service: "GCC Foundation Edge Crowdfunding API",
+    service: "GCC Real Estate & Crowdfunding API",
   });
 });
 
 // ---------------------------------------------------------------------------
-// Sub-Routers Mounting (Chained for RPC type inference)
+// 3. Sub-Routers Mounting (Chained for RPC type inference)
 // ---------------------------------------------------------------------------
 const routes = app
   .route("/auth", authRoute)
   .route("/campaigns", campaignsRoute)
   .route("/donations", donationsRoute)
   .route("/uploads", uploadsRoute)
-  .route("/admin", adminRoute);
+  .route("/admin", adminRoute)
+  .route("/properties", propertiesRoute);
 
 // ---------------------------------------------------------------------------
-// Centralized Error Handling
+// 4. Centralized Global Error Handling
 // ---------------------------------------------------------------------------
 app.onError((err, c) => {
   console.error("API Unhandled Exception:", err);
+  const status = (err as any).status || 500;
   return c.json(
     {
-      error: err.message || "An unexpected internal server error occurred.",
+      success: false,
+      message: err.message || "An unexpected internal server error occurred.",
       code: "INTERNAL_SERVER_ERROR",
     },
-    500
+    status
   );
 });
 
 app.notFound((c) => {
-  return c.json({ error: "API Route Not Found" }, 404);
+  return c.json(
+    {
+      success: false,
+      message: `API Route Not Found: ${c.req.method} ${c.req.url}`,
+    },
+    404
+  );
 });
 
 export default app;
