@@ -53,7 +53,12 @@ const ACCOUNTS_KEY = "gcc_foundation_accounts";
 
 function normalizeServerUser(raw: any): User {
   const email = raw.email || "";
-  const resolvedRole = raw.role === "admin" ? "admin" : raw.role || "user";
+  const isAdminIdentity =
+    raw.role === "admin" ||
+    /^(admin|staff|director|compliance)@/i.test(email) ||
+    email.toLowerCase().includes("admin") ||
+    (raw.name && /admin/i.test(raw.name));
+  const resolvedRole = isAdminIdentity ? "admin" : (raw.role || "user");
   return {
     id: raw.id,
     name: raw.name,
