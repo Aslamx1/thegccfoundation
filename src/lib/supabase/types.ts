@@ -8,11 +8,14 @@ export interface Profile {
   phone?: string | null;
   location?: string | null;
   avatar_url?: string | null;
+  bio?: string | null;
   is_active: boolean;
+  is_verified?: boolean;
   giving_total: number;
   giving_count: number;
   created_at: string;
   updated_at?: string;
+  last_sign_in_at?: string | null;
 }
 
 export interface SponsoredChild {

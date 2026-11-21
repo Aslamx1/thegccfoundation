@@ -677,6 +677,22 @@ export const AdminService = {
   // 5. Donor & Staff Directory
   // ----------------------------------------------------------------------------
   async getUsers(): Promise<Profile[]> {
+    // 1. Fetch live registered accounts from server API
+    try {
+      const res = await fetch('/api/auth/registered-users', { credentials: 'include' });
+      if (res.ok) {
+        const json = (await res.json()) as any;
+        if (json.users && Array.isArray(json.users) && json.users.length > 0) {
+          const localUsers = getStore<Profile[]>('users', INITIAL_USERS);
+          const serverEmails = new Set(json.users.map((u: any) => (u.email || '').toLowerCase()));
+          const localRemain = localUsers.filter(
+            (u) => !serverEmails.has((u.email || '').toLowerCase())
+          );
+          return [...json.users, ...localRemain];
+        }
+      }
+    } catch {}
+
     const supabase = getSupabase();
     if (supabase) {
       try {

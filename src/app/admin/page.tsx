@@ -22,6 +22,7 @@ import {
   Clock,
   Layers,
   ChevronRight,
+  UserCheck,
 } from 'lucide-react';
 
 export default function AdminDashboardOverview() {
@@ -91,6 +92,13 @@ export default function AdminDashboardOverview() {
             >
               <Megaphone className="w-4 h-4 text-emerald-400" />
               Publish Project Update
+            </Link>
+            <Link
+              href="/admin/accounts"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium text-xs sm:text-sm backdrop-blur-xs transition-all"
+            >
+              <UserCheck className="w-4 h-4 text-emerald-300" />
+              Registered Accounts
             </Link>
             <Link
               href="/admin/letters"
@@ -386,12 +394,12 @@ export default function AdminDashboardOverview() {
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
               <Link
-                href="/admin/users?tab=activity"
+                href="/admin/accounts"
                 className="flex items-center justify-between p-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <span className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
-                  Account &amp; Session Activity Logs
+                  <UserCheck className="w-4 h-4 text-emerald-600" />
+                  Registered Accounts &amp; Session Activity
                 </span>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>

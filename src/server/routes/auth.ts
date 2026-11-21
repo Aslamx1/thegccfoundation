@@ -199,6 +199,31 @@ async function saveUserRecord(c: any, record: StoredUserRecord, isNew = false): 
         kv.put(`gcc_auth_email:${normalizedEmail}`, serialized),
         kv.put(`gcc_auth_id:${record.id}`, serialized),
       ]);
+      // Update registered users registry in KV
+      const existingRaw = await kv.get('gcc_registered_users_registry');
+      let existingList = [];
+      if (existingRaw) {
+        try { existingList = JSON.parse(existingRaw); } catch {}
+      }
+      const summary = {
+        id: record.id,
+        name: record.name,
+        email: normalizedEmail,
+        avatar_url: record.avatarUrl || null,
+        role: record.role || 'user',
+        phone: record.phone || null,
+        location: record.location || null,
+        bio: record.bio || null,
+        is_active: true,
+        is_verified: record.isVerified ?? true,
+        created_at: record.createdAt || new Date().toISOString(),
+        giving_total: 0,
+      };
+      const filtered = Array.isArray(existingList)
+        ? existingList.filter((u) => u.id !== record.id && u.email !== normalizedEmail)
+        : [];
+      filtered.unshift(summary);
+      await kv.put('gcc_registered_users_registry', JSON.stringify(filtered.slice(0, 1000)));
     } catch (err) {
       console.warn("KV saveUserRecord error:", err);
     }
@@ -605,7 +630,73 @@ export const authRoute = new Hono<HonoEnv>()
   })
 
   // ---------------------------------------------------------------------------
-  // 9. Record Client-Side Auth Event
+  // 9. All Registered Accounts (For Admin Review)
+  // ---------------------------------------------------------------------------
+  .get("/registered-users", async (c) => {
+    // 1. Try DB
+    const db = c.get("db");
+    if (db) {
+      try {
+        const rows = await db.select().from(users);
+        if (rows && rows.length > 0) {
+          const mapped = rows.map((r) => ({
+            id: r.id,
+            name: r.name,
+            email: r.email,
+            avatar_url: r.avatarUrl,
+            role: r.role || 'user',
+            phone: r.phone || null,
+            location: r.location || null,
+            bio: (r as any).bio || null,
+            is_active: true,
+            is_verified: r.isVerified ?? true,
+            created_at: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+            giving_total: 0,
+          }));
+          mapped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          return c.json({ success: true, users: mapped });
+        }
+      } catch (err) {
+        console.warn("DB registered-users fetch fallback:", err);
+      }
+    }
+
+    // 2. Try KV
+    const kv = getKvNamespace(c);
+    if (kv) {
+      try {
+        const raw = await kv.get('gcc_registered_users_registry');
+        if (raw) {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list) && list.length > 0) {
+            return c.json({ success: true, users: list });
+          }
+        }
+      } catch {}
+    }
+
+    // 3. Fallback to memory
+    const memoryList = Array.from(memoryUsersById.values()).map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      avatar_url: u.avatarUrl || null,
+      role: u.role || 'user',
+      phone: u.phone || null,
+      location: u.location || null,
+      bio: u.bio || null,
+      is_active: true,
+      is_verified: u.isVerified ?? true,
+      created_at: u.createdAt || new Date().toISOString(),
+      giving_total: 0,
+    }));
+    memoryList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return c.json({ success: true, users: memoryList });
+  })
+
+  // ---------------------------------------------------------------------------
+  // 10. Record Client-Side Auth Event
   // ---------------------------------------------------------------------------
   .post(
     "/record-log",

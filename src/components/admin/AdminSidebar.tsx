@@ -18,6 +18,7 @@ import {
   ExternalLink,
   LogOut,
   ShieldCheck,
+  UserCheck,
   ChevronRight,
   Database,
   Sparkles,
@@ -52,6 +53,11 @@ export function AdminSidebar({ mobileOpen = false, onCloseMobile }: SidebarProps
       href: '/admin',
       icon: LayoutDashboard,
       exact: true,
+    },
+    {
+      title: 'Registered Accounts',
+      href: '/admin/accounts',
+      icon: UserCheck,
     },
     {
       title: 'Child Sponsorships',
