@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { LegalAgreementNotice } from '@/components/legal/LegalAgreementNotice';
 
 function getPostAuthPath() {
   if (typeof window === 'undefined') return '/account/impact';
@@ -129,6 +130,7 @@ export default function SignUpPage() {
             </svg>
             Continue with Google
           </button>
+          <LegalAgreementNotice className="pt-1" />
         </div>
 
         {/* Divider */}
@@ -255,6 +257,7 @@ export default function SignUpPage() {
             {isLoading ? 'Creating account...' : 'Create my account'}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
+          <LegalAgreementNotice className="pt-1" />
         </form>
 
         {/* Trust Guarantee Note */}

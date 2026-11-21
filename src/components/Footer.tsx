@@ -1,7 +1,4 @@
-﻿
-
-
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,12 +33,12 @@ const footerGroups = [
     ],
   },
   {
-    title: 'More resources',
+    title: 'Legal & Policies',
     links: [
-      { label: 'Browse fundraisers', href: '/#discover' },
+      { label: 'Terms & Conditions', href: '/terms-and-conditions' },
+      { label: 'Privacy Policy', href: '/privacy-policy' },
       { label: 'Fundraising tips', href: '/fundraising-tips' },
-      { label: 'Campaign updates and reporting', href: '/transparency' },
-      { label: 'Start a fundraiser', href: '/create/fundraiser/category' },
+      { label: 'Real Estate Portfolio', href: '/properties' },
     ],
   },
 ];
@@ -51,9 +48,13 @@ export default function Footer() {
   if (pathname?.startsWith('/admin')) {
     return null;
   }
+
+  const currentYear = new Date().getFullYear() || 2026;
+
   return (
     <footer className="border-t border-[#e6e9e6] bg-[#f7f8f6] text-[#20251f]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
+        {/* Navigation Columns */}
         <nav aria-label="Footer navigation" className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 md:gap-x-10">
           {footerGroups.map((group) => (
             <div key={group.title}>
@@ -71,26 +72,30 @@ export default function Footer() {
           ))}
         </nav>
 
-        <div className="mt-12 flex flex-col gap-6 border-t border-[#e1e5e1] pt-7 sm:flex-row sm:items-center sm:justify-between">
+        {/* Brand and Utility Links */}
+        <div className="mt-12 flex flex-col gap-6 border-t border-[#e1e5e1] pt-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col items-start gap-3">
             <Link href="/" aria-label="GCC Foundation home">
               <Image src="/images/gcc-logo-full.jpg" alt="GCC Foundation" width={170} height={46} className="h-9 w-auto object-contain" />
             </Link>
             <p className="max-w-sm text-xs leading-relaxed text-[#69716b]">
-              Community giving, with clear campaign updates and transparent reporting.
+              Community giving, with clear campaign updates and transparent reporting across East Africa.
             </p>
           </div>
-          <div className="flex flex-col gap-3 text-xs text-[#69716b] sm:items-end">
-            <p>© {new Date().getFullYear()} GCC Foundation. All rights reserved.</p>
-            <div className="flex flex-wrap gap-x-5 gap-y-2">
-              <Link href="/how-it-works" className="hover:text-[#20251f] hover:underline">How GCC works</Link>
-              <Link href="/transparency" className="hover:text-[#20251f] hover:underline">Transparency</Link>
-              <Link href="/our-team" className="hover:text-[#20251f] hover:underline">About GCC</Link>
-            </div>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-[#69716b]">
+            <Link href="/terms-and-conditions" className="hover:text-[#20251f] hover:underline">Terms &amp; Conditions</Link>
+            <Link href="/privacy-policy" className="hover:text-[#20251f] hover:underline">Privacy Policy</Link>
+            <Link href="/transparency" className="hover:text-[#20251f] hover:underline">Transparency</Link>
+            <Link href="/our-team" className="hover:text-[#20251f] hover:underline">About GCC</Link>
           </div>
+        </div>
+
+        {/* Clean Centered Copyright Bar */}
+        <div className="mt-8 border-t border-[#e6e9e6] pt-6 text-center text-xs text-[#69716b]">
+          <p>© {currentYear} Gcc Foundation. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
 }
-

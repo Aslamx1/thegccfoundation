@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import DonorboxWidget from '@/components/DonorboxWidget';
 import { DONORBOX_URL } from '@/context/DonationContext';
+import { LegalAgreementNotice } from '@/components/legal/LegalAgreementNotice';
 import { ArrowLeft, Heart, ShieldCheck } from 'lucide-react';
 
 export default function DonatePage() {
@@ -53,6 +54,7 @@ export default function DonatePage() {
             <Heart className="h-5 w-5 fill-current" />
             Donate Now
           </a>
+          <LegalAgreementNotice className="pt-2 max-w-sm mx-auto" actionText="By continuing to donate" />
         </div>
       </main>
     </div>

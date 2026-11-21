@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Eye, EyeOff, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { LegalAgreementNotice } from '@/components/legal/LegalAgreementNotice';
 
 function getPostAuthPath(email?: string) {
   if (typeof window === 'undefined') return '/account/impact';
@@ -147,6 +148,7 @@ export default function SignInPage() {
                   </svg>
                   Continue with Google
                 </button>
+                <LegalAgreementNotice className="pt-1" />
               </div>
 
               <div className="my-6 flex items-center gap-4">
@@ -278,6 +280,7 @@ export default function SignInPage() {
                 {isLoading ? 'Signing in…' : 'Sign in'}
                 {!isLoading && <ArrowRight className="h-4 w-4" />}
               </button>
+              <LegalAgreementNotice className="pt-1" />
             </form>
           )}
 
