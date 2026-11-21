@@ -14,7 +14,6 @@ import { donationsRoute } from "./routes/donations";
 import { uploadsRoute } from "./routes/uploads";
 import { adminRoute } from "./routes/admin";
 import { authRoute } from "./routes/auth";
-import { propertiesRoute } from "./routes/properties";
 import type { HonoEnv } from "./types";
 
 const app = new Hono<HonoEnv>().basePath("/api");
@@ -86,7 +85,7 @@ app.get("/health", (c) => {
   return c.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    service: "GCC Real Estate & Crowdfunding API",
+    service: "GCC Foundation Crowdfunding API",
     security: {
       rateLimiting: "active",
       sslVerification: "enforced",
@@ -103,8 +102,7 @@ const routes = app
   .route("/campaigns", campaignsRoute)
   .route("/donations", donationsRoute)
   .route("/uploads", uploadsRoute)
-  .route("/admin", adminRoute)
-  .route("/properties", propertiesRoute);
+  .route("/admin", adminRoute);
 
 // ---------------------------------------------------------------------------
 // 8. Centralized Global Error Handling

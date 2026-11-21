@@ -38,7 +38,7 @@ const footerGroups = [
       { label: 'Terms & Conditions', href: '/terms-and-conditions' },
       { label: 'Privacy Policy', href: '/privacy-policy' },
       { label: 'Fundraising tips', href: '/fundraising-tips' },
-      { label: 'Real Estate Portfolio', href: '/properties' },
+      { label: 'Transparency & Reports', href: '/transparency' },
     ],
   },
 ];
