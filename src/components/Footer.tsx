@@ -1,8 +1,11 @@
 ﻿
 
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 const footerGroups = [
   {
@@ -44,6 +47,10 @@ const footerGroups = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
   return (
     <footer className="border-t border-[#e6e9e6] bg-[#f7f8f6] text-[#20251f]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
