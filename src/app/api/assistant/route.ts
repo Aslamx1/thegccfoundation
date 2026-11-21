@@ -18,7 +18,7 @@ Escalate payout delays over five business days, account suspension, identity ver
 function withinRateLimit(key: string): boolean {
   const now = Date.now();
   const recent = (recentRequests.get(key) ?? []).filter((time) => now - time < 60_000);
-  if (recent.length >= 15) return false;
+  if (recent.length >= 10) return false;
   recent.push(now);
   recentRequests.set(key, recent);
   return true;

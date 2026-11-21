@@ -27,7 +27,11 @@ export async function createDbClient(customConnectionString?: string): Promise<D
 
   const client = new Client({
     connectionString,
-    ssl: isLocalhost ? false : { rejectUnauthorized: false },
+    ssl: isLocalhost
+      ? false
+      : {
+          rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === "false" ? false : true,
+        },
     connectionTimeoutMillis: 5000,
   });
 
