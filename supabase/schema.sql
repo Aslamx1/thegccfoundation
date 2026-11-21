@@ -530,3 +530,35 @@ create policy "Admins can upload org assets"
 on storage.objects for all
 using (bucket_id = 'org-assets' and public.is_admin())
 with check (bucket_id = 'org-assets' and public.is_admin());
+
+-- ------------------------------------------------------------------------------
+-- 12. Authentication & Session Audit Logs (`public.auth_audit_logs`)
+-- ------------------------------------------------------------------------------
+create table if not exists public.auth_audit_logs (
+    id uuid primary key default uuid_generate_v4(),
+    user_id text,
+    user_name text not null,
+    user_email text not null,
+    action text not null check (action in ('signup', 'login', 'logout')),
+    ip_address text,
+    user_agent text,
+    status text not null default 'success' check (status in ('success', 'failed')),
+    details text,
+    created_at timestamptz not null default timezone('utc'::text, now())
+);
+
+create index if not exists idx_auth_logs_created_at on public.auth_audit_logs(created_at desc);
+create index if not exists idx_auth_logs_user_email on public.auth_audit_logs(user_email);
+create index if not exists idx_auth_logs_action on public.auth_audit_logs(action);
+
+alter table public.auth_audit_logs enable row level security;
+
+create policy "Admins can view auth audit logs"
+on public.auth_audit_logs for select
+to authenticated
+using (public.is_admin());
+
+create policy "Service or app can insert auth audit logs"
+on public.auth_audit_logs for insert
+to anon, authenticated
+with check (true);

@@ -197,3 +197,18 @@ export interface DashboardKPIs {
   totalRegisteredSupporters: number;
   currency: string;
 }
+
+export type AuthActionType = 'signup' | 'login' | 'logout';
+
+export interface AuthAuditLog {
+  id: string;
+  user_id?: string | null;
+  user_name: string;
+  user_email: string;
+  action: AuthActionType;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  status: 'success' | 'failed';
+  details?: string | null;
+  created_at: string;
+}

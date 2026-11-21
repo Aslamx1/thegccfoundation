@@ -27,8 +27,79 @@ export interface StoredUserRecord {
   createdAt: string;
 }
 
+export interface ServerAuditLog {
+  id: string;
+  user_id: string | null;
+  user_name: string;
+  user_email: string;
+  action: 'signup' | 'login' | 'logout';
+  ip_address: string;
+  user_agent: string;
+  status: 'success' | 'failed';
+  details: string | null;
+  created_at: string;
+}
+
 const memoryUsersByEmail = new Map<string, StoredUserRecord>();
 const memoryUsersById = new Map<string, StoredUserRecord>();
+const memoryAuditLogs: ServerAuditLog[] = [];
+
+async function getAuthAuditLogsFromStorage(c: any): Promise<ServerAuditLog[]> {
+  const kv = getKvNamespace(c);
+  if (kv) {
+    try {
+      const raw = await kv.get('gcc_auth_audit_logs');
+      if (raw) {
+        return JSON.parse(raw);
+      }
+    } catch {}
+  }
+  return memoryAuditLogs;
+}
+
+async function recordAuthAuditLog(
+  c: any,
+  action: 'signup' | 'login' | 'logout',
+  user: { id?: string | null; name: string; email: string },
+  status: 'success' | 'failed' = 'success',
+  details?: string
+): Promise<ServerAuditLog> {
+  const ip =
+    c.req.header('cf-connecting-ip') ||
+    c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+    c.req.header('x-real-ip') ||
+    'Direct';
+  const userAgent = c.req.header('user-agent') || 'Browser';
+
+  const entry: ServerAuditLog = {
+    id: `log_${crypto.randomUUID()}`,
+    user_id: user.id || null,
+    user_name: user.name || 'Supporter',
+    user_email: (user.email || '').toLowerCase(),
+    action,
+    ip_address: ip,
+    user_agent: userAgent,
+    status,
+    details: details || null,
+    created_at: new Date().toISOString(),
+  };
+
+  memoryAuditLogs.unshift(entry);
+  if (memoryAuditLogs.length > 300) memoryAuditLogs.pop();
+
+  const kv = getKvNamespace(c);
+  if (kv) {
+    try {
+      const existing = (await kv.get('gcc_auth_audit_logs', 'json')) || [];
+      const updated = [entry, ...(Array.isArray(existing) ? existing.slice(0, 299) : [])];
+      await kv.put('gcc_auth_audit_logs', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('KV recordAuthAuditLog error:', err);
+    }
+  }
+
+  return entry;
+}
 
 function getKvNamespace(c: any): KVNamespace | null {
   try {
@@ -215,6 +286,14 @@ export const authRoute = new Hono<HonoEnv>()
 
       await saveUserRecord(c, newUserRecord, true);
 
+      await recordAuthAuditLog(
+        c,
+        'signup',
+        { id: userId, name: newUserRecord.name, email: newUserRecord.email },
+        'success',
+        'Supporter registered new account'
+      );
+
       const userSession: UserSession = {
         id: userId,
         name: newUserRecord.name,
@@ -275,6 +354,13 @@ export const authRoute = new Hono<HonoEnv>()
         : false;
 
       if (!isValid) {
+        await recordAuthAuditLog(
+          c,
+          'login',
+          { id: userRecord.id, name: userRecord.name, email: userRecord.email },
+          'failed',
+          'Failed sign-in attempt (incorrect password)'
+        );
         return c.json({ error: "Incorrect password. Please check your password and try again." }, 401);
       }
 
@@ -300,6 +386,14 @@ export const authRoute = new Hono<HonoEnv>()
 
       const token = await createSessionToken(userSession);
       setSessionCookie(c, token);
+
+      await recordAuthAuditLog(
+        c,
+        'login',
+        { id: userRecord.id, name: userRecord.name, email: userRecord.email },
+        'success',
+        isAdminIdentity ? 'Admin authenticated session' : 'Supporter authenticated session'
+      );
 
       return c.json({
         success: true,
@@ -471,6 +565,22 @@ export const authRoute = new Hono<HonoEnv>()
   // 7. Sign Out
   // ---------------------------------------------------------------------------
   .post("/signout", async (c) => {
+    const token = getCookie(c, "gcc_session") || getCookie(c, "__Host-gcc_session");
+    if (token) {
+      try {
+        const session = await verifySessionToken(token);
+        if (session) {
+          await recordAuthAuditLog(
+            c,
+            'logout',
+            { id: session.id, name: session.name, email: session.email },
+            'success',
+            'Supporter ended session (signed out)'
+          );
+        }
+      } catch {}
+    }
+
     deleteCookie(c, "gcc_session", { path: "/" });
     deleteCookie(c, "__Host-gcc_session", {
       path: "/",
@@ -481,4 +591,46 @@ export const authRoute = new Hono<HonoEnv>()
       success: true,
       message: "Signed out successfully.",
     });
-  });
+  })
+
+  // ---------------------------------------------------------------------------
+  // 8. Auth & Session Audit Logs
+  // ---------------------------------------------------------------------------
+  .get("/audit-logs", async (c) => {
+    const logs = await getAuthAuditLogsFromStorage(c);
+    return c.json({
+      success: true,
+      logs,
+    });
+  })
+
+  // ---------------------------------------------------------------------------
+  // 9. Record Client-Side Auth Event
+  // ---------------------------------------------------------------------------
+  .post(
+    "/record-log",
+    zValidator(
+      "json",
+      z.object({
+        action: z.enum(["signup", "login", "logout"]),
+        user_name: z.string(),
+        user_email: z.string(),
+        user_id: z.string().optional().nullable(),
+        ip_address: z.string().optional().nullable(),
+        user_agent: z.string().optional().nullable(),
+        status: z.enum(["success", "failed"]).optional(),
+        details: z.string().optional().nullable(),
+      })
+    ),
+    async (c) => {
+      const data = c.req.valid("json");
+      const entry = await recordAuthAuditLog(
+        c,
+        data.action,
+        { id: data.user_id, name: data.user_name, email: data.user_email },
+        data.status || "success",
+        data.details || undefined
+      );
+      return c.json({ success: true, log: entry });
+    }
+  );

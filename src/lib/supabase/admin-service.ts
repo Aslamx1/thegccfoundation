@@ -14,6 +14,8 @@ import {
   OrgSettings,
   DashboardKPIs,
   UserRole,
+  AuthAuditLog,
+  AuthActionType,
 } from './types';
 
 // ==============================================================================
@@ -26,6 +28,8 @@ const INITIAL_LETTERS: SponsorshipMessage[] = [];
 const INITIAL_FIELD_REPORTS: FieldReport[] = [];
 
 const INITIAL_DONATIONS: Donation[] = [];
+
+const INITIAL_AUTH_LOGS: AuthAuditLog[] = [];
 
 const INITIAL_USERS: Profile[] = [
   {
@@ -998,5 +1002,71 @@ export const AdminService = {
       success: true,
       deliveredCount: recipients,
     };
+  },
+
+  // ----------------------------------------------------------------------------
+  // 8. Authentication & Session Audit Logs
+  // ----------------------------------------------------------------------------
+  async getAuthAuditLogs(): Promise<AuthAuditLog[]> {
+    // 1. Try fetching from server API (which reads KV / Memory / DB)
+    try {
+      const res = await fetch('/api/auth/audit-logs', { credentials: 'include' });
+      if (res.ok) {
+        const json = (await res.json()) as any;
+        if (json.logs && Array.isArray(json.logs) && json.logs.length > 0) {
+          return json.logs;
+        }
+      }
+    } catch {}
+
+    // 2. Try Supabase
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('auth_audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase fetch auth_audit_logs failed, using local store:', err);
+      }
+    }
+
+    return getStore<AuthAuditLog[]>('auth_audit_logs', INITIAL_AUTH_LOGS);
+  },
+
+  async recordAuthEvent(
+    event: Omit<AuthAuditLog, 'id' | 'created_at'>
+  ): Promise<AuthAuditLog> {
+    const newEntry: AuthAuditLog = {
+      ...event,
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      created_at: new Date().toISOString(),
+    };
+
+    // Try posting to server
+    try {
+      await fetch('/api/auth/record-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry),
+        credentials: 'include',
+      });
+    } catch {}
+
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('auth_audit_logs').insert(newEntry);
+      } catch {}
+    }
+
+    // Update local store
+    const items = getStore<AuthAuditLog[]>('auth_audit_logs', INITIAL_AUTH_LOGS);
+    const updated = [newEntry, ...items].slice(0, 200);
+    setStore('auth_audit_logs', updated);
+    return newEntry;
   },
 };

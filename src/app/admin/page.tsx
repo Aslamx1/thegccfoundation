@@ -385,6 +385,16 @@ export default function AdminDashboardOverview() {
                 </span>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
+              <Link
+                href="/admin/users?tab=activity"
+                className="flex items-center justify-between p-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  Account &amp; Session Activity Logs
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
             </div>
           </div>
         </div>
