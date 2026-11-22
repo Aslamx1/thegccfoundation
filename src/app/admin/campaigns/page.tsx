@@ -555,16 +555,31 @@ export default function CampaignsAdminPage() {
                       }}
                       className="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
                     />
-                    <input
-                      type="url"
-                      value={campForm.banner_url}
-                      onChange={(e) => {
-                        setCampForm({ ...campForm, banner_url: e.target.value });
-                        if (!bannerFile) setBannerPreview(e.target.value);
-                      }}
-                      placeholder="Or paste banner image URL (e.g. https://...)"
-                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none text-xs"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        value={campForm.banner_url}
+                        onChange={(e) => {
+                          setCampForm({ ...campForm, banner_url: e.target.value });
+                          if (!bannerFile) setBannerPreview(e.target.value);
+                        }}
+                        placeholder="Or paste banner image URL (e.g. https://...)"
+                        className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none text-xs"
+                      />
+                      {(bannerPreview || campForm.banner_url) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBannerFile(null);
+                            setBannerPreview('');
+                            setCampForm((prev) => ({ ...prev, banner_url: '' }));
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold border border-rose-200 shrink-0 whitespace-nowrap"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

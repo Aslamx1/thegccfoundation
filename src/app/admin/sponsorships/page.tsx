@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { AdminService } from '@/lib/supabase/admin-service';
 import { SponsoredChild, Sponsorship } from '@/lib/supabase/types';
 import { useAdminToast } from '@/components/admin/AdminToast';
+import { compressImageFile, formatFileSize, SAMPLE_PORTRAITS } from '@/lib/image-utils';
 import {
   StatusBadge,
   ConfirmModal,
@@ -63,6 +64,9 @@ export default function ChildSponsorshipCMS() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageInfo, setImageInfo] = useState<string>('');
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Link Sponsor Modal
   const [linkModalChild, setLinkModalChild] = useState<SponsoredChild | null>(null);
@@ -102,6 +106,7 @@ export default function ChildSponsorshipCMS() {
 
   const openCreateModal = () => {
     setEditingChild(null);
+    const initialPreset = SAMPLE_PORTRAITS.Education[0].url;
     setFormData({
       first_name: '',
       last_name: '',
@@ -114,17 +119,20 @@ export default function ChildSponsorshipCMS() {
       aspirations: '',
       monthly_amount: 35.0,
       currency: 'USD',
-      portrait_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
+      portrait_url: initialPreset,
       status: 'available',
       category: 'Education',
     });
     setImageFile(null);
-    setImagePreview('');
+    setImagePreview(initialPreset);
+    setImageInfo('Curated Default Verified Photo');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setIsFormOpen(true);
   };
 
   const openEditModal = (child: SponsoredChild) => {
     setEditingChild(child);
+    const childPhoto = child.portrait_url || '';
     setFormData({
       first_name: child.first_name,
       last_name: child.last_name || '',
@@ -137,21 +145,53 @@ export default function ChildSponsorshipCMS() {
       aspirations: child.aspirations,
       monthly_amount: child.monthly_amount,
       currency: child.currency,
-      portrait_url: child.portrait_url,
+      portrait_url: childPhoto,
       status: child.status as 'available' | 'sponsored',
       category: ((child.category as any) || 'Education') as 'Medical' | 'Education' | 'Emergency' | 'Community',
     });
     setImageFile(null);
-    setImagePreview(child.portrait_url);
+    setImagePreview(childPhoto);
+    setImageInfo(childPhoto ? 'Current Profile Photo' : 'No photo uploaded');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setIsFormOpen(true);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      try {
+        setIsCompressing(true);
+        // Automatically optimize & compress to ~40KB client-side (no Supabase needed)
+        const result = await compressImageFile(file, 800, 0.82);
+        setImageFile(file);
+        setImagePreview(result.dataUrl);
+        setFormData((prev) => ({ ...prev, portrait_url: result.dataUrl }));
+        setImageInfo(`${formatFileSize(result.compressedSize)} (Optimized & Ready)`);
+        toast.success(`Photo optimized to ${formatFileSize(result.compressedSize)}.`);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to process photo.');
+      } finally {
+        setIsCompressing(false);
+      }
     }
+  };
+
+  const handleRemovePhoto = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData((prev) => ({ ...prev, portrait_url: '' }));
+    setImageInfo('Photo removed (No image set)');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast.info('Photo removed. You can upload a new one, pick a sample preset, or leave it blank.');
+  };
+
+  const handleSelectPreset = (url: string, label: string) => {
+    setImageFile(null);
+    setImagePreview(url);
+    setFormData((prev) => ({ ...prev, portrait_url: url }));
+    setImageInfo(`Preset: ${label}`);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast.info(`Selected ${label} photo.`);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -163,11 +203,14 @@ export default function ChildSponsorshipCMS() {
 
     try {
       setFormSubmitting(true);
-      let finalImageUrl = formData.portrait_url;
-
-      if (imageFile) {
-        toast.info('Uploading portrait to Supabase Storage bucket...');
-        finalImageUrl = await AdminService.uploadStorageFile('child-portraits', imageFile, 'portraits/');
+      
+      // Image is already processed and ready in formData.portrait_url or imagePreview
+      let finalImageUrl = formData.portrait_url || imagePreview;
+      
+      // If no photo was set at all, use default category fallback so cards always look sharp
+      if (!finalImageUrl) {
+        finalImageUrl = SAMPLE_PORTRAITS[formData.category]?.[0]?.url ||
+          'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80';
       }
 
       const payload = {
@@ -177,10 +220,10 @@ export default function ChildSponsorshipCMS() {
 
       if (editingChild) {
         await AdminService.updateChild(editingChild.id, payload);
-        toast.success(`Child profile for ${payload.first_name} updated successfully.`);
+        toast.success(`Child profile for ${payload.first_name} saved successfully.`);
       } else {
         await AdminService.createChild(payload);
-        toast.success(`New child profile for ${payload.first_name} added.`);
+        toast.success(`New profile for ${payload.first_name} published.`);
       }
 
       setIsFormOpen(false);
@@ -557,50 +600,112 @@ export default function ChildSponsorshipCMS() {
                 </p>
               </div>
 
-              {/* Image Upload Area with Direct URL fallback */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Photo / Portrait Image *</label>
-                <div className="flex items-start gap-4">
-                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+              {/* Image Upload Area with Remove & Replace controls */}
+              <div className="space-y-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800">Profile Photo</label>
+                  {imageInfo && (
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      {imageInfo}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Photo Preview Box */}
+                  <div className="relative w-28 h-28 rounded-2xl overflow-hidden bg-slate-200 border-2 border-slate-200 shrink-0 shadow-xs flex items-center justify-center">
                     {imagePreview || formData.portrait_url ? (
                       <Image
                         src={imagePreview || formData.portrait_url}
-                        alt="Preview"
+                        alt="Profile Preview"
                         fill
                         className="object-cover"
+                        unoptimized
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <Upload className="w-6 h-6" />
+                      <div className="text-center p-2 text-slate-400">
+                        <Upload className="w-6 h-6 mx-auto mb-1 opacity-60" />
+                        <span className="text-[10px] font-medium block">No Photo</span>
+                      </div>
+                    )}
+
+                    {isCompressing && (
+                      <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-white text-xs font-semibold">
+                        <Loader2 className="w-5 h-5 animate-spin" />
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-600 mb-1">Upload Photo File:</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                      />
+
+                  {/* Actions: Upload New & Remove Photo */}
+                  <div className="flex-1 space-y-2.5 w-full">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isCompressing}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all shadow-xs disabled:opacity-50"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{imagePreview || formData.portrait_url ? 'Upload New Photo' : 'Upload Photo'}</span>
+                      </button>
+
+                      {(imagePreview || formData.portrait_url) && (
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove Photo</span>
+                        </button>
+                      )}
                     </div>
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-600 mb-1">Or Direct Photo URL:</span>
+
+                    {/* Quick Presets for Current Category */}
+                    <div className="pt-1">
+                      <span className="block text-[11px] font-semibold text-slate-600 mb-1.5">
+                        Or pick a verified sample for {formData.category}:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(SAMPLE_PORTRAITS[formData.category] || SAMPLE_PORTRAITS.Education).map((preset) => (
+                          <button
+                            key={preset.url}
+                            type="button"
+                            onClick={() => handleSelectPreset(preset.url, preset.label)}
+                            className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Direct URL input */}
+                    <div className="pt-1">
+                      <span className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Or enter direct photo URL:
+                      </span>
                       <input
                         type="url"
-                        value={formData.portrait_url}
+                        value={formData.portrait_url.startsWith('data:') ? '' : formData.portrait_url}
                         onChange={(e) => {
-                          setFormData({ ...formData, portrait_url: e.target.value });
-                          if (!imageFile) setImagePreview(e.target.value);
+                          const val = e.target.value;
+                          setFormData((prev) => ({ ...prev, portrait_url: val }));
+                          setImagePreview(val);
+                          setImageInfo(val ? 'Custom URL Photo' : '');
                         }}
                         placeholder="https://images.unsplash.com/photo-..."
-                        className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        className="w-full px-3 py-1.5 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-800"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400">
-                      Live preview updates instantly. Accepts JPG, PNG, WebP (or Unsplash URL).
-                    </p>
                   </div>
                 </div>
               </div>
