@@ -26,6 +26,7 @@ const footerGroups = [
   {
     title: 'About',
     links: [
+      { label: 'About Us', href: '/about' },
       { label: 'How GCC works', href: '/how-it-works' },
       { label: 'Giving and transparency', href: '/transparency' },
       { label: 'Our team', href: '/our-team' },
@@ -87,7 +88,7 @@ export default function Footer() {
             <Link href="/terms-and-conditions" className="hover:text-[#20251f] hover:underline">Terms &amp; Conditions</Link>
             <Link href="/privacy-policy" className="hover:text-[#20251f] hover:underline">Privacy Policy</Link>
             <Link href="/transparency" className="hover:text-[#20251f] hover:underline">Transparency</Link>
-            <Link href="/our-team" className="hover:text-[#20251f] hover:underline">About GCC</Link>
+            <Link href="/about" className="hover:text-[#20251f] hover:underline">About Us</Link>
           </div>
         </div>
 
