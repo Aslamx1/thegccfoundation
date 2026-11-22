@@ -27,6 +27,14 @@ export const campaignsRoute = new Hono<HonoEnv>()
       const db = c.get("db");
       const { category, status, search, limit, offset, sort } = c.req.valid("query");
 
+      if (!db) {
+        return c.json({
+          campaigns: [],
+          limit,
+          offset,
+        });
+      }
+
       const conditions = [eq(campaigns.status, status)];
 
       if (category && category !== "all") {
@@ -90,6 +98,10 @@ export const campaignsRoute = new Hono<HonoEnv>()
   .get("/:slug", async (c) => {
     const db = c.get("db");
     const slug = c.req.param("slug");
+
+    if (!db) {
+      return c.json({ error: "Campaign not found" }, 404);
+    }
 
     const campaignList = await db
       .select({

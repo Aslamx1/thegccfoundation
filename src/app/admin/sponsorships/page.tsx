@@ -59,6 +59,7 @@ export default function ChildSponsorshipCMS() {
     currency: 'USD',
     portrait_url: '',
     status: 'available' as 'available' | 'sponsored',
+    category: 'Education' as 'Medical' | 'Education' | 'Emergency' | 'Community',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -115,6 +116,7 @@ export default function ChildSponsorshipCMS() {
       currency: 'USD',
       portrait_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
       status: 'available',
+      category: 'Education',
     });
     setImageFile(null);
     setImagePreview('');
@@ -137,6 +139,7 @@ export default function ChildSponsorshipCMS() {
       currency: child.currency,
       portrait_url: child.portrait_url,
       status: child.status as 'available' | 'sponsored',
+      category: ((child.category as any) || 'Education') as 'Medical' | 'Education' | 'Emergency' | 'Community',
     });
     setImageFile(null);
     setImagePreview(child.portrait_url);
@@ -271,7 +274,7 @@ export default function ChildSponsorshipCMS() {
             Child Sponsorship CMS
           </h2>
           <p className="text-xs sm:text-sm text-slate-500">
-            Maintain verified child profiles, manage active donor-to-child links, and avoid duplicate sponsorships.
+            Maintain verified child profiles, manage active donor-to-child links, and publish directly to public fundraisers.
           </p>
         </div>
 
@@ -282,6 +285,20 @@ export default function ChildSponsorshipCMS() {
           <Plus className="w-4 h-4" />
           <span>Add Child Profile</span>
         </button>
+      </div>
+
+      {/* Live Sync Information Banner */}
+      <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-emerald-900">
+        <Sparkles className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="font-bold flex items-center gap-2">
+            <span>Public Site Sync Active</span>
+            <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">Medical • Education • Emergency • Community</span>
+          </div>
+          <p className="text-emerald-800 leading-relaxed text-[11px]">
+            Profiles and photos added or edited here are automatically displayed on the <strong>Home Page</strong> (&quot;Discover fundraisers inspired by what you care about&quot;), the <strong>Donate Page</strong>, and category filters.
+          </p>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
@@ -385,8 +402,11 @@ export default function ChildSponsorshipCMS() {
                             <div className="font-bold text-slate-900 text-sm">
                               {child.first_name} {child.last_name || ''}
                             </div>
-                            <div className="text-[11px] text-slate-400">
-                              {child.age} yrs • {child.gender}
+                            <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                              <span>{child.age} yrs • {child.gender}</span>
+                              <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 text-[10px]">
+                                {child.category || 'Education'}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -508,11 +528,40 @@ export default function ChildSponsorshipCMS() {
             </div>
 
             <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
-              {/* Image Upload Area */}
+              {/* Category Selector for Live Display */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800">Target Category on Public Site *</label>
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Live Sync
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(['Medical', 'Education', 'Emergency', 'Community'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, category: cat })}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all text-center flex flex-col items-center justify-center gap-0.5 ${
+                        formData.category === cat
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>{cat}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Selecting <strong>{formData.category}</strong> ensures this entry is shown under &quot;Discover fundraisers inspired by what you care about&quot;, the Donate page, and category filters.
+                </p>
+              </div>
+
+              {/* Image Upload Area with Direct URL fallback */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Portrait Image (Supabase Storage)</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                <label className="text-xs font-semibold text-slate-700">Photo / Portrait Image *</label>
+                <div className="flex items-start gap-4">
+                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
                     {imagePreview || formData.portrait_url ? (
                       <Image
                         src={imagePreview || formData.portrait_url}
@@ -526,15 +575,31 @@ export default function ChildSponsorshipCMS() {
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                    />
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <span className="block text-[11px] font-semibold text-slate-600 mb-1">Upload Photo File:</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-semibold text-slate-600 mb-1">Or Direct Photo URL:</span>
+                      <input
+                        type="url"
+                        value={formData.portrait_url}
+                        onChange={(e) => {
+                          setFormData({ ...formData, portrait_url: e.target.value });
+                          if (!imageFile) setImagePreview(e.target.value);
+                        }}
+                        placeholder="https://images.unsplash.com/photo-..."
+                        className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                    </div>
                     <p className="text-[11px] text-slate-400">
-                      Recommended: High-resolution vertical JPG/PNG portrait (max 5MB).
+                      Live preview updates instantly. Accepts JPG, PNG, WebP (or Unsplash URL).
                     </p>
                   </div>
                 </div>

@@ -21,7 +21,88 @@ import {
 // ==============================================================================
 // INITIAL / FALLBACK NGO DATA
 // ==============================================================================
-const INITIAL_CHILDREN: SponsoredChild[] = [];
+function notifyDataChanged(type: string) {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('gcc_data_updated', { detail: { type } }));
+    } catch {}
+  }
+}
+
+const INITIAL_CHILDREN: SponsoredChild[] = [
+  {
+    id: 'ch-init-1',
+    first_name: 'Amina',
+    last_name: 'Namyalo',
+    age: 8,
+    gender: 'Girl',
+    location: 'Katwe, Kampala',
+    region: 'Central Uganda',
+    school_and_grade: 'Hope Junior Academy, Primary 2',
+    bio: 'Amina lives with her elderly grandmother in Katwe. She loves drawing and mathematics and dreams of attending full-term primary education.',
+    aspirations: 'Wants to become a pediatric nurse to treat children in need.',
+    monthly_amount: 35.0,
+    currency: 'USD',
+    portrait_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
+    status: 'available',
+    category: 'Education',
+    created_at: '2026-02-10T00:00:00Z',
+  },
+  {
+    id: 'ch-init-2',
+    first_name: 'David',
+    last_name: 'Ochola',
+    age: 9,
+    gender: 'Boy',
+    location: 'Gulu Municipality',
+    region: 'Northern Uganda',
+    school_and_grade: 'St. Jude Primary, Primary 3',
+    bio: 'David requires routine chronic asthma and allergy medication alongside primary schooling support after his family was displaced by extreme climate drought.',
+    aspirations: 'Wants to become a civil engineer to construct bridges and schools.',
+    monthly_amount: 40.0,
+    currency: 'USD',
+    portrait_url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=700&q=80',
+    status: 'available',
+    category: 'Medical',
+    created_at: '2026-03-01T00:00:00Z',
+  },
+  {
+    id: 'ch-init-3',
+    first_name: 'Sarah',
+    last_name: 'Kiconco',
+    age: 7,
+    gender: 'Girl',
+    location: 'Kasese District',
+    region: 'Western Uganda',
+    school_and_grade: 'Rwenzori Community School, Primary 1',
+    bio: 'Sarah and her family lost their home and belongings during the Rwenzori river flash floods. She needs emergency nutritional care, books, and safe boarding tuition.',
+    aspirations: 'Wants to be a teacher to teach children in disaster-impacted villages.',
+    monthly_amount: 35.0,
+    currency: 'USD',
+    portrait_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=700&q=80',
+    status: 'available',
+    category: 'Emergency',
+    created_at: '2026-03-15T00:00:00Z',
+  },
+  {
+    id: 'ch-init-4',
+    first_name: 'Emmanuel',
+    last_name: 'Mugisha',
+    age: 10,
+    gender: 'Boy',
+    location: 'Kamuli Rural District',
+    region: 'Eastern Uganda',
+    school_and_grade: 'Kamuli Primary, Primary 4',
+    bio: 'Emmanuel walks 4km daily to fetch river water for his village community. He is eager to study and help his community establish solar water pumps and sanitation.',
+    aspirations: 'Wants to work in environmental science and clean community water systems.',
+    monthly_amount: 35.0,
+    currency: 'USD',
+    portrait_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=700&q=80',
+    status: 'available',
+    category: 'Community',
+    created_at: '2026-04-01T00:00:00Z',
+  },
+];
 
 const INITIAL_LETTERS: SponsorshipMessage[] = [];
 
@@ -349,6 +430,7 @@ export const AdminService = {
     };
     items.unshift(newChild);
     setStore('children', items);
+    notifyDataChanged('children');
     return newChild;
   },
 
@@ -375,6 +457,7 @@ export const AdminService = {
     const updated = { ...items[index], ...updates, updated_at: new Date().toISOString() };
     items[index] = updated;
     setStore('children', items);
+    notifyDataChanged('children');
     return updated;
   },
 
@@ -390,6 +473,7 @@ export const AdminService = {
     const items = getStore<SponsoredChild[]>('children', INITIAL_CHILDREN);
     const filtered = items.filter((c) => c.id !== id);
     setStore('children', filtered);
+    notifyDataChanged('children');
   },
 
   async linkSponsorship(
@@ -779,6 +863,7 @@ export const AdminService = {
     const items = getStore<Campaign[]>('campaigns', INITIAL_CAMPAIGNS);
     items.unshift(newCamp);
     setStore('campaigns', items);
+    notifyDataChanged('campaigns');
 
     const supabase = getSupabase();
     if (supabase) {
@@ -799,6 +884,7 @@ export const AdminService = {
     const updated = { ...items[index], ...updates, updated_at: new Date().toISOString() };
     items[index] = updated;
     setStore('campaigns', items);
+    notifyDataChanged('campaigns');
 
     const supabase = getSupabase();
     if (supabase) {

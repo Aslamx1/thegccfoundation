@@ -33,6 +33,8 @@ export interface SponsoredChild {
   currency: string;
   portrait_url: string;
   status: 'available' | 'sponsored' | 'graduated' | 'on_hold';
+  category?: 'Medical' | 'Education' | 'Emergency' | 'Community' | string;
+  goal_amount?: number;
   created_at: string;
   updated_at?: string;
   active_sponsorship?: Sponsorship | null;

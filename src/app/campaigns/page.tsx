@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProgressBar from "@/components/ProgressBar";
 import { formatMinorUnits, calculateProgress } from "@/lib/formatters";
+import { useDonation, matchCategory } from "@/context/DonationContext";
 import {
   Search,
   CheckCircle2,
@@ -35,15 +36,14 @@ interface CampaignItem {
 
 const CATEGORIES = [
   "All",
-  "Medical Care",
-  "Emergency Relief",
-  "Education & Tuition",
-  "Community & Water",
-  "Memorial & Funeral",
-  "Small Business",
+  "Medical",
+  "Education",
+  "Emergency",
+  "Community",
 ];
 
 export default function CampaignsDiscoveryPage() {
+  const { campaigns: contextCampaigns } = useDonation();
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -60,21 +60,54 @@ export default function CampaignsDiscoveryPage() {
         const res = await fetch(`/api/campaigns?${queryParams.toString()}`);
         if (res.ok) {
           const data = (await res.json()) as any;
-          setCampaigns(data.campaigns || []);
+          if (data.campaigns && data.campaigns.length > 0) {
+            setCampaigns(data.campaigns);
+            return;
+          }
         }
       } catch (err) {
-        console.error("Failed to load campaigns:", err);
+        console.error("Failed to load campaigns via API:", err);
       } finally {
         setLoading(false);
       }
+
+      // Live fallback using unified DonationContext campaigns
+      const filtered = contextCampaigns
+        .filter((c) => {
+          const matchesCat = matchCategory(c.category, category);
+          const q = search.trim().toLowerCase();
+          const matchesSearch =
+            !q ||
+            c.title.toLowerCase().includes(q) ||
+            (c.subtitle || "").toLowerCase().includes(q) ||
+            (c.location?.district || "").toLowerCase().includes(q);
+          return matchesCat && matchesSearch;
+        })
+        .map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          title: c.title,
+          story: c.subtitle || (c.fullStoryHtml?.[0] ?? ""),
+          category: c.category,
+          currency: "UGX",
+          goalAmount: Math.round(c.goalUGX * 100),
+          raisedAmount: Math.round(c.raisedUGX * 100),
+          donorCount: c.donorCount,
+          coverImageUrl: c.coverImage,
+          isVerified: true,
+          status: "active",
+        }));
+
+      setCampaigns(filtered);
+      setLoading(false);
     }
 
     const timer = setTimeout(() => {
       fetchCampaigns();
-    }, 250);
+    }, 150);
 
     return () => clearTimeout(timer);
-  }, [category, search]);
+  }, [category, search, contextCampaigns]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F6] font-sans text-gray-900">

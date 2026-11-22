@@ -527,18 +527,46 @@ export default function CampaignsAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-700">Banner Image (Supabase Storage)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setBannerFile(e.target.files[0]);
-                      setBannerPreview(URL.createObjectURL(e.target.files[0]));
-                    }
-                  }}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                />
+                <label className="font-semibold text-slate-700">Banner Photo / Image *</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                    {bannerPreview || campForm.banner_url ? (
+                      <Image
+                        src={bannerPreview || campForm.banner_url}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setBannerFile(e.target.files[0]);
+                          setBannerPreview(URL.createObjectURL(e.target.files[0]));
+                        }
+                      }}
+                      className="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                    />
+                    <input
+                      type="url"
+                      value={campForm.banner_url}
+                      onChange={(e) => {
+                        setCampForm({ ...campForm, banner_url: e.target.value });
+                        if (!bannerFile) setBannerPreview(e.target.value);
+                      }}
+                      placeholder="Or paste banner image URL (e.g. https://...)"
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none text-xs"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-6 pt-2">
