@@ -57,8 +57,8 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-[#E5E7EB] h-16 md:h-[72px]">
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-white border-b border-[#E5E7EB]">
+      <div className="max-w-7xl mx-auto h-16 md:h-[72px] px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         
         {/* LEFT NAV: Search, Donate dropdown, Fundraise dropdown */}
         <div className="flex min-w-0 items-center gap-0.5 sm:gap-2">
@@ -313,7 +313,7 @@ export default function Header() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div ref={mobileMenuRef} className="md:hidden bg-white border-b border-[#E5E7EB] px-4 py-4 space-y-3 animate-fadeIn">
+        <div ref={mobileMenuRef} className="md:hidden bg-white border-b border-[#E5E7EB] px-4 py-4 space-y-3 animate-fadeIn max-h-[calc(100dvh-4.5rem)] overflow-y-auto">
           <button
             onClick={() => {
               setMobileMenuOpen(false);
@@ -358,84 +358,59 @@ export default function Header() {
               Public Financial Ledger
             </Link>
             {/* Mobile About Us Dropdown */}
-            <div className={`overflow-hidden rounded-2xl border transition-all duration-300 ${mobileAboutOpen ? 'border-[#02A95C] bg-white shadow-lg ring-2 ring-[#02A95C]/10' : 'border-[#E5E7EB] bg-[#FBF9F6] hover:bg-[#F5F3EF]'}`}>
+            <div className={`overflow-hidden rounded-xl border transition-colors ${mobileAboutOpen ? 'border-[#02A95C] bg-[#FBF9F6]' : 'border-gray-200 bg-white'}`}>
               <button
                 type="button"
                 onClick={() => setMobileAboutOpen(!mobileAboutOpen)}
-                className="flex w-full items-center justify-between p-3.5 text-left transition-colors"
+                className="flex w-full items-center justify-between p-3 text-left transition-colors"
                 aria-expanded={mobileAboutOpen}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${mobileAboutOpen ? 'bg-[#02A95C] text-white shadow-xs' : 'bg-emerald-100 text-[#02A95C]'}`}>
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <span className="block text-sm font-bold text-[#1A1A1A]">About Us</span>
-                    <span className="block text-[11px] font-medium text-gray-500">Our Story, Mission &amp; Talents</span>
-                  </div>
-                </div>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-full transition-transform duration-300 ${mobileAboutOpen ? 'rotate-180 bg-emerald-50 text-[#02A95C]' : 'bg-gray-100 text-gray-500'}`}>
-                  <ChevronDown className="h-4 w-4" />
-                </div>
+                <span className="text-sm font-bold text-[#1A1A1A]">About Us</span>
+                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${mobileAboutOpen ? 'rotate-180 text-[#02A95C]' : ''}`} />
               </button>
 
               {mobileAboutOpen && (
-                <div className="border-t border-[#E5E7EB] bg-white p-4 space-y-4 animate-fadeIn text-left">
+                <div className="border-t border-gray-200 bg-white p-3 space-y-2.5 text-left text-xs leading-relaxed text-gray-700">
                   {/* Our story */}
-                  <div className="space-y-2">
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-[#02A95C] uppercase tracking-wider border border-emerald-200">
-                      <Heart className="w-3 h-3" />
-                      <span>Our Story</span>
-                    </div>
-                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
-                      <p>
-                        GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
-                      </p>
-                      <p>
-                        We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
-                      </p>
-                      <p>
-                        We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living.
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        Our foundation is a community based Organization in Ndejje, Kampala.
-                      </p>
-                      <div className="rounded-xl bg-[#F5F8F4] p-3 border border-[#DCE9DD] text-gray-800">
-                        Today our Foundation is managed by <strong className="font-bold text-[#087443]">Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him.
-                      </div>
-                    </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wide">Our story</h4>
+                    <p>
+                      GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
+                    </p>
+                    <p>
+                      We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
+                    </p>
+                    <p>
+                      We started bringing out their talents so that we can start benefiting from our talents Later we formed some tiktok accounts to help us earn a living.
+                    </p>
+                    <p>
+                      Our foundation is a community based Organization in Ndejje, Kampala.
+                    </p>
+                    <p>
+                      Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him.
+                    </p>
                   </div>
 
                   {/* Our Mission */}
-                  <div className="border-t border-gray-100 pt-3 space-y-2">
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider border border-blue-200">
-                      <Sparkles className="w-3 h-3" />
-                      <span>Our Mission</span>
-                    </div>
-                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
-                      <p>
-                        The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
-                      </p>
-                      <p>
-                        We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
-                      </p>
-                    </div>
+                  <div className="border-t border-gray-100 pt-2 space-y-1">
+                    <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wide">Our Mission</h4>
+                    <p>
+                      The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
+                    </p>
+                    <p>
+                      We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
+                    </p>
                   </div>
 
                   {/* Achievements */}
-                  <div className="border-t border-gray-100 pt-3 space-y-2">
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider border border-amber-200">
-                      <Sparkles className="w-3 h-3" />
-                      <span>Achievements</span>
-                    </div>
-                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
-                      <p>
-                        These children are growing up homeless. Some have homes but cant afford day today basic needs.
-                      </p>
-                      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-[#02A95C] p-3 text-white shadow-xs font-semibold text-xs leading-snug">
-                        But right now they have found a home at Gcc Foundation where they can show their talents.
-                      </div>
-                    </div>
+                  <div className="border-t border-gray-100 pt-2 space-y-1">
+                    <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wide">Achievements</h4>
+                    <p>
+                      These children are growing up homeless Some have homes but cant afford day today basic needs.
+                    </p>
+                    <p className="font-medium text-gray-900">
+                      But right now they have found a home at Gcc Foundation where they can show their talents.
+                    </p>
                   </div>
 
                   {/* Full Page Link */}
@@ -446,10 +421,9 @@ export default function Header() {
                         setMobileMenuOpen(false);
                         setMobileAboutOpen(false);
                       }}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#02A95C] py-2.5 px-4 text-xs font-bold text-white shadow-xs hover:bg-[#028F4D] transition-colors"
+                      className="inline-flex items-center gap-1 font-bold text-xs text-[#02A95C] hover:underline"
                     >
-                      <span>Explore Complete About Us Page</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      <span>Full About Us Page &rarr;</span>
                     </Link>
                   </div>
                 </div>
