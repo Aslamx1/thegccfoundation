@@ -3,6 +3,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { Youtube, Mail } from 'lucide-react';
+
+function TikTokIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.49 6.27 6.27 0 0 0 1.89-4.49V8.41a8.3 8.3 0 0 0 4.88 1.59V6.69z" />
+    </svg>
+  );
+}
 
 const footerGroups = [
   {
@@ -73,15 +82,91 @@ export default function Footer() {
           ))}
         </nav>
 
+        {/* Social Media & Contact Card */}
+        <div className="mt-12 rounded-2xl bg-white border border-[#e1e5e1] p-6 sm:p-7 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#02A95C]">Official Social Media &amp; Contact</span>
+              <h3 className="font-heading text-lg font-bold text-[#20251F]">Connect with The GCC Foundation</h3>
+              <p className="text-xs text-gray-600 max-w-md leading-relaxed">
+                Watch our children&apos;s daily talents, performances, and updates across our official YouTube channel and TikTok accounts.
+              </p>
+              <div className="pt-1.5">
+                <a
+                  href="mailto:mkyagulanyimesach@gmail.com"
+                  className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#087443] hover:text-[#02A95C] transition-colors hover:underline"
+                >
+                  <Mail className="w-4 h-4 text-[#02A95C]" />
+                  <span>mkyagulanyimesach@gmail.com</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Social Accounts */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* YouTube */}
+              <a
+                href="http://www.youtube.com/@GccFoundation1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 px-3.5 py-2 text-xs font-bold text-red-700 transition-colors shadow-2xs"
+              >
+                <Youtube className="w-4 h-4 text-red-600" />
+                <span>YouTube @GccFoundation1</span>
+              </a>
+
+              {/* TikTok 1 */}
+              <a
+                href="http://www.tiktok.com/@gcc.foundation?_r=1&_t=ZS-9BdyXvwYDXo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 px-3.5 py-2 text-xs font-bold text-[#1A1A1A] transition-colors shadow-2xs"
+              >
+                <TikTokIcon className="w-3.5 h-3.5" />
+                <span>TikTok @gcc.foundation</span>
+              </a>
+
+              {/* TikTok 2 */}
+              <a
+                href="https://www.tiktok.com/@new.hopee1?_r=1&_t=ZS-9BdysphfLPN"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 px-3.5 py-2 text-xs font-bold text-[#1A1A1A] transition-colors shadow-2xs"
+              >
+                <TikTokIcon className="w-3.5 h-3.5" />
+                <span>TikTok @new.hopee1</span>
+              </a>
+
+              {/* TikTok 3 */}
+              <a
+                href="https://www.tiktok.com/@village.of.faith?_r=1&_t=ZS-9Bdz2ujY8Xs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 px-3.5 py-2 text-xs font-bold text-[#1A1A1A] transition-colors shadow-2xs"
+              >
+                <TikTokIcon className="w-3.5 h-3.5" />
+                <span>TikTok @village.of.faith</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* Brand and Utility Links */}
-        <div className="mt-12 flex flex-col gap-6 border-t border-[#e1e5e1] pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col items-start gap-3">
+        <div className="mt-8 flex flex-col gap-6 border-t border-[#e1e5e1] pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col items-start gap-2">
             <Link href="/" aria-label="GCC Foundation home">
               <Image src="/images/gcc-logo-full.jpg" alt="GCC Foundation" width={170} height={46} className="h-9 w-auto object-contain" />
             </Link>
             <p className="max-w-sm text-xs leading-relaxed text-[#69716b]">
               Community giving, with clear campaign updates and transparent reporting across East Africa.
             </p>
+            <a
+              href="mailto:mkyagulanyimesach@gmail.com"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#02A95C] hover:underline"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>mkyagulanyimesach@gmail.com</span>
+            </a>
           </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-[#69716b]">
