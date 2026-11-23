@@ -69,7 +69,7 @@ export default function AboutPage() {
               We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
             </p>
             <p>
-              Today our Foundation is managed by <strong>Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
+              Today our Foundation is managed by <strong>Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him.
             </p>
           </div>
         </section>
@@ -83,7 +83,7 @@ export default function AboutPage() {
                 Leadership and Daily Operations
               </h2>
               <p className="text-base sm:text-lg text-gray-700 leading-relaxed">
-                Today, The GCC Foundation is managed by <strong>Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him in Ndejje, Kampala.
+                Today, The GCC Foundation is managed by <strong>Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him in Ndejje, Kampala.
               </p>
               <p className="text-sm sm:text-base text-gray-600">
                 Together, we work hand-in-hand with our community to ensure every child has access to food, shelter, education, and the opportunity to showcase their gifts.

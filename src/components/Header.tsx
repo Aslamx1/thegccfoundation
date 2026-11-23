@@ -5,13 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useDonation } from '@/context/DonationContext';
 import { useAuth } from '@/context/AuthContext';
-import { Search, ChevronDown, Menu, X, LogOut, ArrowRight, HeartHandshake, Building2 } from 'lucide-react';
+import { Search, ChevronDown, Menu, X, LogOut, ArrowRight, HeartHandshake, Building2, Sparkles, Heart } from 'lucide-react';
 
 
 export default function Header() {
   const { openSearchModal, openDonationModal } = useDonation();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
   const [donateDropdownOpen, setDonateDropdownOpen] = useState(false);
   const [fundraiseDropdownOpen, setFundraiseDropdownOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function Header() {
     const closeMenus = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setMobileMenuOpen(false);
+        setMobileAboutOpen(false);
         setDonateDropdownOpen(false);
         setFundraiseDropdownOpen(false);
         setProfileMenuOpen(false);
@@ -217,7 +219,7 @@ export default function Header() {
                       We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
                     </p>
                     <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
-                      Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
+                      Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him.
                     </p>
                   </div>
 
@@ -355,58 +357,104 @@ export default function Header() {
             >
               Public Financial Ledger
             </Link>
-            <details className="group rounded-2xl bg-[#FBF9F6] border border-[#E5E7EB] p-3">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-[#1A1A1A]">
-                About Us <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180 text-gray-500" />
-              </summary>
-              <div className="mt-3 space-y-3 pt-2 border-t border-gray-200 text-xs text-gray-700 leading-relaxed">
-                <div>
-                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Our story</h4>
-                  <p className="mt-1">
-                    GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
-                  </p>
-                  <p className="mt-1">
-                    We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
-                  </p>
-                  <p className="mt-1">
-                    We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
-                  </p>
-                  <p className="mt-1">
-                    Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
-                  </p>
+            {/* Mobile About Us Dropdown */}
+            <div className={`overflow-hidden rounded-2xl border transition-all duration-300 ${mobileAboutOpen ? 'border-[#02A95C] bg-white shadow-lg ring-2 ring-[#02A95C]/10' : 'border-[#E5E7EB] bg-[#FBF9F6] hover:bg-[#F5F3EF]'}`}>
+              <button
+                type="button"
+                onClick={() => setMobileAboutOpen(!mobileAboutOpen)}
+                className="flex w-full items-center justify-between p-3.5 text-left transition-colors"
+                aria-expanded={mobileAboutOpen}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${mobileAboutOpen ? 'bg-[#02A95C] text-white shadow-xs' : 'bg-emerald-100 text-[#02A95C]'}`}>
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold text-[#1A1A1A]">About Us</span>
+                    <span className="block text-[11px] font-medium text-gray-500">Our Story, Mission &amp; Talents</span>
+                  </div>
                 </div>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-full transition-transform duration-300 ${mobileAboutOpen ? 'rotate-180 bg-emerald-50 text-[#02A95C]' : 'bg-gray-100 text-gray-500'}`}>
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              </button>
 
-                <div className="border-t border-gray-200 pt-2">
-                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Our Mission</h4>
-                  <p className="mt-1">
-                    The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
-                  </p>
-                  <p className="mt-1">
-                    We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
-                  </p>
-                </div>
+              {mobileAboutOpen && (
+                <div className="border-t border-[#E5E7EB] bg-white p-4 space-y-4 animate-fadeIn text-left">
+                  {/* Our story */}
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-[#02A95C] uppercase tracking-wider border border-emerald-200">
+                      <Heart className="w-3 h-3" />
+                      <span>Our Story</span>
+                    </div>
+                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
+                      <p>
+                        GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
+                      </p>
+                      <p>
+                        We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
+                      </p>
+                      <p>
+                        We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living.
+                      </p>
+                      <p className="font-semibold text-gray-900">
+                        Our foundation is a community based Organization in Ndejje, Kampala.
+                      </p>
+                      <div className="rounded-xl bg-[#F5F8F4] p-3 border border-[#DCE9DD] text-gray-800">
+                        Today our Foundation is managed by <strong className="font-bold text-[#087443]">Kyagulanyi Mesach</strong> as a manager and other three partners that started the foundation with him.
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="border-t border-gray-200 pt-2">
-                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Achievements</h4>
-                  <p className="mt-1">
-                    These children are growing up homeless. Some have homes but cant afford day today basic needs.
-                  </p>
-                  <p className="mt-1">
-                    But right now they have found a home at Gcc Foundation where they can show their talents.
-                  </p>
-                </div>
+                  {/* Our Mission */}
+                  <div className="border-t border-gray-100 pt-3 space-y-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider border border-blue-200">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Our Mission</span>
+                    </div>
+                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
+                      <p>
+                        The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
+                      </p>
+                      <p>
+                        We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="pt-2 border-t border-gray-200">
-                  <Link
-                    href="/about"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="inline-flex items-center gap-1 font-bold text-[#02A95C]"
-                  >
-                    <span>Full About Us Page &rarr;</span>
-                  </Link>
+                  {/* Achievements */}
+                  <div className="border-t border-gray-100 pt-3 space-y-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider border border-amber-200">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Achievements</span>
+                    </div>
+                    <div className="space-y-2 text-xs sm:text-[13px] text-gray-700 leading-relaxed font-body">
+                      <p>
+                        These children are growing up homeless. Some have homes but cant afford day today basic needs.
+                      </p>
+                      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-[#02A95C] p-3 text-white shadow-xs font-semibold text-xs leading-snug">
+                        But right now they have found a home at Gcc Foundation where they can show their talents.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Full Page Link */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <Link
+                      href="/about"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setMobileAboutOpen(false);
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#02A95C] py-2.5 px-4 text-xs font-bold text-white shadow-xs hover:bg-[#028F4D] transition-colors"
+                    >
+                      <span>Explore Complete About Us Page</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </details>
+              )}
+            </div>
             {user ? (
               <>
                 <Link href="/account/impact" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-semibold text-[#1A1A1A] hover:bg-[#FBF9F6]">Your impact</Link>
