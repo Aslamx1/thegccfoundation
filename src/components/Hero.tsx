@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { HeartHandshake, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function Hero() {
   const photoTiles = [
@@ -113,27 +112,13 @@ export default function Hero() {
             </p>
 
             {/* Primary calls to action */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="pt-2 flex items-center justify-center">
               <Link
                 href="/create/fundraiser/category"
                 className="inline-flex items-center justify-center bg-[#02A95C] hover:bg-[#028F4D] text-white text-base font-bold py-3.5 px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-98"
               >
                 Start a GCC Fundraiser
               </Link>
-
-              <Link
-                href="/how-it-works"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-white hover:text-[#02A95C] py-2 px-4 rounded-full transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
-              >
-                <span>How Vetting Works</span>
-                <ArrowRight className="w-4 h-4 text-white drop-shadow" />
-              </Link>
-            </div>
-
-            {/* Trust Assurance Sub-line */}
-            <div className="flex items-center justify-center gap-2 text-xs text-white font-medium pt-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
-              <ShieldCheck className="w-4 h-4 text-[#02A95C] drop-shadow" />
-              <span>Direct-to-Institution Payouts • 0% Platform Fee to Charities</span>
             </div>
 
           </div>
