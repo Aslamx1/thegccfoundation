@@ -14,6 +14,12 @@ interface DonationContextType {
   isDonationModalOpen: boolean;
   openDonationModal: (campaign?: Campaign) => void;
   closeDonationModal: () => void;
+  recordDonation: (params: {
+    campaignId: string;
+    amount: number;
+    donorName?: string;
+    donorEmail?: string;
+  }) => Promise<void>;
 
   // Volunteer & Material Pledge Modal
   isPledgeModalOpen: boolean;
@@ -62,8 +68,8 @@ export function matchCategory(campaignCategory: string, filterCategory: string):
 function toUGX(amountMinor: number, currency: string, rates: Record<string, number>) {
   const major = amountMinor / 100;
   if (currency === 'UGX') return major;
-  const currencyPerUsd = rates[currency];
-  const ugxPerUsd = rates.UGX;
+  const currencyPerUsd = rates[currency] || (currency === 'EUR' ? 0.92 : currency === 'GBP' ? 0.79 : currency === 'KES' ? 130 : 1);
+  const ugxPerUsd = rates.UGX || 3750;
   return currencyPerUsd && ugxPerUsd ? (major / currencyPerUsd) * ugxPerUsd : major * 3750;
 }
 
@@ -350,19 +356,7 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         console.warn('Failed loading admin campaigns:', err);
       }
 
-      // 3. Admin child sponsorships (Supabase / localStorage)
-      try {
-        const adminChildren = await AdminService.getChildren();
-        (adminChildren || []).forEach((ch) => {
-          if (ch && ch.id) {
-            baseMap.set(ch.id, childToCampaign(ch, rates));
-          }
-        });
-      } catch (err) {
-        console.warn('Failed loading admin children:', err);
-      }
-
-      // 4. Server API campaigns
+      // 3. Server API campaigns
       try {
         const res = await fetch('/api/campaigns?status=active&limit=50&sort=recent');
         if (res.ok) {
@@ -410,6 +404,21 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
 
   const closeDonationModal = () => {
     setIsDonationModalOpen(false);
+  };
+
+  const recordDonation = async (params: {
+    campaignId: string;
+    amount: number;
+    donorName?: string;
+    donorEmail?: string;
+  }) => {
+    await AdminService.recordCampaignDonation(
+      params.campaignId,
+      params.amount,
+      params.donorName,
+      params.donorEmail
+    );
+    await loadAllCampaigns();
   };
 
   const openPledgeModal = (campaign: Campaign) => {
@@ -504,6 +513,7 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         isDonationModalOpen,
         openDonationModal,
         closeDonationModal,
+        recordDonation,
         isPledgeModalOpen,
         activeCampaignForPledge,
         openPledgeModal,

@@ -45,9 +45,9 @@ export default function CampaignsAdminPage() {
     slug: '',
     category: 'Healthcare & Medical',
     story: '',
-    goal_amount: 25000,
+    goal_amount: 5000,
     currency: 'USD',
-    banner_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=1200&q=80',
+    banner_url: '',
     status: 'active' as Campaign['status'],
     is_featured: false,
   });
@@ -108,9 +108,9 @@ export default function CampaignsAdminPage() {
       slug: '',
       category: 'Healthcare & Medical',
       story: '',
-      goal_amount: 25000,
+      goal_amount: 5000,
       currency: 'USD',
-      banner_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=1200&q=80',
+      banner_url: '',
       status: 'active',
       is_featured: false,
     });
@@ -351,10 +351,10 @@ export default function CampaignsAdminPage() {
                     <div className="space-y-1.5 pt-2 border-t border-slate-100">
                       <div className="flex justify-between text-xs">
                         <span className="font-bold text-slate-900">
-                          ${camp.raised_amount.toLocaleString()}
+                          {camp.currency || 'USD'} {camp.raised_amount.toLocaleString()}
                         </span>
                         <span className="text-slate-400">
-                          of ${camp.goal_amount.toLocaleString()} ({progressPct}%)
+                          of {camp.currency || 'USD'} {camp.goal_amount.toLocaleString()} ({progressPct}%)
                         </span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
@@ -370,7 +370,7 @@ export default function CampaignsAdminPage() {
                       <span className="text-xs text-slate-400 font-medium">
                         {camp.donor_count} supporters
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <button
                           onClick={() => {
                             setMilestoneForm((prev) => ({ ...prev, campaign_id: camp.id }));
@@ -385,6 +385,18 @@ export default function CampaignsAdminPage() {
                           className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Delete campaign "${camp.title}"? This cannot be undone.`)) {
+                              await AdminService.deleteCampaign(camp.id);
+                              toast.success(`Campaign deleted.`);
+                              await loadData();
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors"
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -500,17 +512,35 @@ export default function CampaignsAdminPage() {
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-700">Goal Amount (USD) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="100"
-                    step="100"
-                    value={campForm.goal_amount}
-                    onChange={(e) => setCampForm({ ...campForm, goal_amount: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700">Currency *</label>
+                    <select
+                      value={campForm.currency}
+                      onChange={(e) => setCampForm({ ...campForm, currency: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="UGX">UGX (USh)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="KES">KES (KSh)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700">Target Goal *</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      step={campForm.currency === 'UGX' ? '10000' : '10'}
+                      value={campForm.goal_amount}
+                      onChange={(e) => setCampForm({ ...campForm, goal_amount: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                      placeholder={campForm.currency === 'UGX' ? 'e.g. 15000000' : 'e.g. 5000'}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -61,6 +61,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           userRoleStr === 'program_coordinator' ||
           /admin/i.test(user.name || '') ||
           /admin/i.test(user.email || '') ||
+          user.email?.toLowerCase() === 'mkyagulanyimesach@gmail.com' ||
           user.email?.toLowerCase().endsWith('@thegccfoundation.org') ||
           (typeof window !== 'undefined' && localStorage.getItem('gcc_admin_override') === 'true');
 

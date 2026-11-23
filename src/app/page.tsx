@@ -138,15 +138,30 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-[#D7DED8] bg-[#F8FAF7] px-6 py-14 text-center">
-            <h3 className="font-heading text-xl font-bold text-[#20251F]">No {selectedCategory.toLowerCase()} fundraisers yet</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-gray-600">Try another cause, or browse every fundraiser on GCC Foundation.</p>
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('All')}
-              className="mt-5 rounded-full bg-[#02A95C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#028F4D]"
-            >
-              Browse all fundraisers
-            </button>
+            <h3 className="font-heading text-xl font-bold text-[#20251F]">
+              {selectedCategory === 'All' ? 'No active fundraisers published yet' : `No ${selectedCategory.toLowerCase()} fundraisers yet`}
+            </h3>
+            <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600">
+              New verified community projects and fundraisers will appear here as soon as they are launched by the GCC Foundation team. 100% of donations will go directly to verified school and medical recipients.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              {selectedCategory !== 'All' ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('All')}
+                  className="rounded-full bg-[#02A95C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#028F4D]"
+                >
+                  Browse all fundraisers
+                </button>
+              ) : (
+                <Link
+                  href="/admin/campaigns"
+                  className="rounded-full bg-[#02A95C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#028F4D]"
+                >
+                  Publish a Fundraiser
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </section>

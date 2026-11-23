@@ -129,53 +129,7 @@ const INITIAL_USERS: Profile[] = [
   },
 ];
 
-const INITIAL_CAMPAIGNS: Campaign[] = [
-  {
-    id: 'cmp-1',
-    title: 'Clean Water Boreholes for Karamoja',
-    slug: 'clean-water-boreholes-karamoja',
-    category: 'Clean Water & Sanitation',
-    story: 'Providing 12 deep solar-powered boreholes to drought-impacted communities across Moroto and Kotido districts in Karamoja.',
-    goal_amount: 45000.0,
-    raised_amount: 0.0,
-    currency: 'USD',
-    banner_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=1200&q=80',
-    status: 'active',
-    is_featured: true,
-    donor_count: 0,
-    created_at: '2026-01-15T00:00:00Z',
-  },
-  {
-    id: 'cmp-2',
-    title: 'Mulago Pediatric Oncology Emergency Ward',
-    slug: 'mulago-pediatric-oncology-ward',
-    category: 'Healthcare & Medical',
-    story: 'Funding chemotherapy lines, sterile infant cots, and maternal care support for children battling leukemia at Mulago National Referral Hospital.',
-    goal_amount: 60000.0,
-    raised_amount: 0.0,
-    currency: 'USD',
-    banner_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1200&q=80',
-    status: 'active',
-    is_featured: true,
-    donor_count: 0,
-    created_at: '2026-02-01T00:00:00Z',
-  },
-  {
-    id: 'cmp-3',
-    title: 'High School Girls STEM Scholarships',
-    slug: 'high-school-girls-stem-scholarships',
-    category: 'Education & Tuition',
-    story: 'Covering full boarding tuition, uniform, laptop, and science lab fees for 60 vulnerable young women across rural Eastern Uganda.',
-    goal_amount: 28000.0,
-    raised_amount: 0.0,
-    currency: 'USD',
-    banner_url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80',
-    status: 'active',
-    is_featured: false,
-    donor_count: 0,
-    created_at: '2026-04-10T00:00:00Z',
-  },
-];
+const INITIAL_CAMPAIGNS: Campaign[] = [];
 
 const INITIAL_USER_FUNDRAISERS: UserFundraiser[] = [];
 
@@ -221,7 +175,7 @@ const INITIAL_SETTINGS: OrgSettings = {
 };
 
 // Local storage key helpers for seamless client fallback
-const STORAGE_PREFIX = 'gcc_admin_store_v3_';
+const STORAGE_PREFIX = 'gcc_admin_store_v4_';
 
 if (typeof window !== 'undefined') {
   try {
@@ -240,6 +194,7 @@ if (typeof window !== 'undefined') {
     legacyKeys.forEach((k) => {
       localStorage.removeItem('gcc_admin_store_' + k);
       localStorage.removeItem('gcc_admin_store_v2_' + k);
+      localStorage.removeItem('gcc_admin_store_v3_' + k);
     });
   } catch {}
 }
@@ -741,8 +696,10 @@ export const AdminService = {
         campaigns[cIndex].raised_amount += payload.amount;
         campaigns[cIndex].donor_count += 1;
         setStore('campaigns', campaigns);
+        notifyDataChanged('campaigns');
       }
     }
+    notifyDataChanged('donations');
 
     const supabase = getSupabase();
     if (supabase) {
@@ -913,6 +870,80 @@ export const AdminService = {
       }
     }
     return updated;
+  },
+
+  async deleteCampaign(id: string): Promise<boolean> {
+    const items = getStore<Campaign[]>('campaigns', INITIAL_CAMPAIGNS);
+    const filtered = items.filter((c) => c.id !== id);
+    setStore('campaigns', filtered);
+    notifyDataChanged('campaigns');
+
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('campaigns').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase delete campaign failed:', err);
+      }
+    }
+    return true;
+  },
+
+  async recordCampaignDonation(
+    campaignId: string,
+    amount: number,
+    donorName: string = 'Anonymous Supporter',
+    donorEmail?: string
+  ): Promise<boolean> {
+    const items = getStore<Campaign[]>('campaigns', INITIAL_CAMPAIGNS);
+    const index = items.findIndex((c) => c.id === campaignId || c.slug === campaignId);
+    let linkedCampaign = index !== -1 ? items[index] : null;
+
+    if (linkedCampaign) {
+      linkedCampaign.raised_amount = (Number(linkedCampaign.raised_amount) || 0) + Number(amount);
+      linkedCampaign.donor_count = (Number(linkedCampaign.donor_count) || 0) + 1;
+      items[index] = linkedCampaign;
+      setStore('campaigns', items);
+      notifyDataChanged('campaigns');
+    }
+
+    const receiptNum = `GCC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newDonation: Donation = {
+      id: `don-${Date.now()}`,
+      campaign_id: campaignId,
+      donor_name: donorName,
+      donor_email: donorEmail || 'supporter@thegccfoundation.com',
+      amount: Number(amount),
+      currency: linkedCampaign?.currency || 'USD',
+      entry_type: 'online',
+      payment_method: 'Online Checkout / Card',
+      payment_status: 'succeeded',
+      receipt_status: 'sent',
+      receipt_number: receiptNum,
+      receipt_url: `/receipts/${receiptNum}.pdf`,
+      created_at: new Date().toISOString(),
+    };
+
+    const donations = getStore<Donation[]>('donations', INITIAL_DONATIONS);
+    donations.unshift(newDonation);
+    setStore('donations', donations);
+    notifyDataChanged('donations');
+
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('donations').insert(newDonation);
+        if (linkedCampaign) {
+          await supabase.from('campaigns').update({
+            raised_amount: linkedCampaign.raised_amount,
+            donor_count: linkedCampaign.donor_count,
+          }).eq('id', linkedCampaign.id);
+        }
+      } catch (err) {
+        console.warn('Supabase record donation failed:', err);
+      }
+    }
+    return true;
   },
 
   async postCampaignUpdate(
