@@ -23,8 +23,9 @@ export default function Hero() {
     },
     {
       category: 'Clean Water',
-      label: 'Deep Solar Borehole',
-      image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186f5f7?auto=format&fit=crop&w=600&q=80',
+      label: 'Clean Water Borehole',
+      image: '/images/clean-water-borehole.jpg',
+      aspect: 'aspect-[3/4]',
       rotation: 'rotate-1',
       colPos: 'lg:top-1/2 lg:-left-6 lg:-translate-y-1/2',
     },
