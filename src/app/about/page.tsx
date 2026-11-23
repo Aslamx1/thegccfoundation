@@ -41,10 +41,10 @@ export default function AboutPage() {
               <span>ABOUT US</span>
             </div>
             <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-6xl text-[#1A1A1A] tracking-[-0.02em] leading-tight">
-              Honest, Accountable, and Direct Community Giving
+              The GCC Foundation
             </h1>
             <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Bringing trust, clarity, and accountability to community giving in East Africa and beyond.
+              Empowering vulnerable children and Youths in our community through Education and talents.
             </p>
           </div>
         </section>
@@ -60,13 +60,16 @@ export default function AboutPage() {
 
           <div className="prose prose-lg text-gray-700 leading-relaxed space-y-5 text-base sm:text-lg">
             <p>
-              The foundation was started in 2020 out of a clear need to bring trust, clarity, and accountability to community giving in East Africa and beyond.
+              GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
             </p>
             <p>
-              When looking closely at how urgent needs are met in our communities, too many people who wanted to help were held back by uncertainty—wondering whether contributions would reach the right hospital, school, or project, or whether funds would be lost along the way. At the same time, genuine organizers and families facing crises needed a reliable way to prove their need and receive timely support.
+              We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
             </p>
             <p className="bg-emerald-50/70 border-l-4 border-[#02A95C] p-5 sm:p-6 rounded-r-2xl text-gray-800 leading-relaxed">
-              That realization shaped the direction of <strong>The GCC Foundation</strong>. Starting with work in [City/District, e.g., Kampala / Wakiso] and growing across East Africa, the foundation was built to connect everyday donors and supporters abroad with verified needs through direct institutional payouts and transparent records.
+              We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
+            </p>
+            <p>
+              Today our Foundation is managed by <strong>Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
             </p>
           </div>
         </section>
@@ -80,10 +83,10 @@ export default function AboutPage() {
                 Leadership and Daily Operations
               </h2>
               <p className="text-base sm:text-lg text-gray-700 leading-relaxed">
-                Today, The GCC Foundation is led and coordinated by <strong>[Founder / Director Name]</strong>, who oversees overall operations, vetting standards, and partner accountability.
+                Today, The GCC Foundation is managed by <strong>Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him in Ndejje, Kampala.
               </p>
               <p className="text-sm sm:text-base text-gray-600">
-                Day-to-day work is supported by our dedicated team across key areas:
+                Together, we work hand-in-hand with our community to ensure every child has access to food, shelter, education, and the opportunity to showcase their gifts.
               </p>
             </div>
 
@@ -173,10 +176,13 @@ export default function AboutPage() {
               OUR MISSION
             </span>
             <h2 className="font-heading font-extrabold text-2xl sm:text-4xl text-[#1A1A1A]">
-              Simple, Practical, and Vital
+              Simple But Vital
             </h2>
             <p className="text-base sm:text-lg text-gray-700 leading-relaxed">
-              The mission of the foundation is simple and vital: to make transparent, vetted giving accessible so communities can respond reliably to urgent human and development needs.
+              The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
+            </p>
+            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
             </p>
           </div>
 
@@ -185,46 +191,43 @@ export default function AboutPage() {
               <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#02A95C] flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
-              <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Direct Institutional Accountability</h3>
+              <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Education, Shelter &amp; Daily Needs</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                At the same time, we focus on direct institutional accountability—ensuring that medical and tuition donations are wired straight to verified hospital, school, or project accounts rather than unverified personal hands, with 0% platform fee charged to charities.
+                Collecting vulnerable children and youths into one loving family, providing stable shelter, nourishing food, school tuition, and daily necessities.
               </p>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-3xl p-7 sm:p-8 space-y-3 shadow-subtle">
               <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#02A95C] flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5" />
+                <Sparkles className="w-5 h-5" />
               </div>
-              <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Vetted &amp; Accessible Giving</h3>
+              <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Nurturing Talents &amp; Creativity</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                By combining in-person vetting, itemized documentation, and accessible payment options via Mobile Money and cards, we make it easier for neighbors, friends, and well-wishers around the world to support real needs with confidence.
+                Empowering children to develop and showcase their musical and artistic talents, creating opportunities for them to earn a living and connect with supporters globally.
               </p>
             </div>
           </div>
         </section>
 
-        {/* ================= SECTION: GROWTH OF THE FOUNDATION ================= */}
+        {/* ================= SECTION: ACHIEVEMENTS ================= */}
         <section className="bg-white border-y border-gray-200/80 py-16 sm:py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <div className="space-y-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[#02A95C] flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4" />
-                <span>Steady Progress</span>
+                <span>Our Impact</span>
               </span>
               <h2 className="font-heading font-extrabold text-2xl sm:text-4xl text-[#1A1A1A]">
-                Growth of the Foundation
+                Achievements
               </h2>
             </div>
 
             <div className="prose prose-lg text-gray-700 leading-relaxed space-y-5 text-base sm:text-lg">
               <p>
-                Since starting in 2020, the foundation has grown steadily in both reach and accountability.
+                These children are growing up homeless. Some have homes but cant afford day today basic needs.
               </p>
-              <p>
-                One of the clearest signs of progress is the range of communities and urgent causes we can support across Uganda and East Africa. Over time, we have strengthened our verification steps, improved direct bank disbursement workflows, and expanded public ledger reporting so supporters can follow how funds move.
-              </p>
-              <p className="bg-[#FAF8F5] border-l-4 border-emerald-600 p-5 rounded-r-2xl text-gray-800 font-medium">
-                The ability to consistently support verified medical, educational, water, livelihood, and relief campaigns reflects the trust placed in the foundation by donors and community partners alike.
+              <p className="bg-[#FAF8F5] border-l-4 border-[#02A95C] p-6 rounded-r-2xl text-gray-900 font-semibold leading-relaxed">
+                But right now they have found a home at Gcc Foundation where they can show their talents and build a promising future together as one family.
               </p>
             </div>
           </div>

@@ -7,18 +7,7 @@ import { useDonation } from '@/context/DonationContext';
 import { useAuth } from '@/context/AuthContext';
 import { Search, ChevronDown, Menu, X, LogOut, ArrowRight, HeartHandshake, Building2 } from 'lucide-react';
 
-const aboutResources = [
-  { title: 'How GCC works', description: 'Step-by-step help to get started', href: '/about#how-it-works' },
-  { title: 'Trust and safety', description: 'Reporting and published safeguards', href: '/about#safety' },
-  { title: 'Supported countries', description: 'Explore fundraiser locations', href: '/about#countries' },
-  { title: 'Pricing', description: 'Platform fee and payment details', href: '/about#pricing' },
-  { title: 'Help Center', description: 'Answers and guided support', href: '/about#help' },
-  { title: 'About GCC', description: 'Learn about the foundation and team', href: '/about#about-gcc' },
-  { title: 'Newsroom', description: 'News and campaign updates', href: '/about#newsroom' },
-  { title: 'Careers', description: 'Explore current opportunities', href: '/about#careers' },
-  { title: 'GCC Foundation', description: 'Community giving across East Africa', href: '/about#foundation' },
-  { title: 'Partnerships', description: 'Learn about working with GCC', href: '/about#partnerships' },
-];
+
 export default function Header() {
   const { openSearchModal, openDonationModal } = useDonation();
   const { user, logout } = useAuth();
@@ -188,13 +177,85 @@ export default function Header() {
         {/* RIGHT: About, Sign in, Pill Outlined "Start a Fundraiser" */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-4">
           <div ref={aboutMenuRef} className="relative hidden lg:block" onMouseLeave={() => setAboutDropdownOpen(false)}>
-            <button type="button" aria-haspopup="true" aria-expanded={aboutDropdownOpen} onClick={() => { setAboutDropdownOpen((open) => !open); setDonateDropdownOpen(false); setFundraiseDropdownOpen(false); }} className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:text-[#02A95C]">
-              About <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+            <button
+              type="button"
+              aria-haspopup="true"
+              aria-expanded={aboutDropdownOpen}
+              onClick={() => {
+                setAboutDropdownOpen((open) => !open);
+                setDonateDropdownOpen(false);
+                setFundraiseDropdownOpen(false);
+              }}
+              className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:text-[#02A95C]"
+            >
+              About Us <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
             </button>
-            {aboutDropdownOpen && <div className="absolute right-0 top-full z-50 mt-0 w-[min(760px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-[#E5E7EB] bg-white p-5 shadow-2xl animate-fadeIn">
-              <h3 className="px-2 text-sm font-bold text-[#20251F]">How it works, pricing, and more</h3>
-              <div className="mt-3 grid grid-cols-2 gap-1">{aboutResources.map((resource) => <Link key={resource.title} href={resource.href} onClick={() => setAboutDropdownOpen(false)} className="group rounded-2xl p-3 hover:bg-[#F6F8F5]"><strong className="block text-sm text-[#20251F] group-hover:text-[#087443]">{resource.title}</strong><span className="mt-1 block text-xs leading-relaxed text-gray-500">{resource.description}</span></Link>)}</div>
-            </div>}
+            {aboutDropdownOpen && (
+              <div className="absolute right-0 top-full z-50 mt-0 w-[min(560px,calc(100vw-2rem))] max-h-[82vh] overflow-y-auto rounded-3xl border border-[#E5E7EB] bg-white p-6 shadow-2xl animate-fadeIn">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <h3 className="font-heading text-lg font-bold text-[#1A1A1A]">About Us</h3>
+                  <Link
+                    href="/about"
+                    onClick={() => setAboutDropdownOpen(false)}
+                    className="text-xs font-semibold text-[#02A95C] hover:underline"
+                  >
+                    View About Page &rarr;
+                  </Link>
+                </div>
+
+                <div className="mt-4 space-y-4 text-left">
+                  {/* Our story */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#02A95C]">Our story</h4>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
+                    </p>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
+                    </p>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
+                    </p>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
+                    </p>
+                  </div>
+
+                  {/* Our Mission */}
+                  <div className="border-t border-gray-100 pt-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#02A95C]">Our Mission</h4>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
+                    </p>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
+                    </p>
+                  </div>
+
+                  {/* Achievements */}
+                  <div className="border-t border-gray-100 pt-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#02A95C]">Achievements</h4>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      These children are growing up homeless Some have homes but cant afford day today basic needs.
+                    </p>
+                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-700">
+                      But right now they have found a home at Gcc Foundation where they can show their talents.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 border-t border-gray-100 pt-3">
+                  <Link
+                    href="/about"
+                    onClick={() => setAboutDropdownOpen(false)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#02A95C] hover:text-[#028F4D]"
+                  >
+                    <span>Read full story on About page</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           {user ? (
@@ -294,17 +355,56 @@ export default function Header() {
             >
               Public Financial Ledger
             </Link>
-            <details className="group rounded-lg px-3 py-2">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#1A1A1A]">
-                About <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            <details className="group rounded-2xl bg-[#FBF9F6] border border-[#E5E7EB] p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-[#1A1A1A]">
+                About Us <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180 text-gray-500" />
               </summary>
-              <p className="mt-2 text-xs font-semibold text-gray-500">How it works, pricing, and more</p>
-              <div className="mt-1 space-y-1">
-                {aboutResources.map((resource) => (
-                  <Link key={resource.title} href={resource.href} onClick={() => setMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-[#FBF9F6]">
-                    {resource.title}
+              <div className="mt-3 space-y-3 pt-2 border-t border-gray-200 text-xs text-gray-700 leading-relaxed">
+                <div>
+                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Our story</h4>
+                  <p className="mt-1">
+                    GCC Foundation was started in 2020 by a group of church youths who thought they can change the world with a little start.
+                  </p>
+                  <p className="mt-1">
+                    We realized that our community had so many children and youths that had no stable homes, education plus daily necessities. So we started collecting them together and we made them one Family.
+                  </p>
+                  <p className="mt-1">
+                    We started bringing out their talents so that we can start benefiting from our talents. Later we formed some tiktok accounts to help us earn a living. Our foundation is a community based Organization in Ndejje, Kampala.
+                  </p>
+                  <p className="mt-1">
+                    Today our Foundation is managed by <strong className="font-semibold text-gray-900">Kyagulanyi Monch</strong> as a manager and other three partners that started the foundation with him.
+                  </p>
+                </div>
+
+                <div className="border-t border-gray-200 pt-2">
+                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Our Mission</h4>
+                  <p className="mt-1">
+                    The mission of the Foundation is simple but vital to support children in need by providing education, shelter, food and other basic necessities.
+                  </p>
+                  <p className="mt-1">
+                    We regularly showcase the children&apos;s performances on social media platforms including Tiktok, Instagram and Youtube, which allows volunteers and well-wishers around the world to connect with us.
+                  </p>
+                </div>
+
+                <div className="border-t border-gray-200 pt-2">
+                  <h4 className="font-bold text-[#02A95C] uppercase text-[11px] tracking-wider">Achievements</h4>
+                  <p className="mt-1">
+                    These children are growing up homeless. Some have homes but cant afford day today basic needs.
+                  </p>
+                  <p className="mt-1">
+                    But right now they have found a home at Gcc Foundation where they can show their talents.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-gray-200">
+                  <Link
+                    href="/about"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex items-center gap-1 font-bold text-[#02A95C]"
+                  >
+                    <span>Full About Us Page &rarr;</span>
                   </Link>
-                ))}
+                </div>
               </div>
             </details>
             {user ? (

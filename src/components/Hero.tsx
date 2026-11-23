@@ -89,20 +89,13 @@ export default function Hero() {
           {/* Centered campaign introduction */}
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
             
-            {/* Eyebrow Badge */}
-            <div className="inline-flex max-w-full items-center gap-2 bg-[#FBF9F6] border border-[#E5E7EB] text-[#1A1A1A] px-3 py-1.5 rounded-full text-[10px] leading-snug sm:px-4 sm:text-xs font-bold shadow-subtle">
-              <span className="w-2 h-2 rounded-full bg-[#02A95C]"></span>
-              <span>#1 CROWDFUNDING PLATFORM FOR COMMUNITIES</span>
-            </div>
-
             {/* Bold Headline */}
             <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-[#1A1A1A] tracking-[-0.025em] leading-[1.1]">
-              Successful fundraisers <br className="hidden sm:inline" />
-              start here
+              The GCC Foundation
             </h1>
 
             <p className="text-gray-600 text-base sm:text-lg max-w-lg mx-auto font-body leading-relaxed">
-              Transparent, vetted giving for East Africa and beyond. 100% of medical and tuition donations are wired directly to verified institutional ledgers.
+              Empowering vulnerable children and Youths in our community through Education and talents
             </p>
 
             {/* Primary calls to action */}
