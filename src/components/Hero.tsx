@@ -53,7 +53,7 @@ export default function Hero() {
 
   return (
     <section className="relative pt-10 pb-16 sm:pt-14 sm:pb-20 overflow-hidden border-b border-[#E5E7EB] bg-gray-900">
-      {/* Background Image with subtle dark overlay */}
+      {/* Background Image with enhanced lighting and gentle overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/hero-bg.jpg"
@@ -61,10 +61,10 @@ export default function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center"
+          className="object-cover object-center brightness-110 contrast-[1.05]"
         />
-        {/* Subtle dark overlay so text stays easy to read while people remain visible */}
-        <div className="absolute inset-0 bg-black/50" />
+        {/* Lighter overlay so the people in the photo are clearly illuminated and visible */}
+        <div className="absolute inset-0 bg-black/25" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,11 +104,11 @@ export default function Hero() {
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
             
             {/* Bold Headline */}
-            <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-white tracking-[-0.025em] leading-[1.1] drop-shadow-md">
+            <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-white tracking-[-0.025em] leading-[1.1] drop-shadow-[0_3px_10px_rgba(0,0,0,0.9)]">
               The GCC Foundation
             </h1>
 
-            <p className="text-gray-100 text-base sm:text-lg max-w-lg mx-auto font-body leading-relaxed drop-shadow-sm">
+            <p className="text-white text-base sm:text-lg max-w-lg mx-auto font-body leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] font-medium">
               Empowering vulnerable children and Youths in our community through Education and talents
             </p>
 
@@ -116,23 +116,23 @@ export default function Hero() {
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/create/fundraiser/category"
-                className="inline-flex items-center justify-center bg-[#02A95C] hover:bg-[#028F4D] text-white text-base font-bold py-3.5 px-8 rounded-full shadow-sm hover:shadow transition-all transform active:scale-98"
+                className="inline-flex items-center justify-center bg-[#02A95C] hover:bg-[#028F4D] text-white text-base font-bold py-3.5 px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-98"
               >
                 Start a GCC Fundraiser
               </Link>
 
               <Link
                 href="/how-it-works"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-white hover:text-[#02A95C] py-2 px-4 rounded-full transition-colors drop-shadow-sm"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-white hover:text-[#02A95C] py-2 px-4 rounded-full transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
               >
                 <span>How Vetting Works</span>
-                <ArrowRight className="w-4 h-4 text-white" />
+                <ArrowRight className="w-4 h-4 text-white drop-shadow" />
               </Link>
             </div>
 
             {/* Trust Assurance Sub-line */}
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-200 pt-2 drop-shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-[#02A95C]" />
+            <div className="flex items-center justify-center gap-2 text-xs text-white font-medium pt-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+              <ShieldCheck className="w-4 h-4 text-[#02A95C] drop-shadow" />
               <span>Direct-to-Institution Payouts • 0% Platform Fee to Charities</span>
             </div>
 
