@@ -17,6 +17,7 @@ export default function Hero() {
       category: 'Education',
       label: 'Education Tuition Relief',
       image: '/images/education-tuition.jpg',
+      aspect: 'aspect-[3/4]',
       rotation: 'rotate-3',
       colPos: 'lg:top-2 lg:right-6',
     },
@@ -63,13 +64,13 @@ export default function Hero() {
           className="object-cover object-center brightness-110 contrast-[1.05]"
         />
         {/* Lighter overlay so the people in the photo are clearly illuminated and visible */}
-        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-0 bg-black/20" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Central Hero Block */}
-        <div className="relative min-h-0 sm:min-h-[480px] lg:min-h-[580px] flex flex-col items-center justify-center text-center py-5 sm:py-8">
+        <div className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[580px] flex flex-col items-center justify-center text-center py-5 sm:py-8">
           
           {/* Arc Photo Tiles (Desktop Positioned in Circle/Arc around center content) */}
           <div className="hidden lg:block absolute inset-0 pointer-events-none select-none">
@@ -78,12 +79,12 @@ export default function Hero() {
                 key={idx}
                 className={`absolute ${tile.colPos} ${tile.rotation} w-44 xl:w-52 bg-white p-2 rounded-2xl shadow-card border border-[#E5E7EB] transform transition-transform duration-300 hover:scale-105 pointer-events-auto`}
               >
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+                <div className={`relative ${tile.aspect || 'aspect-[4/3]'} rounded-xl overflow-hidden bg-gray-100`}>
                   <Image
                     src={tile.image}
                     alt={tile.label}
                     fill
-                    className="object-cover"
+                    className={`${tile.aspect ? 'object-cover object-top' : 'object-cover'} transition-transform duration-300`}
                     sizes="220px"
                   />
                   <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
@@ -130,8 +131,14 @@ export default function Hero() {
                 key={idx}
                 className="w-[min(72vw,10rem)] flex-shrink-0 bg-white p-2 rounded-2xl shadow-subtle border border-[#E5E7EB]"
               >
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
-                  <Image src={tile.image} alt={tile.label} fill className="object-cover" />
+                <div className={`relative ${tile.aspect || 'aspect-[4/3]'} rounded-xl overflow-hidden bg-gray-100`}>
+                  <Image
+                    src={tile.image}
+                    alt={tile.label}
+                    fill
+                    className={`${tile.aspect ? 'object-cover object-top' : 'object-cover'}`}
+                    sizes="160px"
+                  />
                   <div className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     {tile.category}
                   </div>
