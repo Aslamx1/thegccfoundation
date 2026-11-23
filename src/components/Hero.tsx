@@ -15,8 +15,8 @@ export default function Hero() {
     },
     {
       category: 'Education',
-      label: 'Secondary Tuition Relief',
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80',
+      label: 'Education Tuition Relief',
+      image: '/images/education-tuition.jpg',
       rotation: 'rotate-3',
       colPos: 'lg:top-2 lg:right-6',
     },
