@@ -30,8 +30,9 @@ export default function Hero() {
     },
     {
       category: 'Community',
-      label: 'Women’s Drip Irrigation',
-      image: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=600&q=80',
+      label: 'Woman’s Reunion Support',
+      image: '/images/women-reunion.jpg',
+      aspect: 'aspect-[9/16]',
       rotation: '-rotate-2',
       colPos: 'lg:top-1/2 lg:-right-6 lg:-translate-y-1/2',
     },
