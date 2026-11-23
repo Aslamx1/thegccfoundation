@@ -52,8 +52,22 @@ export default function Hero() {
   ];
 
   return (
-    <section className="relative bg-white pt-10 pb-16 sm:pt-14 sm:pb-20 overflow-hidden border-b border-[#E5E7EB]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative pt-10 pb-16 sm:pt-14 sm:pb-20 overflow-hidden border-b border-[#E5E7EB] bg-gray-900">
+      {/* Background Image with subtle dark overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/hero-bg.jpg"
+          alt="The GCC Foundation community"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        {/* Subtle dark overlay so text stays easy to read while people remain visible */}
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Central Hero Block */}
         <div className="relative min-h-0 sm:min-h-[480px] lg:min-h-[580px] flex flex-col items-center justify-center text-center py-5 sm:py-8">
@@ -90,11 +104,11 @@ export default function Hero() {
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
             
             {/* Bold Headline */}
-            <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-[#1A1A1A] tracking-[-0.025em] leading-[1.1]">
+            <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-white tracking-[-0.025em] leading-[1.1] drop-shadow-md">
               The GCC Foundation
             </h1>
 
-            <p className="text-gray-600 text-base sm:text-lg max-w-lg mx-auto font-body leading-relaxed">
+            <p className="text-gray-100 text-base sm:text-lg max-w-lg mx-auto font-body leading-relaxed drop-shadow-sm">
               Empowering vulnerable children and Youths in our community through Education and talents
             </p>
 
@@ -109,15 +123,15 @@ export default function Hero() {
 
               <Link
                 href="/how-it-works"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-[#02A95C] py-2 px-4 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-white hover:text-[#02A95C] py-2 px-4 rounded-full transition-colors drop-shadow-sm"
               >
                 <span>How Vetting Works</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-white" />
               </Link>
             </div>
 
             {/* Trust Assurance Sub-line */}
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 pt-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-200 pt-2 drop-shadow-sm">
               <ShieldCheck className="w-4 h-4 text-[#02A95C]" />
               <span>Direct-to-Institution Payouts • 0% Platform Fee to Charities</span>
             </div>
