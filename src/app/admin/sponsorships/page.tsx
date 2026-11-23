@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { AdminService } from '@/lib/supabase/admin-service';
 import { SponsoredChild, Sponsorship } from '@/lib/supabase/types';
 import { useAdminToast } from '@/components/admin/AdminToast';
-import { compressImageFile, formatFileSize, SAMPLE_PORTRAITS } from '@/lib/image-utils';
+import { compressImageFile, formatFileSize } from '@/lib/image-utils';
 import {
   StatusBadge,
   ConfirmModal,
@@ -41,6 +41,7 @@ export default function ChildSponsorshipCMS() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sponsored'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'All' | 'Medical' | 'Education' | 'Emergency' | 'Community'>('All');
 
   // Form Modal (Create or Edit)
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -49,14 +50,17 @@ export default function ChildSponsorshipCMS() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    age: 8,
-    gender: 'Girl' as 'Girl' | 'Boy',
+    age: 10,
+    gender: 'Boy' as 'Girl' | 'Boy',
     location: '',
     region: 'Uganda',
     school_and_grade: '',
     bio: '',
     aspirations: '',
     monthly_amount: 35.0,
+    goal_amount: 0,
+    raised_amount: 0,
+    donor_count: 0,
     currency: 'USD',
     portrait_url: '',
     status: 'available' as 'available' | 'sponsored',
@@ -106,26 +110,28 @@ export default function ChildSponsorshipCMS() {
 
   const openCreateModal = () => {
     setEditingChild(null);
-    const initialPreset = SAMPLE_PORTRAITS.Education[0].url;
     setFormData({
       first_name: '',
       last_name: '',
-      age: 8,
-      gender: 'Girl',
-      location: 'Katwe, Kampala',
-      region: 'Central Uganda',
-      school_and_grade: 'Hope Junior Academy, Primary 2',
+      age: 10,
+      gender: 'Boy',
+      location: '',
+      region: 'Uganda',
+      school_and_grade: '',
       bio: '',
       aspirations: '',
       monthly_amount: 35.0,
+      goal_amount: 0,
+      raised_amount: 0,
+      donor_count: 0,
       currency: 'USD',
-      portrait_url: initialPreset,
+      portrait_url: '',
       status: 'available',
-      category: 'Education',
+      category: categoryFilter !== 'All' ? categoryFilter : 'Education',
     });
     setImageFile(null);
-    setImagePreview(initialPreset);
-    setImageInfo('Curated Default Verified Photo');
+    setImagePreview('');
+    setImageInfo('');
     if (fileInputRef.current) fileInputRef.current.value = '';
     setIsFormOpen(true);
   };
@@ -139,14 +145,17 @@ export default function ChildSponsorshipCMS() {
       age: child.age,
       gender: child.gender,
       location: child.location,
-      region: child.region,
+      region: child.region || 'Uganda',
       school_and_grade: child.school_and_grade,
       bio: child.bio,
       aspirations: child.aspirations,
       monthly_amount: child.monthly_amount,
-      currency: child.currency,
+      goal_amount: child.goal_amount || 0,
+      raised_amount: child.raised_amount || 0,
+      donor_count: child.donor_count || 0,
+      currency: child.currency || 'USD',
       portrait_url: childPhoto,
-      status: child.status as 'available' | 'sponsored',
+      status: child.status === 'sponsored' ? 'sponsored' : 'available',
       category: ((child.category as any) || 'Education') as 'Medical' | 'Education' | 'Emergency' | 'Community',
     });
     setImageFile(null);
@@ -182,16 +191,7 @@ export default function ChildSponsorshipCMS() {
     setFormData((prev) => ({ ...prev, portrait_url: '' }));
     setImageInfo('Photo removed (No image set)');
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast.info('Photo removed. You can upload a new one, pick a sample preset, or leave it blank.');
-  };
-
-  const handleSelectPreset = (url: string, label: string) => {
-    setImageFile(null);
-    setImagePreview(url);
-    setFormData((prev) => ({ ...prev, portrait_url: url }));
-    setImageInfo(`Preset: ${label}`);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    toast.info(`Selected ${label} photo.`);
+    toast.info('Photo removed.');
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -207,10 +207,9 @@ export default function ChildSponsorshipCMS() {
       // Image is already processed and ready in formData.portrait_url or imagePreview
       let finalImageUrl = formData.portrait_url || imagePreview;
       
-      // If no photo was set at all, use default category fallback so cards always look sharp
+      // If no photo was set at all, use default hero photo so cards look clean
       if (!finalImageUrl) {
-        finalImageUrl = SAMPLE_PORTRAITS[formData.category]?.[0]?.url ||
-          'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80';
+        finalImageUrl = '/images/hero-bg.jpg';
       }
 
       const payload = {
@@ -296,17 +295,20 @@ export default function ChildSponsorshipCMS() {
       const matchesSearch =
         c.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (c.last_name && c.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        c.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.school_and_grade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.location && c.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (c.school_and_grade && c.school_and_grade.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (c.active_sponsorship?.sponsor_name &&
           c.active_sponsorship.sponsor_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesStatus =
         statusFilter === 'all' ? true : c.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesCategory =
+        categoryFilter === 'All' ? true : (c.category || '').toLowerCase() === categoryFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [childrenList, searchTerm, statusFilter]);
+  }, [childrenList, searchTerm, statusFilter, categoryFilter]);
 
   return (
     <div className="space-y-6">
@@ -345,52 +347,73 @@ export default function ChildSponsorshipCMS() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by child, school, region, or sponsor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-          />
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by child, school, region, or sponsor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="flex rounded-xl bg-slate-100 p-1 w-full sm:w-auto">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  statusFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All ({childrenList.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('available')}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  statusFilter === 'available'
+                    ? 'bg-white text-emerald-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Available ({childrenList.filter((c) => c.status === 'available').length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('sponsored')}
+                className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  statusFilter === 'sponsored'
+                    ? 'bg-white text-sky-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Sponsored ({childrenList.filter((c) => c.status === 'sponsored').length})
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <div className="flex rounded-xl bg-slate-100 p-1 w-full sm:w-auto">
+        {/* Section / Category Filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full pt-2 border-t border-slate-100 scrollbar-none">
+          <span className="text-xs font-bold text-slate-500 mr-1">Section:</span>
+          {(['All', 'Medical', 'Education', 'Emergency', 'Community'] as const).map((cat) => (
             <button
-              onClick={() => setStatusFilter('all')}
-              className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                statusFilter === 'all'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              key={cat}
+              type="button"
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                categoryFilter === cat
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
               }`}
             >
-              All ({childrenList.length})
+              {cat}
             </button>
-            <button
-              onClick={() => setStatusFilter('available')}
-              className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                statusFilter === 'available'
-                  ? 'bg-white text-emerald-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Available ({childrenList.filter((c) => c.status === 'available').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('sponsored')}
-              className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                statusFilter === 'sponsored'
-                  ? 'bg-white text-sky-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Sponsored ({childrenList.filter((c) => c.status === 'sponsored').length})
-            </button>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -467,12 +490,20 @@ export default function ChildSponsorshipCMS() {
                         </div>
                       </td>
 
-                      {/* Pledge Amount */}
+                      {/* Pledge Amount & Real Raised */}
                       <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-900">
-                          ${child.monthly_amount.toFixed(2)}
-                        </span>
-                        <span className="text-[10px] text-slate-400"> / mo</span>
+                        <div className="font-bold text-slate-900">
+                          {child.currency || 'USD'} {child.monthly_amount}/mo
+                        </div>
+                        {Number(child.raised_amount) > 0 ? (
+                          <div className="text-[10px] text-emerald-600 font-semibold">
+                            Raised: {child.currency || 'USD'} {Number(child.raised_amount).toLocaleString()} ({child.donor_count || 0} donors)
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400">
+                            0 donations yet
+                          </div>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -669,25 +700,6 @@ export default function ChildSponsorshipCMS() {
                       )}
                     </div>
 
-                    {/* Quick Presets for Current Category */}
-                    <div className="pt-1">
-                      <span className="block text-[11px] font-semibold text-slate-600 mb-1.5">
-                        Or pick a verified sample for {formData.category}:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(SAMPLE_PORTRAITS[formData.category] || SAMPLE_PORTRAITS.Education).map((preset) => (
-                          <button
-                            key={preset.url}
-                            type="button"
-                            onClick={() => handleSelectPreset(preset.url, preset.label)}
-                            className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Direct URL input */}
                     <div className="pt-1">
                       <span className="block text-[11px] font-semibold text-slate-600 mb-1">
@@ -702,7 +714,7 @@ export default function ChildSponsorshipCMS() {
                           setImagePreview(val);
                           setImageInfo(val ? 'Custom URL Photo' : '');
                         }}
-                        placeholder="https://images.unsplash.com/photo-..."
+                        placeholder="https://..."
                         className="w-full px-3 py-1.5 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-800"
                       />
                     </div>
@@ -808,18 +820,20 @@ export default function ChildSponsorshipCMS() {
                 />
               </div>
 
-              {/* Monthly Amount & Status */}
+              {/* Section / Category & Status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Monthly Pledge Amount (USD)</label>
-                  <input
-                    type="number"
-                    step="5"
-                    min="10"
-                    value={formData.monthly_amount}
-                    onChange={(e) => setFormData({ ...formData, monthly_amount: parseFloat(e.target.value) || 35 })}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none"
-                  />
+                  <label className="text-xs font-semibold text-slate-700">Section / Category *</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                  >
+                    <option value="Education">Education</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Emergency">Emergency</option>
+                    <option value="Community">Community</option>
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">Sponsorship Status</label>
@@ -831,6 +845,60 @@ export default function ChildSponsorshipCMS() {
                     <option value="available">Available for Sponsorship</option>
                     <option value="sponsored">Sponsored</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Currency & Financial Real Numbers */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Currency *</label>
+                  <select
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="UGX">UGX (USh)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="KES">KES (KSh)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Monthly Pledge</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.monthly_amount}
+                    onChange={(e) => setFormData({ ...formData, monthly_amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                    placeholder="35"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Real Amount Raised</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.raised_amount}
+                    onChange={(e) => setFormData({ ...formData, raised_amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Real Donors Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.donor_count}
+                    onChange={(e) => setFormData({ ...formData, donor_count: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                    placeholder="0"
+                  />
                 </div>
               </div>
 

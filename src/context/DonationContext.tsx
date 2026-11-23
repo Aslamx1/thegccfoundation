@@ -146,14 +146,19 @@ function childToCampaign(child: SponsoredChild, rates: Record<string, number>): 
   const annualUSD = child.goal_amount ? Number(child.goal_amount) : monthlyUSD * 12;
   const goalUGX = toUGX(annualUSD * 100, child.currency || 'USD', rates) || (monthlyUSD * 12 * 3750);
   const isSponsored = child.status === 'sponsored';
-  const raisedUGX = isSponsored ? goalUGX : Math.round(goalUGX * 0.35);
+  const raisedUGX = child.raised_amount
+    ? toUGX(Number(child.raised_amount) * 100, child.currency || 'USD', rates)
+    : isSponsored
+    ? goalUGX
+    : 0;
+  const donorCount = Number(child.donor_count) || (isSponsored ? 1 : 0);
 
-  const bio = child.bio || 'Verified child in need of community support.';
-  const aspirations = child.aspirations ? ` Dreams: ${child.aspirations}` : '';
+  const bio = child.bio || 'Child in our community supported through education and talents.';
+  const aspirations = child.aspirations ? ` Aspirations: ${child.aspirations}` : '';
   const fullName = `${child.first_name} ${child.last_name || ''}`.trim();
-  const title = `Support ${fullName} (${child.age} yrs) - ${child.aspirations || child.school_and_grade}`;
+  const title = `Support ${fullName} (${child.age} yrs) - ${child.aspirations || child.school_and_grade || 'Education & Care'}`;
 
-  const coverImg = child.portrait_url || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80';
+  const coverImg = child.portrait_url || '/images/hero-bg.jpg';
 
   return {
     id: child.id,
@@ -162,14 +167,14 @@ function childToCampaign(child: SponsoredChild, rates: Record<string, number>): 
     subtitle: `${bio.slice(0, 140)}...`,
     category: mappedCategory,
     location: {
-      district: child.location || 'Kampala',
+      district: child.location || 'Ndejje, Kampala',
       subCounty: child.region || 'Central Region',
       country: 'Uganda',
       facilityName: child.school_and_grade,
     },
     goalUGX,
     raisedUGX,
-    donorCount: isSponsored ? 1 : 0,
+    donorCount,
     daysRemaining: 45,
     createdAt: child.created_at || new Date().toISOString(),
     urgent: child.category === 'Emergency' || child.status === 'available',
@@ -178,28 +183,28 @@ function childToCampaign(child: SponsoredChild, rates: Record<string, number>): 
     galleryImages: [
       {
         url: coverImg,
-        caption: `Verified portrait of ${fullName}`,
-        dateStamp: 'Recently verified by GCC field staff',
-        capturedBy: 'GCC Foundation Community Field Officer',
+        caption: `Portrait of ${fullName}`,
+        dateStamp: 'Verified GCC Foundation Beneficiary',
+        capturedBy: 'GCC Foundation Welfare Team',
       },
     ],
     payoutVerification: {
       type: mappedCategory === 'Medical Care' ? 'Direct-to-Hospital' : 'Direct-to-School',
-      institutionName: child.school_and_grade || 'Verified Institution Escrow',
-      accountNumberMasked: 'Stanbic Bank Uganda A/C •••• 9102',
-      bankName: 'Stanbic Bank Uganda',
+      institutionName: child.school_and_grade || 'GCC Foundation Community Ledger',
+      accountNumberMasked: '',
+      bankName: 'Direct Institutional Payout',
       verificationReference: `GCC-SPON-${child.id.toUpperCase()}`,
-      complianceOfficer: 'Pauline Namukasa, FCCA (GCC Compliance Officer)',
+      complianceOfficer: 'Kyagulanyi Mesach (Foundation Manager)',
     },
     organizer: {
-      name: 'GCC Field & Social Welfare Desk',
-      role: 'Community Case Manager',
-      ninOrIdMasked: 'NIN: CM880341029•••',
+      name: 'GCC Foundation Community Welfare',
+      role: 'Foundation Leadership',
+      ninOrIdMasked: '',
       verifiedBadge: true,
-      relationshipToBeneficiary: 'Verified Welfare Officer',
-      phoneMasked: '+256 700 ••• 000',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      residence: child.location || 'Uganda',
+      relationshipToBeneficiary: 'Community Welfare Desk',
+      phoneMasked: '',
+      avatarUrl: '/images/hero-bg.jpg',
+      residence: child.location || 'Ndejje, Kampala, Uganda',
     },
     beneficiary: {
       name: fullName,
@@ -210,41 +215,12 @@ function childToCampaign(child: SponsoredChild, rates: Record<string, number>): 
     fullStoryHtml: [
       bio,
       aspirations ? `Personal Aspirations: ${child.aspirations}` : '',
-      `Verified location: ${child.location}, ${child.region}. Institutional Placement: ${child.school_and_grade}.`,
-      '100% of contributions are managed and disbursed directly to the verified school, clinic, or welfare account. Zero middleman fees.',
+      `Community Location: ${child.location || 'Ndejje, Kampala'}. Placement / Grade: ${child.school_and_grade || 'Community Education'}.`,
+      '100% of contributions are managed and disbursed directly to the verified school, medical, or welfare account. Zero middleman fees.',
     ].filter(Boolean),
-    itemizedBudget: [
-      {
-        id: `bud-${child.id}-1`,
-        item: mappedCategory === 'Medical Care' ? 'Medical checkups and required clinical care' : 'School tuition, uniform, and books (Annual)',
-        category: mappedCategory === 'Medical Care' ? 'Healthcare' : 'Tuition & Supplies',
-        amountUGX: Math.round(goalUGX * 0.7),
-        recipientEntity: child.school_and_grade || 'Verified Institution',
-        status: isSponsored ? 'Verified Paid' : 'Estimated',
-      },
-      {
-        id: `bud-${child.id}-2`,
-        item: 'Nutritional and scholastic welfare support',
-        category: 'Welfare',
-        amountUGX: Math.round(goalUGX * 0.3),
-        recipientEntity: 'GCC Community Welfare Account',
-        status: isSponsored ? 'Verified Paid' : 'Estimated',
-      },
-    ],
+    itemizedBudget: [],
     fieldUpdates: [],
-    recentDonors: isSponsored && child.active_sponsorship ? [
-      {
-        id: `don-${child.id}-1`,
-        name: child.active_sponsorship.sponsor_name,
-        amountUGX: Math.round(goalUGX),
-        currencyPaid: 'USD',
-        amountInOriginalCurrency: child.monthly_amount,
-        timestamp: 'Active recurring sponsor',
-        message: 'Proud to sponsor and walk with this child!',
-        paymentMethod: 'Visa / Card',
-        isRecurringMonthly: true,
-      }
-    ] : [],
+    recentDonors: [],
     volunteerPledges: [],
   };
 }
@@ -356,7 +332,19 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
         console.warn('Failed loading admin campaigns:', err);
       }
 
-      // 3. Server API campaigns
+      // 3. Admin child sponsorships (Supabase / localStorage)
+      try {
+        const adminChildren = await AdminService.getChildren();
+        (adminChildren || []).forEach((ch) => {
+          if (ch && ch.id) {
+            baseMap.set(ch.id, childToCampaign(ch, rates));
+          }
+        });
+      } catch (err) {
+        console.warn('Failed loading admin children:', err);
+      }
+
+      // 4. Server API campaigns
       try {
         const res = await fetch('/api/campaigns?status=active&limit=50&sort=recent');
         if (res.ok) {

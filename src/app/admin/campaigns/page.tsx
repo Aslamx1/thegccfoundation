@@ -46,6 +46,8 @@ export default function CampaignsAdminPage() {
     category: 'Healthcare & Medical',
     story: '',
     goal_amount: 5000,
+    raised_amount: 0,
+    donor_count: 0,
     currency: 'USD',
     banner_url: '',
     status: 'active' as Campaign['status'],
@@ -109,6 +111,8 @@ export default function CampaignsAdminPage() {
       category: 'Healthcare & Medical',
       story: '',
       goal_amount: 5000,
+      raised_amount: 0,
+      donor_count: 0,
       currency: 'USD',
       banner_url: '',
       status: 'active',
@@ -127,6 +131,8 @@ export default function CampaignsAdminPage() {
       category: c.category,
       story: c.story,
       goal_amount: c.goal_amount,
+      raised_amount: c.raised_amount || 0,
+      donor_count: c.donor_count || 0,
       currency: c.currency,
       banner_url: c.banner_url,
       status: c.status,
@@ -159,6 +165,8 @@ export default function CampaignsAdminPage() {
         ...campForm,
         slug: generatedSlug,
         banner_url: bannerUrl,
+        raised_amount: Number(campForm.raised_amount) || 0,
+        donor_count: Number(campForm.donor_count) || 0,
       };
 
       if (editingCamp) {
@@ -539,6 +547,31 @@ export default function CampaignsAdminPage() {
                       onChange={(e) => setCampForm({ ...campForm, goal_amount: parseFloat(e.target.value) || 0 })}
                       className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
                       placeholder={campForm.currency === 'UGX' ? 'e.g. 15000000' : 'e.g. 5000'}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700">Real Amount Raised (Starting)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={campForm.raised_amount}
+                      onChange={(e) => setCampForm({ ...campForm, raised_amount: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700">Real Donors Count (Starting)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={campForm.donor_count}
+                      onChange={(e) => setCampForm({ ...campForm, donor_count: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none font-bold"
+                      placeholder="0"
                     />
                   </div>
                 </div>

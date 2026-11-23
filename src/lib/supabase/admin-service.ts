@@ -30,80 +30,7 @@ function notifyDataChanged(type: string) {
   }
 }
 
-const INITIAL_CHILDREN: SponsoredChild[] = [
-  {
-    id: 'ch-init-1',
-    first_name: 'Amina',
-    last_name: 'Namyalo',
-    age: 8,
-    gender: 'Girl',
-    location: 'Katwe, Kampala',
-    region: 'Central Uganda',
-    school_and_grade: 'Hope Junior Academy, Primary 2',
-    bio: 'Amina lives with her elderly grandmother in Katwe. She loves drawing and mathematics and dreams of attending full-term primary education.',
-    aspirations: 'Wants to become a pediatric nurse to treat children in need.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    category: 'Education',
-    created_at: '2026-02-10T00:00:00Z',
-  },
-  {
-    id: 'ch-init-2',
-    first_name: 'David',
-    last_name: 'Ochola',
-    age: 9,
-    gender: 'Boy',
-    location: 'Gulu Municipality',
-    region: 'Northern Uganda',
-    school_and_grade: 'St. Jude Primary, Primary 3',
-    bio: 'David requires routine chronic asthma and allergy medication alongside primary schooling support after his family was displaced by extreme climate drought.',
-    aspirations: 'Wants to become a civil engineer to construct bridges and schools.',
-    monthly_amount: 40.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    category: 'Medical',
-    created_at: '2026-03-01T00:00:00Z',
-  },
-  {
-    id: 'ch-init-3',
-    first_name: 'Sarah',
-    last_name: 'Kiconco',
-    age: 7,
-    gender: 'Girl',
-    location: 'Kasese District',
-    region: 'Western Uganda',
-    school_and_grade: 'Rwenzori Community School, Primary 1',
-    bio: 'Sarah and her family lost their home and belongings during the Rwenzori river flash floods. She needs emergency nutritional care, books, and safe boarding tuition.',
-    aspirations: 'Wants to be a teacher to teach children in disaster-impacted villages.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    category: 'Emergency',
-    created_at: '2026-03-15T00:00:00Z',
-  },
-  {
-    id: 'ch-init-4',
-    first_name: 'Emmanuel',
-    last_name: 'Mugisha',
-    age: 10,
-    gender: 'Boy',
-    location: 'Kamuli Rural District',
-    region: 'Eastern Uganda',
-    school_and_grade: 'Kamuli Primary, Primary 4',
-    bio: 'Emmanuel walks 4km daily to fetch river water for his village community. He is eager to study and help his community establish solar water pumps and sanitation.',
-    aspirations: 'Wants to work in environmental science and clean community water systems.',
-    monthly_amount: 35.0,
-    currency: 'USD',
-    portrait_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=700&q=80',
-    status: 'available',
-    category: 'Community',
-    created_at: '2026-04-01T00:00:00Z',
-  },
-];
+const INITIAL_CHILDREN: SponsoredChild[] = [];
 
 const INITIAL_LETTERS: SponsorshipMessage[] = [];
 
@@ -116,11 +43,11 @@ const INITIAL_AUTH_LOGS: AuthAuditLog[] = [];
 const INITIAL_USERS: Profile[] = [
   {
     id: 'u-1',
-    email: 'admin@thegccfoundation.org',
-    name: 'GCC Admin',
+    email: 'mkyagulanyimesach@gmail.com',
+    name: 'Kyagulanyi Mesach',
     role: 'admin',
-    phone: '+256 700 000 000',
-    location: 'Kampala, Uganda',
+    phone: '',
+    location: 'Ndejje, Kampala, Uganda',
     avatar_url: '',
     is_active: true,
     giving_total: 0.0,
@@ -133,49 +60,26 @@ const INITIAL_CAMPAIGNS: Campaign[] = [];
 
 const INITIAL_USER_FUNDRAISERS: UserFundraiser[] = [];
 
-const INITIAL_EVENTS: EventItem[] = [
-  {
-    id: 'ev-1',
-    title: 'Annual Kampala Charity Gala & Silent Auction',
-    description: 'Our flagship fundraising evening uniting partners, corporate sponsors, and grassroots leaders to benefit pediatric surgeries.',
-    event_date: '2026-12-12T18:00:00Z',
-    location: 'Sheraton Kampala Hotel, Victoria Hall',
-    capacity: 250,
-    registered_count: 0,
-    status: 'upcoming',
-    created_at: '2026-10-01T00:00:00Z',
-  },
-  {
-    id: 'ev-2',
-    title: 'Community Tree Planting & Watershed Protection Outreach',
-    description: 'Mobilizing 100 youth volunteers to plant 3,000 indigenous saplings along the Mpologoma wetland basin.',
-    event_date: '2026-11-28T08:00:00Z',
-    location: 'Iganga Wetland Reserve, Eastern Region',
-    capacity: 100,
-    registered_count: 0,
-    status: 'upcoming',
-    created_at: '2026-10-15T00:00:00Z',
-  },
-];
+const INITIAL_EVENTS: EventItem[] = [];
 
 const INITIAL_VOLUNTEERS: VolunteerLog[] = [];
 
 const INITIAL_SETTINGS: OrgSettings = {
   id: 'primary',
   ngo_name: 'GCC Foundation',
-  registration_number: 'NGO-REG/UG/2022/8941',
-  physical_address: 'Plot 14, Jinja Road, Kampala, Uganda',
-  tax_id: 'TIN-99482104-E',
-  official_email: 'contact@thegccfoundation.org',
-  official_phone: '+256 700 123 456',
+  registration_number: 'NGO-REG/UG/2020/NDEJJE',
+  physical_address: 'Ndejje, Kampala, Uganda',
+  tax_id: '',
+  official_email: 'mkyagulanyimesach@gmail.com',
+  official_phone: '',
   receipt_stamp_url: '/images/gcc-emblem.png',
-  receipt_signature_url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=300&q=80',
+  receipt_signature_url: '',
   default_currency: 'USD',
   updated_at: '2026-11-01T00:00:00Z',
 };
 
 // Local storage key helpers for seamless client fallback
-const STORAGE_PREFIX = 'gcc_admin_store_v4_';
+const STORAGE_PREFIX = 'gcc_admin_store_v5_';
 
 if (typeof window !== 'undefined') {
   try {
@@ -195,6 +99,7 @@ if (typeof window !== 'undefined') {
       localStorage.removeItem('gcc_admin_store_' + k);
       localStorage.removeItem('gcc_admin_store_v2_' + k);
       localStorage.removeItem('gcc_admin_store_v3_' + k);
+      localStorage.removeItem('gcc_admin_store_v4_' + k);
     });
   } catch {}
 }
@@ -381,6 +286,8 @@ export const AdminService = {
     const newChild: SponsoredChild = {
       ...child,
       id: `ch-${Date.now()}`,
+      raised_amount: Number(child.raised_amount) || 0,
+      donor_count: Number(child.donor_count) || 0,
       created_at: new Date().toISOString(),
       active_sponsorship: null,
     };
@@ -826,12 +733,14 @@ export const AdminService = {
     return getStore<Campaign[]>('campaigns', INITIAL_CAMPAIGNS);
   },
 
-  async createCampaign(campaign: Omit<Campaign, 'id' | 'raised_amount' | 'donor_count' | 'created_at'>): Promise<Campaign> {
+  async createCampaign(
+    campaign: Omit<Campaign, 'id' | 'created_at'> & { raised_amount?: number; donor_count?: number }
+  ): Promise<Campaign> {
     const newCamp: Campaign = {
       ...campaign,
       id: `cmp-${Date.now()}`,
-      raised_amount: 0,
-      donor_count: 0,
+      raised_amount: Number(campaign.raised_amount) || 0,
+      donor_count: Number(campaign.donor_count) || 0,
       created_at: new Date().toISOString(),
     };
 
